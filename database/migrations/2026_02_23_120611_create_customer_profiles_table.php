@@ -14,12 +14,25 @@ return new class extends Migration
         Schema::create('customer_profiles', function (Blueprint $table) {
             $table->id();
             // Foreign key + type for polymorphic
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')
+                    ->unique()
+                    ->constrained()
+                    ->cascadeOnDelete();
             
             // Customer-specific fields
-            $table->string('phone')->nullable();
-            $table->text('delivery_address')->nullable();
-            $table->string('preferred_payment_method')->nullable(); // e.g. 'cod', 'esewa', 'khalti'
+            $table->string('full_name')->nullable();
+            $table->string('profile_pic')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->string('gender', 20)->nullable();
+            $table->string('phone', 20)->nullable()->index();
+
+            // foreign key to address table
+            $table->foreignId('delivery_address_id')
+                    ->nullable()
+                    ->constrained('addresses')
+                    ->nullOnDelete();
+
+
             $table->timestamps();
         });
     }
