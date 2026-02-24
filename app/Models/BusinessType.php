@@ -22,4 +22,12 @@ class BusinessType extends Model
     {
         return $this->hasMany(Merchant::class);
     }
+
+    /**
+     * Get all sub-categories under this business type
+     */
+    public function subCategories()
+    {
+        return $this->hasMany(BusinessSubCategory::class);
+    }
 }
