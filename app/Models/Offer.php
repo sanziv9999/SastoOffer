@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Offer extends Model
 {
-    protected $fillable=[
+    use HasFactory;
+
+    protected $fillable = [
         'vendor_id',
         'business_sub_category_id',
         'title',
@@ -19,6 +23,7 @@ class Offer extends Model
         'original_price',
         'offer_price',
         'discount_percent',
+        'discount_amount',
         'currency_code',
         'total_inventory',
         'min_per_customer',
@@ -31,7 +36,6 @@ class Offer extends Model
         'offer_validation_rules',
     ];
 
-
     protected $casts = [
         'highlights'              => 'array',
         'offer_validation_rules'  => 'array',
@@ -39,7 +43,19 @@ class Offer extends Model
         'ends_at'                 => 'datetime',
         'is_featured'             => 'boolean',
         'view_count'              => 'integer',
+        'original_price'          => 'decimal:2',
+        'offer_price'             => 'decimal:2',
+        'discount_percent'        => 'decimal:2',
+        'discount_amount'         => 'decimal:2',
     ];
+
+    protected $appends = [
+        'effective_discount_percent',
+        'savings_amount',
+        'savings_percent',
+    ];
+
+    // ─── Relationships ────────────────────────────────────────
 
     public function vendor(): BelongsTo
     {
@@ -53,14 +69,45 @@ class Offer extends Model
 
     public function offerType(): BelongsTo
     {
-        return $this->belongsTo(OfferType::class);
+        return $this->belongsTo(OfferType::class, 'offer_type_id');
+    }
+
+    // ─── Accessors (calculated on-the-fly) ──────────────────────────────
+
+    /**
+     * Get effective discount percent (uses stored value or recalculates from prices)
+     */
+    public function getEffectiveDiscountPercentAttribute(): float
+    {
+        if ($this->original_price > 0 && $this->offer_price > 0) {
+            return round((($this->original_price - $this->offer_price) / $this->original_price) * 100, 2);
+        }
+
+        return $this->discount_percent ?? 0;
+    }
+
+    /**
+     * Savings in absolute amount (Rs)
+     */
+    public function getSavingsAmountAttribute(): float
+    {
+        return round($this->original_price - $this->offer_price, 2);
+    }
+
+    /**
+     * Savings as percentage
+     */
+    public function getSavingsPercentAttribute(): float
+    {
+        if ($this->original_price > 0) {
+            return round(($this->getSavingsAmountAttribute() / $this->original_price) * 100, 2);
+        }
+
+        return 0;
     }
 
     // ─── Helpers ──────────────────────────────────────────────
 
-    /**
-     * Check if the offer is currently active
-     */
     public function isActive(): bool
     {
         $now = now();
@@ -69,22 +116,24 @@ class Offer extends Model
             && ($this->ends_at === null || $now <= $this->ends_at);
     }
 
-    /**
-     * Get custom validation rules as array
-     */
     public function getCustomValidationRules(): array
     {
         return $this->offer_validation_rules ?? [];
     }
 
     /**
-     * Calculate effective discount percent (if not stored)
+     * Check if this offer is currently running (active + within date range)
      */
-    public function getEffectiveDiscountPercentAttribute(): float
+    public function isRunning(): bool
     {
-        if ($this->original_price > 0 && $this->offer_price > 0) {
-            return (($this->original_price - $this->offer_price) / $this->original_price) * 100;
-        }
-        return $this->discount_percent ?? 0;
+        return $this->isActive() && $this->status === 'active';
+    }
+
+    /**
+     * Get remaining inventory (handles unlimited case)
+     */
+    public function remainingInventory(): ?int
+    {
+        return $this->total_inventory; // can be extended with sold count later
     }
 }

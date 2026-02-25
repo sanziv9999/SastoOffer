@@ -6,15 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
 
-            // Vendor / Merchant
+            // Vendor (FK to vendor_profiles.id)
             $table->foreignId('vendor_id')
                   ->constrained('vendor_profiles')
                   ->cascadeOnDelete();
@@ -29,49 +26,57 @@ return new class extends Migration
 
             $table->text('short_description')->nullable();
             $table->longText('long_description')->nullable();
-            $table->json('highlights')->nullable();  // array of bullet points
+            $table->json('highlights')->nullable(); // array of bullet points
 
-            // Offer Type (FK to offer_types table)
+            // Offer Type
             $table->foreignId('offer_type_id')
                   ->constrained('offer_types')
                   ->cascadeOnDelete();
 
             $table->enum('status', ['draft', 'active', 'inactive', 'expired'])->default('draft');
 
-            $table->decimal('original_price', 15, 2)->nullable();
-            $table->decimal('offer_price', 15, 2)->nullable();  // final/deal price
-            $table->decimal('discount_percent', 5, 2)->nullable();
+            // Price & Discount Fields (all nullable except original_price)
+            $table->decimal('original_price', 15, 2);           // Required: MRP / original price
+            $table->decimal('offer_price', 15, 2)->nullable();  // Final price customer pays
+            $table->decimal('discount_percent', 5, 2)->nullable(); // % discount
+            $table->decimal('discount_amount', 15, 2)->nullable(); // Fixed Rs amount off
+            $table->decimal('savings_amount', 15, 2)->nullable();  // original_price - offer_price
+            $table->decimal('savings_percent', 5, 2)->nullable();  // (savings_amount / original_price) * 100
 
             $table->char('currency_code', 3)->default('NPR');
 
-            $table->integer('total_inventory')->nullable();
+            // Inventory & Limits
+            $table->integer('total_inventory')->nullable()->comment('NULL = unlimited');
             $table->integer('min_per_customer')->default(1);
             $table->integer('max_per_customer')->nullable();
 
+            // Dates & Validity
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
-
-            $table->integer('voucher_valid_days')->nullable();
+            $table->integer('voucher_valid_days')->nullable()->comment('Days voucher is valid after redemption');
 
             $table->boolean('is_featured')->default(false);
             $table->unsignedInteger('view_count')->default(0);
 
-            // Custom per-offer validation rules
-            $table->json('offer_validation_rules')->nullable();  // JSON for custom rules, e.g. {"discount_percent": "between:10,50"}
+            // Custom per-offer validation rules (JSON)
+            $table->json('offer_validation_rules')->nullable();
 
             $table->timestamps();
+
+            // Soft deletes (optional – good for archiving expired offers)
+            $table->softDeletes();
 
             // Indexes for performance
             $table->index(['vendor_id', 'status']);
             $table->index('offer_type_id');
+            $table->index('business_sub_category_id');
             $table->index('starts_at');
             $table->index('ends_at');
+            $table->index('is_featured');
+            $table->index('slug'); // for fast slug lookups
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('offers');

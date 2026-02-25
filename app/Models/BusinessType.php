@@ -18,9 +18,9 @@ class BusinessType extends Model
         'is_active',
     ];
 
-    public function merchants()
+    public function vendor()
     {
-        return $this->hasMany(Merchant::class);
+        return $this->hasMany(VendorProfile::class);
     }
 
     /**
