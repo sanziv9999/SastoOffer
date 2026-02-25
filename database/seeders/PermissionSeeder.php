@@ -75,26 +75,46 @@ class PermissionSeeder extends Seeder
         ]);
 
 
+       // After each user creation and role assignment
+
         $user = \App\Models\User::factory()->create([
-            'name' => 'Example User',
+            'name' => 'Customer Sudip',
             'email' => 'tester@example.com',
             'phone' => '9860357514',
         ]);
         $user->assignRole($customer);
 
+        // Explicitly create profile
+        \App\Models\CustomerProfile::create([
+            'user_id'   => $user->id,
+            'full_name' => $user->name,
+            'phone'     => $user->phone,
+        ]);
+
+        // Same for vendor
         $user = \App\Models\User::factory()->create([
-            'name' => 'Example Admin User',
-            'email' => 'admin@example.com',
+            'name' => 'Vendor Sanjeev',
+            'email' => 'sanzivmagat80@gmail.com',
             'phone' => '9860357512',
         ]);
         $user->assignRole($vendor);
 
+        \App\Models\VendorProfile::create([
+            'user_id'         => $user->id,
+            'business_name'   => $user->name . "'s Business",
+            'slug'            => \Str::slug($user->name . '-' . $user->id),
+            'commission_rate' => 10.00,
+            'verified_status' => 'pending',
+        ]);
+
+        // Same for admin (if admin has a profile — or skip)
         $user = \App\Models\User::factory()->create([
             'name' => 'Example Super-Admin User',
             'email' => 'superadmin@example.com',
             'phone' => '9860357513',
         ]);
         $user->assignRole($admin);
+
         
         
 

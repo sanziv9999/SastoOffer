@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class VendorProfile extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'business_name',
@@ -22,31 +25,38 @@ class VendorProfile extends Model
     ];
 
     protected $casts = [
-        'verified_at'     => 'datetime',
+        'verified_at' => 'datetime',
         'commission_rate' => 'decimal:2',
     ];
 
-    public function user(): BelongsTo
+    // ─── Relationships ────────────────────────────────────────
+
+    /**
+     * The user this vendor profile belongs to
+     * → ONLY ONE copy of this method
+     */
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function businessType(): BelongsTo
+    public function businessType()
     {
         return $this->belongsTo(BusinessType::class);
     }
 
-    public function verifiedBy(): BelongsTo
+    public function verifiedBy()
     {
         return $this->belongsTo(User::class, 'verified_by_user_id');
     }
 
-    public function defaultLocation(): BelongsTo
+    public function defaultLocation()
     {
-        return $this->belongsTo(Address::class, 'default_location_id');
+        return $this->belongsTo(Location::class, 'default_location_id'); // or Address
     }
 
-    // Helper methods
+    // ─── Helpers ──────────────────────────────────────────────
+
     public function isVerified(): bool
     {
         return $this->verified_status === 'verified';
@@ -65,10 +75,5 @@ class VendorProfile extends Model
     public function isSuspended(): bool
     {
         return $this->verified_status === 'suspended';
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
     }
 }
