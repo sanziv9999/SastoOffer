@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from 'react-router-dom';
 import Link from '@/components/Link';
 import {
   LayoutDashboard,
@@ -33,7 +34,7 @@ const userLinks = [
 
 const vendorLinks = [
   { icon: Store, label: 'Vendor Overview', path: '/vendor' },
-  { icon: PlusCircle, label: 'Create Deal', path: '/vendor/create-deal', highlight: true },
+  { icon: PlusCircle, label: 'Create Deal', path: '/vendor/create-deal' },
   { icon: Tags, label: 'Manage Deals', path: '/vendor/deals' },
   { icon: ClipboardList, label: 'Orders', path: '/vendor/orders', badge: 3 },
   { icon: BarChart3, label: 'Analytics', path: '/vendor/analytics' },
@@ -58,6 +59,7 @@ const superAdminLinks = [
 
 const DashboardNav = () => {
   const { user: authUser } = useAuth();
+  const location = useLocation();
 
   // Detect if we are in an Inertia environment
   let isInertia = false;
@@ -77,11 +79,26 @@ const DashboardNav = () => {
     url = page.url;
     user = page.props.auth?.user || authUser;
   } else {
-    // Fallback for non-Inertia environments
-    url = typeof window !== 'undefined' ? window.location.pathname : '';
+    // Use React Router location for reactivity
+    url = location.pathname;
   }
 
-  const isActive = (path: string) => url === path || url.startsWith(`${path}/`);
+  const isActive = (path: string) => {
+    // Standardize URL and path to ignore query strings, hashes, and trailing slashes
+    const normalizedUrl = url.split(/[?#]/)[0].replace(/\/$/, "") || "/";
+    const normalizedPath = path.replace(/\/$/, "") || "/";
+
+    if (normalizedUrl === normalizedPath) return true;
+
+    // For base routes like /dashboard, /vendor etc, they should only be active on exact match
+    // to avoid overlapping with sub-pages like /dashboard/purchases
+    const baseRoutes = ['/dashboard', '/vendor', '/admin', '/super-admin'];
+    if (baseRoutes.includes(normalizedPath)) {
+      return normalizedUrl === normalizedPath;
+    }
+
+    return normalizedUrl.startsWith(`${normalizedPath}/`);
+  };
 
   const renderLinks = (links: Array<{ icon: any; label: string; path: string; highlight?: boolean; badge?: number }>, label: string) => (
     <SidebarGroup>
