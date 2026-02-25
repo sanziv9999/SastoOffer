@@ -1,11 +1,10 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  LayoutDashboard, 
-  Heart, 
-  ShoppingBag, 
-  Star, 
-  Bell, 
+import { Link, usePage } from '@inertiajs/react';
+import {
+  LayoutDashboard,
+  Heart,
+  ShoppingBag,
+  Star,
+  Bell,
   Settings,
   Store,
   PlusCircle,
@@ -56,9 +55,10 @@ const superAdminLinks = [
 ];
 
 const DashboardNav = () => {
-  const { user } = useAuth();
-  const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
+  const { url, props } = usePage<any>();
+  const user = props.auth?.user;
+
+  const isActive = (path: string) => url === path || url.startsWith(`${path}/`);
 
   const renderLinks = (links: Array<{ icon: any; label: string; path: string; highlight?: boolean; badge?: number }>, label: string) => (
     <SidebarGroup>
@@ -71,7 +71,7 @@ const DashboardNav = () => {
                 isActive(link.path) && "bg-accent text-accent-foreground",
                 link.highlight && !isActive(link.path) && "bg-primary/10 text-primary font-semibold hover:bg-primary/20 border border-primary/20"
               )}>
-                <Link to={link.path} className="flex items-center justify-between w-full">
+                <Link href={link.path} className="flex items-center justify-between w-full">
                   <span className="flex items-center">
                     <link.icon className={cn("h-4 w-4 mr-2", link.highlight && !isActive(link.path) && "text-primary")} />
                     <span>{link.label}</span>
