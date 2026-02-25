@@ -1,19 +1,33 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, TrendingUp, DollarSign, ShoppingBag, Users, Store } from 'lucide-react';
-import { users, vendors, deals, purchases } from '@/data/mockData';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const AdminReports = () => {
-  const totalRevenue = purchases.reduce((sum, p) => sum + p.totalPrice, 0);
-  const totalSales = purchases.length;
-  const totalUsers = users.filter(u => u.role === 'user').length;
+interface AdminReportsProps {
+  statsData: {
+    totalRevenue: number;
+    totalSales: number;
+    totalUsers: number;
+    totalVendors: number;
+    activeDeals: number;
+    conversionRate: string;
+    revenueChange: string;
+    salesChange: string;
+    usersChange: string;
+    vendorsChange: string;
+    dealsChange: string;
+    conversionChange: string;
+  };
+}
 
+const AdminReports = ({ statsData }: AdminReportsProps) => {
   const stats = [
-    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, change: '+18%' },
-    { label: 'Total Sales', value: totalSales.toString(), icon: ShoppingBag, change: '+12%' },
-    { label: 'Total Users', value: totalUsers.toString(), icon: Users, change: '+25%' },
-    { label: 'Total Vendors', value: vendors.length.toString(), icon: Store, change: '+8%' },
-    { label: 'Active Deals', value: deals.filter(d => d.status === 'active').length.toString(), icon: BarChart, change: '+5%' },
-    { label: 'Conversion Rate', value: '3.8%', icon: TrendingUp, change: '+0.4%' },
+    { label: 'Total Revenue', value: `$${statsData?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: statsData?.revenueChange || '0%' },
+    { label: 'Total Sales', value: statsData?.totalSales?.toString() || '0', icon: ShoppingBag, change: statsData?.salesChange || '0%' },
+    { label: 'Total Users', value: statsData?.totalUsers?.toString() || '0', icon: Users, change: statsData?.usersChange || '0%' },
+    { label: 'Total Vendors', value: statsData?.totalVendors?.toString() || '0', icon: Store, change: statsData?.vendorsChange || '0%' },
+    { label: 'Active Deals', value: statsData?.activeDeals?.toString() || '0', icon: BarChart, change: statsData?.dealsChange || '0%' },
+    { label: 'Conversion Rate', value: statsData?.conversionRate || '0.0%', icon: TrendingUp, change: statsData?.conversionChange || '0%' },
   ];
 
   return (
@@ -32,7 +46,9 @@ const AdminReports = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-green-600">{stat.change} from last month</p>
+              <p className={`text-xs ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                {stat.change} from last month
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -45,9 +61,9 @@ const AdminReports = () => {
             <CardDescription>Monthly platform revenue</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
               <BarChart className="h-10 w-10" />
-              <span className="ml-2">Revenue chart would appear here</span>
+              <span className="ml-2">Revenue chart placeholder</span>
             </div>
           </CardContent>
         </Card>
@@ -57,9 +73,9 @@ const AdminReports = () => {
             <CardDescription>New user registrations over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
               <TrendingUp className="h-10 w-10" />
-              <span className="ml-2">Growth chart would appear here</span>
+              <span className="ml-2">Growth chart placeholder</span>
             </div>
           </CardContent>
         </Card>
@@ -67,5 +83,7 @@ const AdminReports = () => {
     </div>
   );
 };
+
+AdminReports.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default AdminReports;

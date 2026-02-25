@@ -5,18 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const mockOrders = [
-  { id: 'ORD-001', customer: 'Sarah Johnson', deal: 'Gourmet Pizza Deal', quantity: 2, total: 45.98, date: '2024-01-19', status: 'pending' },
-  { id: 'ORD-002', customer: 'Mike Chen', deal: 'Spa Relaxation Package', quantity: 1, total: 89.00, date: '2024-01-19', status: 'processing' },
-  { id: 'ORD-003', customer: 'Emily Davis', deal: 'Weekend Brunch Special', quantity: 3, total: 67.50, date: '2024-01-18', status: 'completed' },
-  { id: 'ORD-004', customer: 'Lisa Anderson', deal: 'Fitness Class Pack', quantity: 1, total: 120.00, date: '2024-01-18', status: 'completed' },
-  { id: 'ORD-005', customer: 'James Wilson', deal: 'Coffee Lover Bundle', quantity: 4, total: 35.96, date: '2024-01-17', status: 'cancelled' },
-  { id: 'ORD-006', customer: 'Sarah Johnson', deal: 'Spa Relaxation Package', quantity: 1, total: 89.00, date: '2024-01-17', status: 'completed' },
-  { id: 'ORD-007', customer: 'Emily Davis', deal: 'Gourmet Pizza Deal', quantity: 1, total: 22.99, date: '2024-01-16', status: 'pending' },
-];
+interface OrdersProps {
+  orders: any[];
+}
 
-const Orders = () => {
+const Orders = ({ orders }: OrdersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const getStatusIcon = (status: string) => {
@@ -40,17 +35,17 @@ const Orders = () => {
   };
 
   const filterOrders = (status?: string) => {
-    let orders = mockOrders;
-    if (status) orders = orders.filter(o => o.status === status);
-    if (searchTerm) orders = orders.filter(o =>
-      o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.deal.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.id.toLowerCase().includes(searchTerm.toLowerCase())
+    let filteredOrders = orders || [];
+    if (status && status !== 'all') filteredOrders = filteredOrders.filter((o: any) => o.status === status);
+    if (searchTerm) filteredOrders = filteredOrders.filter((o: any) =>
+      o.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.deal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.id?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    return orders;
+    return filteredOrders;
   };
 
-  const renderOrders = (orders: typeof mockOrders) => (
+  const renderOrdersTable = (ordersList: any[]) => (
     <div className="rounded-md border overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="border-b bg-muted/50">
@@ -64,7 +59,7 @@ const Orders = () => {
           </tr>
         </thead>
         <tbody>
-          {orders.map(order => (
+          {ordersList.map(order => (
             <tr key={order.id} className="border-b hover:bg-muted/50 transition-colors">
               <td className="p-4 font-mono text-xs">{order.id}</td>
               <td className="p-4">
@@ -73,7 +68,7 @@ const Orders = () => {
               </td>
               <td className="p-4 hidden md:table-cell">{order.deal}</td>
               <td className="p-4">{order.quantity}</td>
-              <td className="p-4 font-medium">${order.total.toFixed(2)}</td>
+              <td className="p-4 font-medium">${order.total?.toFixed(2)}</td>
               <td className="p-4">
                 <Badge className={`${getStatusColor(order.status)} flex items-center gap-1 w-fit`}>
                   {getStatusIcon(order.status)}
@@ -82,7 +77,7 @@ const Orders = () => {
               </td>
             </tr>
           ))}
-          {orders.length === 0 && (
+          {ordersList.length === 0 && (
             <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No orders found</td></tr>
           )}
         </tbody>
@@ -100,19 +95,19 @@ const Orders = () => {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Orders</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{mockOrders.length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">{orders?.length || 0}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-yellow-600">{mockOrders.filter(o => o.status === 'pending').length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-yellow-600">{orders?.filter((o: any) => o.status === 'pending').length}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Completed</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-green-600">{mockOrders.filter(o => o.status === 'completed').length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-green-600">{orders?.filter((o: any) => o.status === 'completed').length}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${mockOrders.filter(o => o.status === 'completed').reduce((s, o) => s + o.total, 0).toFixed(2)}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">${orders?.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0).toFixed(2)}</div></CardContent>
         </Card>
       </div>
 
@@ -138,16 +133,18 @@ const Orders = () => {
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
             </TabsList>
-            <TabsContent value="all">{renderOrders(filterOrders())}</TabsContent>
-            <TabsContent value="pending">{renderOrders(filterOrders('pending'))}</TabsContent>
-            <TabsContent value="processing">{renderOrders(filterOrders('processing'))}</TabsContent>
-            <TabsContent value="completed">{renderOrders(filterOrders('completed'))}</TabsContent>
-            <TabsContent value="cancelled">{renderOrders(filterOrders('cancelled'))}</TabsContent>
+            <TabsContent value="all">{renderOrdersTable(filterOrders('all'))}</TabsContent>
+            <TabsContent value="pending">{renderOrdersTable(filterOrders('pending'))}</TabsContent>
+            <TabsContent value="processing">{renderOrdersTable(filterOrders('processing'))}</TabsContent>
+            <TabsContent value="completed">{renderOrdersTable(filterOrders('completed'))}</TabsContent>
+            <TabsContent value="cancelled">{renderOrdersTable(filterOrders('cancelled'))}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>
     </div>
   );
 };
+
+Orders.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default Orders;

@@ -1,6 +1,6 @@
+
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { User, Mail, Phone, MapPin, Bell, Shield, Palette } from 'lucide-react';
+import { User, Bell, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,16 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import DashboardLayout from '@/layouts/DashboardLayout';
+import { useAuth } from '@/context/AuthContext';
 
 const Settings = () => {
   const { user } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [city, setCity] = useState(user?.city || '');
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    // router.post('/dashboard/settings/profile', { name, email, phone, city });
     toast.success('Profile updated successfully!');
   };
 
@@ -119,5 +122,7 @@ const Settings = () => {
     </div>
   );
 };
+
+Settings.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default Settings;

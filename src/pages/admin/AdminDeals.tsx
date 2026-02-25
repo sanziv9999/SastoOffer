@@ -1,25 +1,30 @@
+
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, CheckCircle, XCircle } from 'lucide-react';
-import { deals, vendors } from '@/data/mockData';
 import { formatDistanceToNow } from 'date-fns';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const AdminDeals = () => {
+interface AdminDealsProps {
+  deals: any[];
+}
+
+const AdminDeals = ({ deals }: AdminDealsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filterDeals = (status?: string) => {
-    let filtered = deals;
+    let filtered = deals || [];
     if (status && status !== 'all') filtered = filtered.filter(d => d.status === status);
-    if (searchTerm) filtered = filtered.filter(d => d.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (searchTerm) filtered = filtered.filter(d => d.title?.toLowerCase().includes(searchTerm.toLowerCase()));
     return filtered;
   };
 
-  const renderTable = (dealsList: typeof deals) => (
+  const renderTable = (dealsList: any[]) => (
     <div className="rounded-md border">
       <div className="relative w-full overflow-auto">
         <table className="w-full caption-bottom text-sm">
@@ -34,45 +39,48 @@ const AdminDeals = () => {
             </tr>
           </thead>
           <tbody>
-            {dealsList.map(deal => {
-              const vendor = vendors.find(v => v.id === deal.vendorId);
-              return (
-                <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
-                  <td className="p-4 align-middle">
-                    <div className="flex items-center gap-3">
-                      <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />
-                      <div>
-                        <div className="font-medium">{deal.title.length > 25 ? `${deal.title.substring(0, 25)}...` : deal.title}</div>
-                        <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
-                      </div>
+            {dealsList.length > 0 ? dealsList.map(deal => (
+              <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
+                <td className="p-4 align-middle">
+                  <div className="flex items-center gap-3">
+                    {deal.image && <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />}
+                    <div>
+                      <div className="font-medium">{deal.title?.length > 25 ? `${deal.title.substring(0, 25)}...` : deal.title}</div>
+                      <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
                     </div>
-                  </td>
-                  <td className="p-4 align-middle">{vendor?.businessName || 'Unknown'}</td>
-                  <td className="p-4 align-middle">
-                    <div className="font-medium">${deal.discountedPrice.toFixed(2)}</div>
-                    <div className="text-xs text-muted-foreground line-through">${deal.originalPrice.toFixed(2)}</div>
-                  </td>
-                  <td className="p-4 align-middle">
-                    <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'pending' ? 'destructive' : 'outline'}
-                      className={deal.status === 'active' ? 'bg-green-500' : undefined}>
-                      {deal.status.charAt(0).toUpperCase() + deal.status.slice(1)}
-                    </Badge>
-                  </td>
-                  <td className="p-4 align-middle">{formatDistanceToNow(new Date(deal.endDate), { addSuffix: true })}</td>
-                  <td className="p-4 align-middle text-right">
-                    <div className="flex justify-end gap-2">
-                      {deal.status === 'pending' && (
-                        <>
-                          <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>
-                          <Button variant="destructive" size="sm"><XCircle className="h-4 w-4 mr-1" />Reject</Button>
-                        </>
-                      )}
-                      <Button variant="ghost" size="sm" asChild><Link to={`/deals/${deal.id}`}>View</Link></Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                  </div>
+                </td>
+                <td className="p-4 align-middle">{deal.vendorName || 'Unknown'}</td>
+                <td className="p-4 align-middle">
+                  <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
+                  <div className="text-xs text-muted-foreground line-through">${deal.originalPrice?.toFixed(2)}</div>
+                </td>
+                <td className="p-4 align-middle">
+                  <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'pending' ? 'destructive' : 'outline'}
+                    className={deal.status === 'active' ? 'bg-green-500' : undefined}>
+                    {deal.status ? deal.status.charAt(0).toUpperCase() + deal.status.slice(1) : 'Unknown'}
+                  </Badge>
+                </td>
+                <td className="p-4 align-middle">{deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'N/A'}</td>
+                <td className="p-4 align-middle text-right">
+                  <div className="flex justify-end gap-2">
+                    {deal.status === 'pending' && (
+                      <>
+                        <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>
+                        <Button variant="destructive" size="sm"><XCircle className="h-4 w-4 mr-1" />Reject</Button>
+                      </>
+                    )}
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/deals/${deal.id}`}>View</Link>
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={6} className="p-8 text-center text-muted-foreground">No deals found.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -91,7 +99,7 @@ const AdminDeals = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Deals</CardTitle>
-              <CardDescription>{deals.length} total deals</CardDescription>
+              <CardDescription>{deals?.length || 0} total deals</CardDescription>
             </div>
             <div className="flex w-full md:w-auto">
               <Input placeholder="Search deals..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
@@ -117,5 +125,7 @@ const AdminDeals = () => {
     </div>
   );
 };
+
+AdminDeals.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default AdminDeals;

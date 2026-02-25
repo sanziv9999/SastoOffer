@@ -1,4 +1,6 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import { useAuth } from '@/context/AuthContext';
+import Link from '@/components/Link';
 import {
   LayoutDashboard,
   Heart,
@@ -55,8 +57,29 @@ const superAdminLinks = [
 ];
 
 const DashboardNav = () => {
-  const { url, props } = usePage<any>();
-  const user = props.auth?.user;
+  const { user: authUser } = useAuth();
+
+  // Detect if we are in an Inertia environment
+  let isInertia = false;
+  try {
+    usePage();
+    isInertia = true;
+  } catch (e) {
+    isInertia = false;
+  }
+
+  // Try to get Inertia data, otherwise use fallback
+  let url = '';
+  let user = authUser;
+
+  if (isInertia) {
+    const page = usePage<any>();
+    url = page.url;
+    user = page.props.auth?.user || authUser;
+  } else {
+    // Fallback for non-Inertia environments
+    url = typeof window !== 'undefined' ? window.location.pathname : '';
+  }
 
   const isActive = (path: string) => url === path || url.startsWith(`${path}/`);
 
@@ -65,24 +88,27 @@ const DashboardNav = () => {
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {links.map((link) => (
-            <SidebarMenuItem key={link.path}>
-              <SidebarMenuButton asChild className={cn(
-                isActive(link.path) && "bg-accent text-accent-foreground",
-                link.highlight && !isActive(link.path) && "bg-primary/10 text-primary font-semibold hover:bg-primary/20 border border-primary/20"
-              )}>
-                <Link href={link.path} className="flex items-center justify-between w-full">
-                  <span className="flex items-center">
-                    <link.icon className={cn("h-4 w-4 mr-2", link.highlight && !isActive(link.path) && "text-primary")} />
-                    <span>{link.label}</span>
-                  </span>
-                  {link.badge && link.badge > 0 && (
-                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">{link.badge}</span>
-                  )}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {links.map((link) => {
+            const active = isActive(link.path);
+            return (
+              <SidebarMenuItem key={link.path}>
+                <SidebarMenuButton asChild className={cn(
+                  active && "bg-accent text-accent-foreground",
+                  link.highlight && !active && "bg-primary/10 text-primary font-semibold hover:bg-primary/20 border border-primary/20"
+                )}>
+                  <Link href={link.path} className="flex items-center justify-between w-full">
+                    <span className="flex items-center">
+                      <link.icon className={cn("h-4 w-4 mr-2", link.highlight && !active && "text-primary")} />
+                      <span>{link.label}</span>
+                    </span>
+                    {link.badge && link.badge > 0 && (
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">{link.badge}</span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

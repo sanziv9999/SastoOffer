@@ -1,15 +1,13 @@
+
 import { Bell, Gift, Tag, AlertCircle, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const mockNotifications = [
-  { id: '1', type: 'deal', title: 'Flash Sale Alert!', message: '50% off all restaurants near you for the next 2 hours.', time: '2 hours ago', read: false },
-  { id: '2', type: 'coupon', title: 'Coupon Expiring Soon', message: 'Your coupon for "Gourmet Delights" expires tomorrow.', time: '5 hours ago', read: false },
-  { id: '3', type: 'system', title: 'Welcome to Offer Oasis!', message: 'Thanks for joining. Start exploring amazing deals in your city.', time: '1 day ago', read: true },
-  { id: '4', type: 'deal', title: 'New Deals in Your Area', message: '15 new deals added near your location this week.', time: '2 days ago', read: true },
-  { id: '5', type: 'coupon', title: 'Coupon Redeemed', message: 'Your coupon SAVE20 was successfully redeemed.', time: '3 days ago', read: true },
-];
+interface NotificationsProps {
+  notifications: any[];
+}
 
 const getIcon = (type: string) => {
   switch (type) {
@@ -20,8 +18,8 @@ const getIcon = (type: string) => {
   }
 };
 
-const Notifications = () => {
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+const Notifications = ({ notifications }: NotificationsProps) => {
+  const unreadCount = notifications?.filter((n: any) => !n.read).length || 0;
 
   return (
     <div className="space-y-6">
@@ -34,7 +32,7 @@ const Notifications = () => {
       </div>
 
       <div className="space-y-3">
-        {mockNotifications.map(notification => (
+        {notifications?.map((notification: any) => (
           <Card key={notification.id} className={notification.read ? 'opacity-70' : 'border-primary/30'}>
             <CardContent className="flex items-start gap-4 p-4">
               <div className="mt-1">{getIcon(notification.type)}</div>
@@ -58,5 +56,7 @@ const Notifications = () => {
     </div>
   );
 };
+
+Notifications.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default Notifications;

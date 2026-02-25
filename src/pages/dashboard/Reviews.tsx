@@ -1,17 +1,16 @@
+
 import { Star, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { deals } from '@/data/mockData';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const mockReviews = [
-  { id: '1', dealId: 'deal1', rating: 5, comment: 'Amazing deal! Got a great discount on the meal.', date: '2024-01-15' },
-  { id: '2', dealId: 'deal2', rating: 4, comment: 'Good quality products at a fair price.', date: '2024-01-10' },
-  { id: '3', dealId: 'deal3', rating: 3, comment: 'Decent deal but could be better.', date: '2024-01-05' },
-];
+interface ReviewsProps {
+  reviews: any[];
+  deals: any[];
+}
 
-const Reviews = () => {
-  const getDealById = (dealId: string) => deals.find(d => d.id === dealId);
+const Reviews = ({ reviews, deals }: ReviewsProps) => {
+  const getDealById = (dealId: string) => deals?.find((d: any) => d.id === dealId);
 
   return (
     <div className="space-y-6">
@@ -27,7 +26,7 @@ const Reviews = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockReviews.length}</div>
+            <div className="text-2xl font-bold">{reviews?.length || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -37,15 +36,17 @@ const Reviews = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(mockReviews.reduce((sum, r) => sum + r.rating, 0) / mockReviews.length).toFixed(1)}
+              {reviews?.length > 0
+                ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                : '0.0'}
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="space-y-4">
-        {mockReviews.map(review => {
-          const deal = getDealById(review.dealId);
+        {reviews?.map((review: any) => {
+          const deal = review.deal || getDealById(review.dealId);
           return (
             <Card key={review.id}>
               <CardContent className="p-4">
@@ -61,7 +62,7 @@ const Reviews = () => {
                       ))}
                     </div>
                     <p className="text-muted-foreground">{review.comment}</p>
-                    <p className="text-xs text-muted-foreground mt-2">{review.date}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{review.createdAt}</p>
                   </div>
                   <Button variant="outline" size="sm">Edit</Button>
                 </div>
@@ -73,5 +74,7 @@ const Reviews = () => {
     </div>
   );
 };
+
+Reviews.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default Reviews;

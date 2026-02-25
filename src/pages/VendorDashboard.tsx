@@ -1,11 +1,10 @@
 
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  BarChart, 
-  DollarSign, 
-  Users, 
+import { useState } from 'react';
+import Link from '@/components/Link';
+import {
+  BarChart,
+  DollarSign,
+  Users,
   ShoppingBag,
   Tag,
   Plus,
@@ -13,89 +12,46 @@ import {
   Filter,
   Search
 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { vendors, deals, purchases } from '@/data/mockData';
 import { formatDistanceToNow } from 'date-fns';
-import { Deal, Vendor } from '@/types';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const VendorDashboard = () => {
-  const { user } = useAuth();
-  const [vendor, setVendor] = useState<Vendor | null>(null);
-  const [vendorDeals, setVendorDeals] = useState<Deal[]>([]);
+interface VendorDashboardProps {
+  vendor: any;
+  stats: {
+    totalRevenue: number;
+    totalSales: number;
+    activeDeals: number;
+    totalDeals: number;
+  };
+  deals: any[];
+}
+
+const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    // Simulate API call to fetch vendor data
-    setTimeout(() => {
-      if (user?.role === 'vendor') {
-        const foundVendor = vendors.find(v => v.userId === user.id);
-        setVendor(foundVendor || null);
-        
-        if (foundVendor) {
-          const foundDeals = deals.filter(deal => deal.vendorId === foundVendor.id);
-          setVendorDeals(foundDeals);
-        }
-      }
-      
-      setIsLoading(false);
-    }, 1000);
-  }, [user]);
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would filter from the backend
     console.log('Searching for:', searchTerm);
   };
-  
-  const getDealPurchases = (dealId: string) => {
-    return purchases.filter(p => p.dealId === dealId);
-  };
-  
-  // Stats calculations
-  const totalDeals = vendorDeals.length;
-  const activeDeals = vendorDeals.filter(deal => deal.status === 'active').length;
-  const totalRevenue = deals.reduce((sum, deal) => {
-    const dealPurchases = getDealPurchases(deal.id);
-    return sum + dealPurchases.reduce((total, purchase) => total + purchase.totalPrice, 0);
-  }, 0);
-  const totalSales = deals.reduce((sum, deal) => {
-    const dealPurchases = getDealPurchases(deal.id);
-    return sum + dealPurchases.reduce((total, purchase) => total + purchase.quantity, 0);
-  }, 0);
-  
-  if (isLoading) {
-    return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-muted rounded w-1/4"></div>
-        <div className="h-4 bg-muted rounded w-2/4"></div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((_, i) => (
-            <div key={i} className="h-28 bg-muted rounded"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  
+
   if (!vendor) {
     return (
       <div className="text-center py-12">
@@ -103,11 +59,13 @@ const VendorDashboard = () => {
         <p className="text-muted-foreground mb-6">
           Your vendor profile is not set up yet. Please create a vendor profile to get started.
         </p>
-        <Button>Create Vendor Profile</Button>
+        <Button asChild>
+          <Link href="/vendor/profile/create">Create Vendor Profile</Link>
+        </Button>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -117,23 +75,23 @@ const VendorDashboard = () => {
             Manage your deals and track your business performance
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-2">
           <Button asChild>
-            <Link to="/vendor/create-deal">
+            <Link href="/vendor/deals/create">
               <Plus className="mr-2 h-4 w-4" />
               Create Deal
             </Link>
           </Button>
-          
+
           <Button asChild variant="outline">
-            <Link to="/vendor/profile">
+            <Link href="/vendor/profile">
               Edit Profile
             </Link>
           </Button>
         </div>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -144,7 +102,7 @@ const VendorDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
             </p>
@@ -158,7 +116,7 @@ const VendorDashboard = () => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSales}</div>
+            <div className="text-2xl font-bold">{stats?.totalSales || 0}</div>
             <p className="text-xs text-muted-foreground">
               +5 since yesterday
             </p>
@@ -172,9 +130,9 @@ const VendorDashboard = () => {
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeDeals}</div>
+            <div className="text-2xl font-bold">{stats?.activeDeals || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {totalDeals - activeDeals} inactive deals
+              {(stats?.totalDeals || 0) - (stats?.activeDeals || 0)} inactive deals
             </p>
           </CardContent>
         </Card>
@@ -186,15 +144,15 @@ const VendorDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vendor.averageRating}</div>
+            <div className="text-2xl font-bold">{vendor.averageRating || 'N/A'}</div>
             <p className="text-xs text-muted-foreground">
-              Based on 15 reviews
+              Based on recent reviews
             </p>
           </CardContent>
         </Card>
       </div>
-      
-      {/* Charts */}
+
+      {/* Charts placeholder */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -204,13 +162,13 @@ const VendorDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              <BarChart className="h-10 w-10" />
-              <span className="ml-2">Chart would appear here</span>
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+              <BarChart className="h-10 w-10 mr-2 opacity-20" />
+              <span>Sales Trends Chart</span>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Traffic Sources</CardTitle>
@@ -219,14 +177,14 @@ const VendorDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-              <BarChart className="h-10 w-10" />
-              <span className="ml-2">Chart would appear here</span>
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+              <BarChart className="h-10 w-10 mr-2 opacity-20" />
+              <span>Traffic Analysis Chart</span>
             </div>
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Manage Deals */}
       <Card>
         <CardHeader>
@@ -248,7 +206,7 @@ const VendorDashboard = () => {
                 <Search className="h-4 w-4" />
               </Button>
             </form>
-            
+
             <div className="flex items-center gap-2 w-full md:w-auto">
               <Select defaultValue="all">
                 <SelectTrigger className="w-full md:w-40">
@@ -263,16 +221,16 @@ const VendorDashboard = () => {
                   <SelectItem value="pending">Pending Approval</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Button asChild>
-                <Link to="/vendor/create-deal">
+                <Link href="/vendor/deals/create">
                   <Plus className="mr-2 h-4 w-4" />
                   New Deal
                 </Link>
               </Button>
             </div>
           </div>
-          
+
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>
               <TabsTrigger value="all">All Deals</TabsTrigger>
@@ -280,118 +238,85 @@ const VendorDashboard = () => {
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="expired">Expired</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all" className="space-y-4">
-              {vendorDeals.length > 0 ? (
+              {deals?.length > 0 ? (
                 <div className="rounded-md border">
                   <div className="relative w-full overflow-auto">
                     <table className="w-full caption-bottom text-sm">
                       <thead className="border-b">
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                          <th className="h-12 px-4 text-left align-middle font-medium">
-                            Deal
-                          </th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">
-                            Price
-                          </th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">
-                            Status
-                          </th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">
-                            Sales
-                          </th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">
-                            Expires
-                          </th>
-                          <th className="h-12 px-4 text-right align-middle font-medium">
-                            Actions
-                          </th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Expires</th>
+                          <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {vendorDeals.map(deal => (
-                          <tr 
-                            key={deal.id} 
-                            className="border-b transition-colors hover:bg-muted/50"
-                          >
+                        {deals.map((deal: any) => (
+                          <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
                             <td className="p-4 align-middle">
                               <div className="flex items-center gap-3">
-                                <img 
-                                  src={deal.image} 
-                                  alt={deal.title}
-                                  className="h-10 w-10 rounded object-cover"
-                                />
+                                {deal.image && (
+                                  <img
+                                    src={deal.image}
+                                    alt={deal.title}
+                                    className="h-10 w-10 rounded object-cover"
+                                  />
+                                )}
                                 <div>
                                   <div className="font-medium">
-                                    {deal.title.length > 30 
-                                      ? `${deal.title.substring(0, 30)}...` 
+                                    {deal.title.length > 30
+                                      ? `${deal.title.substring(0, 30)}...`
                                       : deal.title}
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    ID: {deal.id}
-                                  </div>
+                                  <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="p-4 align-middle">
                               <div>
-                                <div className="font-medium">${deal.discountedPrice.toFixed(2)}</div>
+                                <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
                                 <div className="text-xs text-muted-foreground line-through">
-                                  ${deal.originalPrice.toFixed(2)}
+                                  ${deal.originalPrice?.toFixed(2)}
                                 </div>
                               </div>
                             </td>
                             <td className="p-4 align-middle">
-                              <Badge 
+                              <Badge
                                 variant={
                                   deal.status === 'active' ? 'default' :
-                                  deal.status === 'expired' ? 'secondary' :
-                                  deal.status === 'draft' ? 'outline' :
-                                  'destructive'
+                                    deal.status === 'expired' ? 'secondary' :
+                                      deal.status === 'draft' ? 'outline' :
+                                        'destructive'
                                 }
-                                className={
-                                  deal.status === 'active' ? 'bg-green-500' : undefined
-                                }
+                                className={deal.status === 'active' ? 'bg-green-500' : undefined}
                               >
-                                {deal.status.charAt(0).toUpperCase() + deal.status.slice(1)}
+                                {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
                               </Badge>
                             </td>
                             <td className="p-4 align-middle">
                               <div>
-                                <div className="font-medium">
-                                  {deal.quantitySold || 0} sold
-                                </div>
+                                <div className="font-medium">{deal.quantitySold || 0} sold</div>
                                 <div className="text-xs text-muted-foreground">
                                   {deal.maxQuantity ? `of ${deal.maxQuantity}` : ''}
                                 </div>
                               </div>
                             </td>
                             <td className="p-4 align-middle">
-                              <div className="flex items-center gap-1">
-                                <span>
-                                  {formatDistanceToNow(new Date(deal.endDate), { addSuffix: true })}
-                                </span>
-                              </div>
+                              <span>
+                                {deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'Never'}
+                              </span>
                             </td>
                             <td className="p-4 align-middle text-right">
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  asChild
-                                >
-                                  <Link to={`/vendor/deals/${deal.id}/edit`}>
-                                    Edit
-                                  </Link>
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  asChild
-                                >
-                                  <Link to={`/deals/${deal.id}`}>
-                                    View
-                                  </Link>
+                                <Button variant="ghost" size="sm" asChild>
+                                  <Link href={`/deals/${deal.id}`}>View</Link>
                                 </Button>
                               </div>
                             </td>
@@ -409,7 +334,7 @@ const VendorDashboard = () => {
                     You haven't created any deals yet. Get started by creating your first deal.
                   </p>
                   <Button asChild>
-                    <Link to="/vendor/create-deal">
+                    <Link href="/vendor/deals/create">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Deal
                     </Link>
@@ -417,24 +342,20 @@ const VendorDashboard = () => {
                 </div>
               )}
             </TabsContent>
-            
+            {/* Other tabs placeholder */}
             <TabsContent value="active" className="space-y-4">
-              {/* Content for active deals tab - similar structure to "all" tab */}
-              {/* Filter the deals by status === 'active' */}
-              <div className="rounded-md border p-8 text-center">
-                <p>Active deals would be listed here.</p>
+              <div className="rounded-md border p-8 text-center border-dashed">
+                <p className="text-muted-foreground">Active deals view filtered by status.</p>
               </div>
             </TabsContent>
-            
             <TabsContent value="draft" className="space-y-4">
-              <div className="rounded-md border p-8 text-center">
-                <p>Draft deals would be listed here.</p>
+              <div className="rounded-md border p-8 text-center border-dashed">
+                <p className="text-muted-foreground">Draft deals view filtered by status.</p>
               </div>
             </TabsContent>
-            
             <TabsContent value="expired" className="space-y-4">
-              <div className="rounded-md border p-8 text-center">
-                <p>Expired deals would be listed here.</p>
+              <div className="rounded-md border p-8 text-center border-dashed">
+                <p className="text-muted-foreground">Expired deals view filtered by status.</p>
               </div>
             </TabsContent>
           </Tabs>
@@ -443,5 +364,7 @@ const VendorDashboard = () => {
     </div>
   );
 };
+
+VendorDashboard.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default VendorDashboard;

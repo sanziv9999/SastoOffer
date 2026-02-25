@@ -1,18 +1,23 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Star } from 'lucide-react';
-import { vendors } from '@/data/mockData';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const AdminVendors = () => {
+interface AdminVendorsProps {
+  vendors: any[];
+}
+
+const AdminVendors = ({ vendors }: AdminVendorsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredVendors = vendors.filter(v =>
-    v.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVendors = vendors?.filter(v =>
+    v.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.contactEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
@@ -26,7 +31,7 @@ const AdminVendors = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Vendors</CardTitle>
-              <CardDescription>{vendors.length} registered vendors</CardDescription>
+              <CardDescription>{vendors?.length || 0} registered vendors</CardDescription>
             </div>
             <div className="flex w-full md:w-auto">
               <Input placeholder="Search vendors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
@@ -48,18 +53,18 @@ const AdminVendors = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredVendors.map(v => (
+                  {filteredVendors.length > 0 ? filteredVendors.map(v => (
                     <tr key={v.id} className="border-b transition-colors hover:bg-muted/50">
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
                           {v.logo ? (
                             <img src={v.logo} alt={v.businessName} className="h-8 w-8 rounded object-cover" />
                           ) : (
-                            <div className="h-8 w-8 rounded bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">{v.businessName.charAt(0)}</div>
+                            <div className="h-8 w-8 rounded bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">{v.businessName?.charAt(0)}</div>
                           )}
                           <div>
                             <span className="font-medium">{v.businessName}</span>
-                            <p className="text-xs text-muted-foreground">{v.description.substring(0, 50)}...</p>
+                            <p className="text-xs text-muted-foreground">{v.description?.substring(0, 50)}...</p>
                           </div>
                         </div>
                       </td>
@@ -67,16 +72,22 @@ const AdminVendors = () => {
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span>{v.averageRating}</span>
+                          <span>{v.averageRating?.toFixed(1) || '0.0'}</span>
                         </div>
                       </td>
-                      <td className="p-4 align-middle">{new Date(v.createdAt).toLocaleDateString()}</td>
+                      <td className="p-4 align-middle">{v.createdAt ? new Date(v.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
                         <Button variant="ghost" size="sm">View</Button>
                         <Button variant="ghost" size="sm" className="text-destructive">Suspend</Button>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                        No vendors found matching your search.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -86,5 +97,7 @@ const AdminVendors = () => {
     </div>
   );
 };
+
+AdminVendors.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default AdminVendors;

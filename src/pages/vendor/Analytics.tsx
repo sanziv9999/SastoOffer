@@ -1,25 +1,21 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, TrendingUp, DollarSign, ShoppingBag, Users, Eye } from 'lucide-react';
-import { deals, purchases, vendors } from '@/data/mockData';
-import { useAuth } from '@/context/AuthContext';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const VendorAnalytics = () => {
-  const { user } = useAuth();
-  const vendor = vendors.find(v => v.userId === user?.id);
-  const vendorDeals = vendor ? deals.filter(d => d.vendorId === vendor.id) : [];
-  const vendorPurchases = purchases.filter(p => vendorDeals.some(d => d.id === p.dealId));
+interface VendorAnalyticsProps {
+  stats: any;
+  topDeals: any[];
+}
 
-  const totalRevenue = vendorPurchases.reduce((sum, p) => sum + p.totalPrice, 0);
-  const totalSales = vendorPurchases.reduce((sum, p) => sum + p.quantity, 0);
-  const avgOrderValue = vendorPurchases.length > 0 ? totalRevenue / vendorPurchases.length : 0;
-
-  const stats = [
-    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, change: '+12%' },
-    { label: 'Total Sales', value: totalSales.toString(), icon: ShoppingBag, change: '+8%' },
-    { label: 'Avg Order Value', value: `$${avgOrderValue.toFixed(2)}`, icon: TrendingUp, change: '+3%' },
-    { label: 'Page Views', value: '2,847', icon: Eye, change: '+15%' },
-    { label: 'Conversion Rate', value: '4.2%', icon: Users, change: '+0.5%' },
-    { label: 'Active Deals', value: vendorDeals.filter(d => d.status === 'active').length.toString(), icon: BarChart, change: '' },
+const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
+  const displayStats = [
+    { label: 'Total Revenue', value: `$${stats?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: stats?.revenueChange },
+    { label: 'Total Sales', value: (stats?.totalSales || 0).toString(), icon: ShoppingBag, change: stats?.salesChange },
+    { label: 'Avg Order Value', value: `$${stats?.avgOrderValue?.toFixed(2) || '0.00'}`, icon: TrendingUp, change: stats?.aovChange },
+    { label: 'Page Views', value: (stats?.pageViews || 0).toLocaleString(), icon: Eye, change: stats?.viewsChange },
+    { label: 'Conversion Rate', value: `${stats?.conversionRate || 0}%`, icon: Users, change: stats?.conversionChange },
+    { label: 'Active Deals', value: (stats?.activeDealsCount || 0).toString(), icon: BarChart, change: '' },
   ];
 
   return (
@@ -30,7 +26,7 @@ const VendorAnalytics = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
+        {displayStats.map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
@@ -38,7 +34,9 @@ const VendorAnalytics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              {stat.change && <p className="text-xs text-green-600">{stat.change} from last month</p>}
+              {stat.change && <p className={`text-xs ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                {stat.change} from last month
+              </p>}
             </CardContent>
           </Card>
         ))}
@@ -51,9 +49,9 @@ const VendorAnalytics = () => {
             <CardDescription>Monthly sales performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[250px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
               <BarChart className="h-10 w-10" />
-              <span className="ml-2">Sales chart would appear here</span>
+              <span className="ml-2">Sales chart placeholder</span>
             </div>
           </CardContent>
         </Card>
@@ -64,17 +62,21 @@ const VendorAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {vendorDeals.slice(0, 5).map((deal, i) => (
+              {topDeals?.length > 0 ? topDeals.map((deal, i) => (
                 <div key={deal.id} className="flex items-center gap-3">
                   <span className="text-sm font-bold text-muted-foreground w-6">#{i + 1}</span>
-                  <img src={deal.image} alt={deal.title} className="h-8 w-8 rounded object-cover" />
+                  {deal.image && <img src={deal.image} alt={deal.title} className="h-8 w-8 rounded object-cover" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{deal.title}</p>
                     <p className="text-xs text-muted-foreground">{deal.quantitySold || 0} sold</p>
                   </div>
-                  <span className="text-sm font-medium">${deal.discountedPrice.toFixed(2)}</span>
+                  <span className="text-sm font-medium">${deal.discountedPrice?.toFixed(2)}</span>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No data available yet.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -82,5 +84,7 @@ const VendorAnalytics = () => {
     </div>
   );
 };
+
+VendorAnalytics.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default VendorAnalytics;

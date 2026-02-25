@@ -1,5 +1,5 @@
-
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import { Outlet } from 'react-router-dom';
 import { LogOut, Home } from 'lucide-react';
 import {
   SidebarProvider,
@@ -11,19 +11,32 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import DashboardNav from '@/components/DashboardNav';
+import { useAuth } from '@/context/AuthContext';
+import Link from '@/components/Link';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { auth } = usePage<any>().props;
-  const user = auth?.user;
+  const { user, logout } = useAuth();
+
+  // Detect environment
+  let isInertia = false;
+  try {
+    usePage();
+    isInertia = true;
+  } catch (e) {
+    isInertia = false;
+  }
 
   const handleLogout = () => {
-    // In a real Inertia app, this would be a POST request to a logout route
-    // router.post('/logout');
-    console.log("Logout triggered");
+    if (isInertia) {
+      // router.post('/logout');
+      console.log("Inertia logout");
+    } else {
+      logout();
+    }
   };
 
   return (
@@ -57,7 +70,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex justify-end mb-4">
             <SidebarTrigger />
           </div>
-          {children}
+          {children || <Outlet />}
         </div>
       </div>
     </SidebarProvider>

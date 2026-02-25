@@ -1,11 +1,12 @@
+
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  BarChart, 
-  DollarSign, 
-  Users, 
-  ShoppingBag, 
-  Tag, 
+import Link from '@/components/Link';
+import {
+  BarChart,
+  DollarSign,
+  Users,
+  ShoppingBag,
+  Tag,
   Store,
   TrendingUp,
   AlertTriangle,
@@ -21,36 +22,56 @@ import {
   CreditCard,
   Globe
 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { users, vendors, deals, purchases } from '@/data/mockData';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
-const SuperAdminDashboard = () => {
+interface SuperAdminDashboardProps {
+  stats: {
+    totalRevenue: number;
+    platformCommission: number;
+    totalUsers: number;
+    userGrowth: number;
+    totalVendors: number;
+    totalAdmins: number;
+    systemUptime: string;
+  };
+  databaseStatus: {
+    storageUsed: string;
+    storageLimit: string;
+    activeConnections: number;
+    connectionLimit: number;
+    performance: string;
+  };
+  securityStatus: {
+    failedLogins: number;
+    sslValid: boolean;
+    firewallActive: boolean;
+  };
+  paymentStatus: {
+    todayTransactions: number;
+    successRate: string;
+    gatewayStatus: string;
+  };
+  adminsList: any[];
+}
+
+const SuperAdminDashboard = ({ stats, databaseStatus, securityStatus, paymentStatus, adminsList }: SuperAdminDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchTerm);
   };
-  
-  // Platform statistics
-  const totalUsers = users.filter(u => u.role === 'user').length;
-  const totalAdmins = users.filter(u => u.role === 'admin').length;
-  const totalVendors = vendors.length;
-  const totalDeals = deals.length;
-  const activeDeals = deals.filter(d => d.status === 'active').length;
-  const totalRevenue = purchases.reduce((sum, purchase) => sum + purchase.totalPrice, 0);
-  const platformCommission = totalRevenue * 0.15; // 15% commission
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -60,7 +81,7 @@ const SuperAdminDashboard = () => {
             Complete platform oversight and system administration
           </p>
         </div>
-        
+
         <form onSubmit={handleSearch} className="flex w-full md:w-auto">
           <Input
             placeholder="Search platform data..."
@@ -73,7 +94,7 @@ const SuperAdminDashboard = () => {
           </Button>
         </form>
       </div>
-      
+
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -82,9 +103,9 @@ const SuperAdminDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
-              Commission: ${platformCommission.toFixed(2)}
+              Commission: ${stats?.platformCommission?.toFixed(2) || '0.00'}
             </p>
           </CardContent>
         </Card>
@@ -94,9 +115,9 @@ const SuperAdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
+            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              +{Math.floor(totalUsers * 0.12)} this month
+              +{stats?.userGrowth || 0} this month
             </p>
           </CardContent>
         </Card>
@@ -106,9 +127,9 @@ const SuperAdminDashboard = () => {
             <Store className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalVendors}</div>
+            <div className="text-2xl font-bold">{stats?.totalVendors || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {totalAdmins} admins managing
+              {stats?.totalAdmins || 0} admins managing
             </p>
           </CardContent>
         </Card>
@@ -118,7 +139,7 @@ const SuperAdminDashboard = () => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">98.5%</div>
+            <div className="text-2xl font-bold">{stats?.systemUptime || 'N/A'}</div>
             <p className="text-xs text-muted-foreground">
               System uptime
             </p>
@@ -140,15 +161,17 @@ const SuperAdminDashboard = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Storage Used</span>
-                <Badge variant="outline">2.4 GB / 10 GB</Badge>
+                <Badge variant="outline">{databaseStatus?.storageUsed || '0'} / {databaseStatus?.storageLimit || '0'}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Active Connections</span>
-                <Badge variant="outline">127 / 500</Badge>
+                <Badge variant="outline">{databaseStatus?.activeConnections || 0} / {databaseStatus?.connectionLimit || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Query Performance</span>
-                <Badge className="bg-green-500">Optimal</Badge>
+                <Badge className={databaseStatus?.performance === 'Optimal' ? 'bg-green-500' : 'bg-yellow-500'}>
+                  {databaseStatus?.performance || 'Unknown'}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -166,15 +189,19 @@ const SuperAdminDashboard = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Failed Login Attempts</span>
-                <Badge variant="outline">23 today</Badge>
+                <Badge variant="outline">{securityStatus?.failedLogins || 0} today</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">SSL Certificate</span>
-                <Badge className="bg-green-500">Valid</Badge>
+                <Badge className={securityStatus?.sslValid ? 'bg-green-500' : 'bg-red-500'}>
+                  {securityStatus?.sslValid ? 'Valid' : 'Invalid'}
+                </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Firewall Status</span>
-                <Badge className="bg-green-500">Active</Badge>
+                <Badge className={securityStatus?.firewallActive ? 'bg-green-500' : 'bg-red-500'}>
+                  {securityStatus?.firewallActive ? 'Active' : 'Inactive'}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -192,15 +219,17 @@ const SuperAdminDashboard = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Today's Transactions</span>
-                <Badge variant="outline">{purchases.length}</Badge>
+                <Badge variant="outline">{paymentStatus?.todayTransactions || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Success Rate</span>
-                <Badge className="bg-green-500">99.2%</Badge>
+                <Badge className="bg-green-500">{paymentStatus?.successRate || '0%'}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Gateway Status</span>
-                <Badge className="bg-green-500">Online</Badge>
+                <Badge className={paymentStatus?.gatewayStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}>
+                  {paymentStatus?.gatewayStatus || 'Unknown'}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -239,7 +268,7 @@ const SuperAdminDashboard = () => {
                 Logs
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="admins" className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Administrator Management</h3>
@@ -247,7 +276,7 @@ const SuperAdminDashboard = () => {
                   Add New Admin
                 </Button>
               </div>
-              
+
               <div className="rounded-md border">
                 <div className="relative w-full overflow-auto">
                   <table className="w-full caption-bottom text-sm">
@@ -261,20 +290,22 @@ const SuperAdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.filter(u => u.role === 'admin').map(admin => (
+                      {adminsList?.map(admin => (
                         <tr key={admin.id} className="border-b transition-colors hover:bg-muted/50">
                           <td className="p-4 align-middle">
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                {admin.name.charAt(0)}
+                                {admin.name?.charAt(0)}
                               </div>
                               <div className="font-medium">{admin.name}</div>
                             </div>
                           </td>
                           <td className="p-4 align-middle">{admin.email}</td>
-                          <td className="p-4 align-middle">2 hours ago</td>
+                          <td className="p-4 align-middle">{admin.lastLogin || 'N/A'}</td>
                           <td className="p-4 align-middle">
-                            <Badge className="bg-green-500">Active</Badge>
+                            <Badge className={admin.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}>
+                              {admin.status || 'Unknown'}
+                            </Badge>
                           </td>
                           <td className="p-4 align-middle text-right">
                             <Button variant="ghost" size="sm">Manage</Button>
@@ -286,7 +317,7 @@ const SuperAdminDashboard = () => {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="system" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
@@ -308,7 +339,7 @@ const SuperAdminDashboard = () => {
                     </Button>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Maintenance</CardTitle>
@@ -330,17 +361,17 @@ const SuperAdminDashboard = () => {
                 </Card>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="analytics" className="space-y-4">
               <div className="text-center p-8 border rounded-md">
                 <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-semibold mb-2">Advanced Analytics</h3>
                 <p className="text-muted-foreground">
-                  Comprehensive platform analytics and reporting tools would be displayed here.
+                  Comprehensive platform analytics and reporting tools.
                 </p>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="payments" className="space-y-4">
               <div className="text-center p-8 border rounded-md">
                 <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -350,7 +381,7 @@ const SuperAdminDashboard = () => {
                 </p>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="logs" className="space-y-4">
               <div className="text-center p-8 border rounded-md">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -366,5 +397,7 @@ const SuperAdminDashboard = () => {
     </div>
   );
 };
+
+SuperAdminDashboard.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default SuperAdminDashboard;

@@ -1,72 +1,64 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  ShoppingBag, 
-  Calendar, 
-  Clock, 
-  Tag, 
+
+import { useState } from 'react';
+import Link from '@/components/Link';
+import {
+  ShoppingBag,
+  Calendar,
+  Clock,
+  Tag,
   Star,
   Search,
   Heart,
   Gift,
   Wallet,
-  TrendingUp,
   MapPin
 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { deals, purchases } from '@/data/mockData';
 import { formatDistanceToNow } from 'date-fns';
+import DashboardLayout from '@/layouts/DashboardLayout';
+import { useAuth } from '@/context/AuthContext';
 
-const CustomerDashboard = () => {
-  const { user } = useAuth();
-  const [userPurchases, setUserPurchases] = useState(purchases);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [favoriteDeals, setFavoriteDeals] = useState(deals.slice(0, 3)); // Mock favorites
-  
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, [user]);
-  
-  const getDealById = (dealId: string) => {
-    return deals.find(deal => deal.id === dealId);
+interface CustomerDashboardProps {
+  stats: {
+    totalPurchases: number;
+    activeCoupons: number;
+    totalSavings: number;
+    favoriteDealsCount: number;
   };
-  
+  recommendations: any[];
+  recentActivity: any[];
+  deals: any[]; // Lookup for deal details if not provided in activity
+}
+
+const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: CustomerDashboardProps) => {
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // router.get('/dashboard', { search: searchTerm }, { preserveState: true });
     console.log('Searching for:', searchTerm);
   };
 
-  // Customer specific stats
-  const totalPurchases = userPurchases.length;
-  const activeCoupons = userPurchases.filter(p => !p.redeemed).length;
-  const totalSavings = userPurchases.reduce((sum, purchase) => {
-    const deal = getDealById(purchase.dealId);
-    if (deal) {
-      return sum + (deal.originalPrice - deal.discountedPrice) * purchase.quantity;
-    }
-    return sum;
-  }, 0);
-  
+  const getDealById = (dealId: string) => {
+    return deals?.find((deal: any) => deal.id === dealId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -76,7 +68,7 @@ const CustomerDashboard = () => {
             Discover amazing deals and manage your purchases
           </p>
         </div>
-        
+
         <form onSubmit={handleSearch} className="flex w-full md:w-auto">
           <Input
             placeholder="Search your purchases..."
@@ -89,7 +81,7 @@ const CustomerDashboard = () => {
           </Button>
         </form>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -98,9 +90,9 @@ const CustomerDashboard = () => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalPurchases}</div>
+            <div className="text-2xl font-bold">{stats?.totalPurchases || 0}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              Across all categories
             </p>
           </CardContent>
         </Card>
@@ -110,7 +102,7 @@ const CustomerDashboard = () => {
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeCoupons}</div>
+            <div className="text-2xl font-bold">{stats?.activeCoupons || 0}</div>
             <p className="text-xs text-muted-foreground">
               Ready to redeem
             </p>
@@ -122,7 +114,7 @@ const CustomerDashboard = () => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalSavings.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${stats?.totalSavings?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               Money saved with deals
             </p>
@@ -134,7 +126,7 @@ const CustomerDashboard = () => {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{favoriteDeals.length}</div>
+            <div className="text-2xl font-bold">{stats?.favoriteDealsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               Saved for later
             </p>
@@ -151,25 +143,25 @@ const CustomerDashboard = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/search">
+              <Link href="/search">
                 <Search className="h-6 w-6 mb-2" />
                 <span>Find Deals</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/dashboard/favorites">
+              <Link href="/dashboard/favorites">
                 <Heart className="h-6 w-6 mb-2" />
                 <span>My Favorites</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/dashboard/notifications">
+              <Link href="/dashboard/notifications">
                 <Gift className="h-6 w-6 mb-2" />
                 <span>Notifications</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/dashboard/settings">
+              <Link href="/dashboard/settings">
                 <MapPin className="h-6 w-6 mb-2" />
                 <span>Preferences</span>
               </Link>
@@ -186,11 +178,11 @@ const CustomerDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {deals.slice(0, 3).map(deal => (
+            {recommendations?.map((deal: any) => (
               <Card key={deal.id} className="hover:shadow-md transition-shadow">
                 <div className="aspect-video relative overflow-hidden rounded-t-lg">
-                  <img 
-                    src={deal.image} 
+                  <img
+                    src={deal.image}
                     alt={deal.title}
                     className="w-full h-full object-cover"
                   />
@@ -213,7 +205,7 @@ const CustomerDashboard = () => {
                     </div>
                   </div>
                   <Button asChild className="w-full" size="sm">
-                    <Link to={`/deals/${deal.id}`}>
+                    <Link href={`/deals/${deal.id}`}>
                       View Deal
                     </Link>
                   </Button>
@@ -223,8 +215,8 @@ const CustomerDashboard = () => {
           </div>
         </CardContent>
       </Card>
-      
-      {/* Purchase History */}
+
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
@@ -235,28 +227,21 @@ const CustomerDashboard = () => {
             <TabsList>
               <TabsTrigger value="recent">Recent Purchases</TabsTrigger>
               <TabsTrigger value="active">Active Coupons</TabsTrigger>
-              <TabsTrigger value="expired">Expired/Used</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="recent" className="space-y-4">
-              {isLoading ? (
+              {recentActivity?.length > 0 ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map((_, i) => (
-                    <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
-                  ))}
-                </div>
-              ) : userPurchases.slice(0, 5).length > 0 ? (
-                <div className="space-y-3">
-                  {userPurchases.slice(0, 5).map(purchase => {
-                    const purchaseDeal = getDealById(purchase.dealId);
+                  {recentActivity.map((purchase: any) => {
+                    const purchaseDeal = purchase.deal || getDealById(purchase.dealId);
                     return (
-                      <div 
-                        key={purchase.id} 
+                      <div
+                        key={purchase.id}
                         className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         {purchaseDeal && (
-                          <img 
-                            src={purchaseDeal.image} 
+                          <img
+                            src={purchaseDeal.image}
                             alt={purchaseDeal.title}
                             className="h-12 w-12 rounded object-cover flex-shrink-0"
                           />
@@ -271,18 +256,18 @@ const CustomerDashboard = () => {
                               {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
                             </span>
                             <span>Qty: {purchase.quantity}</span>
-                            <span className="font-medium">${purchase.totalPrice.toFixed(2)}</span>
+                            <span className="font-medium">${purchase.totalPrice?.toFixed(2)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge 
+                          <Badge
                             variant={purchase.redeemed ? "outline" : "default"}
                             className={purchase.redeemed ? "" : "bg-green-500"}
                           >
                             {purchase.redeemed ? "Used" : "Active"}
                           </Badge>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/deals/${purchase.dealId}`}>
+                            <Link href={`/deals/${purchase.dealId}`}>
                               View
                             </Link>
                           </Button>
@@ -299,19 +284,19 @@ const CustomerDashboard = () => {
                     Start exploring amazing deals and make your first purchase!
                   </p>
                   <Button asChild>
-                    <Link to="/">Explore Deals</Link>
+                    <Link href="/">Explore Deals</Link>
                   </Button>
                 </div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="active" className="space-y-4">
-              {activeCoupons > 0 ? (
+              {recentActivity?.filter((p: any) => !p.redeemed).length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {userPurchases
-                    .filter(p => !p.redeemed)
-                    .map(purchase => {
-                      const purchaseDeal = getDealById(purchase.dealId);
+                  {recentActivity
+                    .filter((p: any) => !p.redeemed)
+                    .map((purchase: any) => {
+                      const purchaseDeal = purchase.deal || getDealById(purchase.dealId);
                       return (
                         <Card key={purchase.id} className="border-green-200 bg-green-50">
                           <CardHeader className="pb-2">
@@ -334,7 +319,7 @@ const CustomerDashboard = () => {
                                 {purchase.couponCode}
                               </code>
                             </div>
-                            
+
                             <div className="flex items-center text-sm text-muted-foreground mb-3">
                               <Clock className="h-4 w-4 mr-1" />
                               {purchaseDeal && (
@@ -343,13 +328,13 @@ const CustomerDashboard = () => {
                                 </span>
                               )}
                             </div>
-                            
+
                             <div className="flex gap-2">
                               <Button className="flex-1" size="sm">
                                 Show QR Code
                               </Button>
                               <Button variant="outline" size="sm" asChild>
-                                <Link to={`/deals/${purchase.dealId}`}>
+                                <Link href={`/deals/${purchase.dealId}`}>
                                   Details
                                 </Link>
                               </Button>
@@ -367,20 +352,10 @@ const CustomerDashboard = () => {
                     You don't have any active coupons at the moment.
                   </p>
                   <Button asChild>
-                    <Link to="/">Find New Deals</Link>
+                    <Link href="/">Find New Deals</Link>
                   </Button>
                 </div>
               )}
-            </TabsContent>
-            
-            <TabsContent value="expired" className="space-y-4">
-              <div className="text-center p-8 border rounded-md">
-                <Clock className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Expired & Used Coupons</h3>
-                <p className="text-muted-foreground">
-                  Your purchase history of expired and redeemed coupons.
-                </p>
-              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -388,5 +363,7 @@ const CustomerDashboard = () => {
     </div>
   );
 };
+
+CustomerDashboard.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default CustomerDashboard;
