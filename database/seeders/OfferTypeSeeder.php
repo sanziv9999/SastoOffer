@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\OfferType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class OfferTypeSeeder extends Seeder
 {
@@ -12,100 +13,117 @@ class OfferTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        $types = [
-
-            // Percentage-based offers (most popular)
+        $offerTypes = [
             [
-                'name'         => 'percentage_discount',
-                'display_name' => 'Percentage Discount',
-                'slug'         => 'percentage-discount',
-                'description'  => 'Discount applied as a percentage of the original price (e.g., 20% off, 50% off)',
-                'is_active'    => true,
+                'name'          => 'percentage_discount',
+                'display_name'  => 'Percentage Discount',
+                'slug'          => Str::slug('Percentage Discount'),
+                'description'   => 'Apply a percentage discount on the original price',
+                'calculation_rule' => json_encode([
+                    'type'    => 'percentage',
+                    'formula' => 'final_price = original_price * (1 - discount_percent / 100)',
+                    'display' => '{discount_percent}% OFF',
+                ]),
+                'required_params' => json_encode(['discount_percent']),
+                'default_values'  => json_encode(['discount_percent' => 10]),
+                'is_active'       => true,
             ],
 
             [
-                'name'         => 'fixed_amount_discount',
-                'display_name' => 'Flat Amount Discount',
-                'slug'         => 'flat-amount-discount',
-                'description'  => 'Fixed amount deducted from the original price (e.g., Rs 200 off, Rs 500 off)',
-                'is_active'    => true,
-            ],
-
-            // Buy & Get style offers
-            [
-                'name'         => 'bogo',
-                'display_name' => 'Buy One Get One (BOGO)',
-                'slug'         => 'bogo',
-                'description'  => 'Buy one item and get another free or at a reduced price (Buy 1 Get 1)',
-                'is_active'    => true,
-            ],
-
-            [
-                'name'         => 'buy_x_get_y',
-                'display_name' => 'Buy X Get Y',
-                'slug'         => 'buy-x-get-y',
-                'description'  => 'Buy a specific quantity and get additional items free or discounted (e.g., Buy 2 Get 1 Free)',
-                'is_active'    => true,
-            ],
-
-            // Time-sensitive and special promotions
-            [
-                'name'         => 'flash_sale',
-                'display_name' => 'Flash Sale',
-                'slug'         => 'flash-sale',
-                'description'  => 'Limited-time, high-discount offer (usually very short duration with limited stock)',
-                'is_active'    => true,
+                'name'          => 'fixed_amount_discount',
+                'display_name'  => 'Fixed Amount Discount',
+                'slug'          => Str::slug('Fixed Amount Discount'),
+                'description'   => 'Subtract a fixed amount from the original price',
+                'calculation_rule' => json_encode([
+                    'type'    => 'fixed',
+                    'formula' => 'final_price = original_price - discount_amount',
+                    'display' => 'Rs {discount_amount} OFF',
+                ]),
+                'required_params' => json_encode(['discount_amount']),
+                'default_values'  => json_encode(['discount_amount' => 200]),
+                'is_active'       => true,
             ],
 
             [
-                'name'         => 'first_order',
-                'display_name' => 'First Order Discount',
-                'slug'         => 'first-order-discount',
-                'description'  => 'Special discount for new customers on their first purchase',
-                'is_active'    => true,
+                'name'          => 'bogo',
+                'display_name'  => 'Buy One Get One',
+                'slug'          => Str::slug('Buy One Get One'),
+                'description'   => 'Buy X get Y free or at discount (BOGO style)',
+                'calculation_rule' => json_encode([
+                    'type'    => 'bogo',
+                    'formula' => 'effective_price_per_item = (original_price * buy_quantity + original_price * get_quantity * (1 - get_discount_percent/100)) / (buy_quantity + get_quantity)',
+                    'display' => 'Buy {buy_quantity} Get {get_quantity} at {get_discount_percent}% OFF',
+                ]),
+                'required_params' => json_encode([
+                    'buy_quantity',
+                    'get_quantity',
+                    'get_discount_percent',
+                ]),
+                'default_values'  => json_encode([
+                    'buy_quantity'       => 1,
+                    'get_quantity'       => 1,
+                    'get_discount_percent' => 100,
+                ]),
+                'is_active'       => true,
             ],
 
-            // Delivery & service related
             [
-                'name'         => 'free_shipping',
-                'display_name' => 'Free Shipping',
-                'slug'         => 'free-shipping',
-                'description'  => 'No delivery charges on qualifying orders (e.g., above Rs 1000)',
-                'is_active'    => true,
+                'name'          => 'flash_sale',
+                'display_name'  => 'Flash Sale',
+                'slug'          => Str::slug('Flash Sale'),
+                'description'   => 'Time-limited deep discount (usually percentage-based)',
+                'calculation_rule' => json_encode([
+                    'type'    => 'percentage',
+                    'formula' => 'final_price = original_price * (1 - discount_percent / 100)',
+                    'display' => 'FLASH SALE: {discount_percent}% OFF (Limited Time)',
+                ]),
+                'required_params' => json_encode(['discount_percent']),
+                'default_values'  => json_encode(['discount_percent' => 40]),
+                'is_active'       => true,
             ],
 
             [
-                'name'         => 'cashback',
-                'display_name' => 'Cashback Offer',
-                'slug'         => 'cashback',
-                'description'  => 'Get a percentage or fixed amount back to wallet/bank after purchase',
-                'is_active'    => true,
+                'name'          => 'free_shipping',
+                'display_name'  => 'Free Shipping',
+                'slug'          => Str::slug('Free Shipping'),
+                'description'   => 'No delivery charge (price unchanged, but validation on min order)',
+                'calculation_rule' => json_encode([
+                    'type'    => 'free_shipping',
+                    'formula' => 'final_price = original_price', // no price change
+                    'display' => 'FREE DELIVERY',
+                ]),
+                'required_params' => json_encode(['min_order_value']),
+                'default_values'  => json_encode(['min_order_value' => 1000]),
+                'is_active'       => true,
             ],
 
-            // Bundle / combo style
+            // Optional: Add more types as needed
             [
-                'name'         => 'combo_bundle',
-                'display_name' => 'Combo / Bundle Offer',
-                'slug'         => 'combo-bundle',
-                'description'  => 'Multiple products sold together at a discounted package price',
-                'is_active'    => true,
-            ],
-
-            // Fallback / custom
-            [
-                'name'         => 'other',
-                'display_name' => 'Other / Custom Offer',
-                'slug'         => 'other',
-                'description'  => 'Any offer that doesn’t fit the above standard types',
-                'is_active'    => true,
+                'name'          => 'cashback',
+                'display_name'  => 'Cashback Offer',
+                'slug'          => Str::slug('Cashback Offer'),
+                'description'   => 'Cashback after purchase (no upfront discount)',
+                'calculation_rule' => json_encode([
+                    'type'    => 'cashback',
+                    'formula' => 'final_price = original_price', // price unchanged
+                    'display' => '{cashback_amount} Cashback',
+                ]),
+                'required_params' => json_encode(['cashback_amount', 'cashback_percent']),
+                'default_values'  => json_encode(['cashback_percent' => 5]),
+                'is_active'       => true,
             ],
         ];
 
-        foreach ($types as $type) {
+        $count = 0;
+
+        foreach ($offerTypes as $data) {
             OfferType::updateOrCreate(
-                ['name' => $type['name']],
-                $type
+                ['name' => $data['name']],
+                $data
             );
+            $count++;
         }
+
+        $this->command->info("Seeded {$count} offer types successfully.");
     }
 }
