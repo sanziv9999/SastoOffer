@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\OfferRuleCalculator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
@@ -32,20 +33,35 @@ class DealOfferType extends Pivot
     public function calculatePrices(array $override = []): self
     {
         $rule = $this->offerType?->calculation_rule ?? [];
+        if (is_string($rule)) {
+            $rule = json_decode($rule, true) ?: [];
+        }
+        $rule = is_array($rule) ? $rule : [];
 
-        if (empty($rule['type'])) {
-            $this->final_price = $this->original_price ?? 0;
+        $defaults = $this->ensureArray($this->offerType->default_values ?? null);
+        $pivotParams = $this->ensureArray($this->params ?? null);
+        $override = $this->ensureArray($override);
+
+        $params = array_merge($defaults, $pivotParams, $override);
+
+        $base = (float) ($this->original_price ?? 0);
+
+        // Approach A: try dynamic formula first (formula_final_price or formula RHS)
+        $calculator = app(OfferRuleCalculator::class);
+        $computedFinal = $calculator->evaluateFinalPrice($base, $params, $rule);
+
+        if ($computedFinal !== null) {
+            $this->applyFormulaResult($base, $computedFinal, $params);
             $this->saveQuietly();
             return $this;
         }
 
-        $params = array_merge(
-            $this->offerType->default_values ?? [],
-            $this->params ?? [],
-            $override
-        );
-
-        $base = (float) ($this->original_price ?? 0);
+        // Fallback: type-based switch (no formula or evaluation failed)
+        if (empty($rule['type'])) {
+            $this->final_price = $base;
+            $this->saveQuietly();
+            return $this;
+        }
 
         switch (strtolower($rule['type'])) {
             case 'percentage':
@@ -73,5 +89,37 @@ class DealOfferType extends Pivot
 
         $this->saveQuietly();
         return $this;
+    }
+
+    /**
+     * Set pivot fields from a formula-computed final price (and derive discount/savings).
+     */
+    protected function applyFormulaResult(float $originalPrice, float $finalPrice, array $params): void
+    {
+        $finalPrice = round(max(0, $finalPrice), 2);
+        $discountAmount = round(max(0, $originalPrice - $finalPrice), 2);
+
+        $this->final_price = $finalPrice;
+        $this->discount_amount = $discountAmount;
+        $this->savings_amount = $discountAmount;
+        $this->savings_percent = $originalPrice > 0
+            ? round(($discountAmount / $originalPrice) * 100, 4)
+            : 0;
+        $this->discount_percent = $params['discount_percent'] ?? $this->savings_percent;
+    }
+
+    /**
+     * Ensure value is array (decode JSON string if needed).
+     */
+    protected function ensureArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
     }
 }

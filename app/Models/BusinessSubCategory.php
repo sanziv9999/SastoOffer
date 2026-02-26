@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class BusinessSubCategory extends Model
 {
@@ -33,6 +34,14 @@ class BusinessSubCategory extends Model
     public function offers()
     {
         return $this->hasMany(Offer::class); // or Product::class, etc.
+    }
+
+    /**
+     * Polymorphic: images for this sub-category (e.g. icon, banner).
+     */
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 
     // ─── Scopes ───────────────────────────────────────────────

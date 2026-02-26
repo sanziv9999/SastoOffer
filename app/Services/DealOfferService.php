@@ -19,25 +19,26 @@ class DealOfferService
         array $data
     ): DealOfferType {
         $this->validateAttachData($data);
+        $defaults = $this->ensureArray($offerType->default_values);
+        $params = $this->ensureArray($data['params'] ?? []);
+        $merged = array_merge($defaults, $params);
+        $this->validateRequiredParams($offerType, $merged);
 
-        return DB::transaction(function () use ($deal, $offerType, $data) {
+        return DB::transaction(function () use ($deal, $offerType, $data, $merged) {
             $pivotAttributes = [
                 'original_price'  => $data['original_price'],
                 'currency_code'   => $data['currency_code'] ?? 'NPR',
-                'params'          => $data['params'] ?? [],
+                'params'          => $merged,
                 'status'          => $data['status'] ?? 'active',
             ];
 
-            // Attach (many-to-many)
             $deal->offerTypes()->attach($offerType->id, $pivotAttributes);
 
-            // Get the fresh pivot record
             $pivot = DealOfferType::where('deal_id', $deal->id)
                 ->where('offer_type_id', $offerType->id)
                 ->firstOrFail();
 
-            // Run calculation logic (lives in pivot model)
-            $pivot->calculatePrices($data['params'] ?? []);
+            $pivot->calculatePrices($merged);
 
             return $pivot->refresh();
         });
@@ -59,15 +60,20 @@ class DealOfferService
             return null;
         }
 
+        $defaults = $this->ensureArray($offerType->default_values);
+        $pivotParams = $this->ensureArray($pivot->params);
+        $inputParams = $this->ensureArray($data['params'] ?? []);
+        $mergedParams = array_merge($defaults, $pivotParams, $inputParams);
+        $this->validateRequiredParams($offerType, $mergedParams);
+
         $pivot->update([
             'original_price' => $data['original_price']         ?? $pivot->original_price,
             'currency_code'  => $data['currency_code']          ?? $pivot->currency_code,
-            'params'         => $data['params']                 ?? $pivot->params,
+            'params'         => $mergedParams,
             'status'         => $data['status']                 ?? $pivot->status,
         ]);
 
-        // Recalculate
-        $pivot->calculatePrices($data['params'] ?? []);
+        $pivot->calculatePrices($mergedParams);
 
         return $pivot->refresh();
     }
@@ -95,6 +101,39 @@ class DealOfferService
         if (empty($data['original_price']) || $data['original_price'] <= 0) {
             throw new InvalidArgumentException('Original price is required and must be positive.');
         }
-        // Add more validation if needed (you can also use FormRequest)
+    }
+
+    /**
+     * Ensure merged params contain every key required by the offer type's rule.
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function validateRequiredParams(OfferType $offerType, array $mergedParams): void
+    {
+        $required = $this->ensureArray($offerType->required_params);
+        if (empty($required)) {
+            return;
+        }
+        $missing = array_diff($required, array_keys($mergedParams));
+        if ($missing !== []) {
+            throw new InvalidArgumentException(
+                'Missing required offer parameters: ' . implode(', ', $missing)
+            );
+        }
+    }
+
+    /**
+     * Ensure value is array (decode JSON string if needed, for DB columns not cast).
+     */
+    protected function ensureArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
     }
 }

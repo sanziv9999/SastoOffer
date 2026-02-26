@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class CustomerProfile extends Model
 {
@@ -55,6 +56,14 @@ class CustomerProfile extends Model
     public function defaultAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'default_address_id');
+    }
+
+    /**
+     * Polymorphic: images for this customer (e.g. profile_pic, gallery).
+     */
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 
     // ────────────────────────────────────────────────

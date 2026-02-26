@@ -12,6 +12,7 @@ class Address extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'address_line', 'city', 'state_province',
         'postal_code', 'country_code', 'latitude', 'longitude',
         'timezone', 'is_default', 'label',

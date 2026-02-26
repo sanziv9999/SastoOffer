@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class BusinessType extends Model
 {
@@ -29,5 +30,13 @@ class BusinessType extends Model
     public function subCategories()
     {
         return $this->hasMany(BusinessSubCategory::class);
+    }
+
+    /**
+     * Polymorphic: images for this business type (e.g. icon, banner).
+     */
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 }

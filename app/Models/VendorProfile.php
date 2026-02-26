@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class VendorProfile extends Model
 {
@@ -53,7 +54,15 @@ class VendorProfile extends Model
 
     public function defaultLocation()
     {
-        return $this->belongsTo(Location::class, 'default_location_id'); // or Address
+        return $this->belongsTo(Address::class, 'default_location_id');
+    }
+
+    /**
+     * Polymorphic: images for this vendor (e.g. logo, cover, gallery).
+     */
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 
     // ─── Helpers ──────────────────────────────────────────────
