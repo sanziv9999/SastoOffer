@@ -11,18 +11,19 @@ class UpdateBusinessTypeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
+        $businessType = $this->route('business_type');
+
         return [
-            //
+            'name'          => ['sometimes', 'string', 'max:255'],
+            'slug'          => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('business_types', 'slug')->ignore($businessType->id)],
+            'description'   => ['nullable', 'string'],
+            'display_order' => ['nullable', 'integer', 'min:0'],
+            'is_active'     => ['nullable', 'boolean'],
         ];
     }
 }
