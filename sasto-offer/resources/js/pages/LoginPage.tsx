@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { Facebook, Apple, Home, ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { users } from '@/data/mockData';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -21,17 +22,25 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
-    
+
     try {
       setIsLoading(true);
-      await login(email, password);
-      navigate('/dashboard');
-      toast({ title: "Success", description: "You have been logged in" });
+      const authUser = users.find(u => u.email === email);
+      if (authUser) {
+        await login(email, password);
+        const role = authUser.role;
+        if (role === 'super_admin') navigate('/super-admin');
+        else if (role === 'admin') navigate('/admin');
+        else if (role === 'vendor') navigate('/vendor');
+        else navigate('/dashboard');
+
+        toast({ title: "Success", description: `Signed in as ${authUser.name}` });
+      }
     } catch (error) {
       toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
     } finally {
@@ -112,14 +121,14 @@ const LoginPage = () => {
               Apple
             </Button>
           </div>
-          
+
           <div className="relative mb-5">
             <Separator />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-card px-2 text-sm text-muted-foreground">OR</span>
             </div>
           </div>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-1.5">
@@ -145,8 +154,8 @@ const LoginPage = () => {
           <div className={`text-center p-3 rounded-lg w-full transition-all ${showSignUpHighlight ? 'bg-primary/10 border border-primary/30' : ''}`}>
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="text-primary font-semibold hover:underline"
                 onMouseEnter={() => setShowSignUpHighlight(true)}
                 onMouseLeave={() => setShowSignUpHighlight(false)}

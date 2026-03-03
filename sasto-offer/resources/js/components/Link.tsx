@@ -18,6 +18,16 @@ const Link = ({ href, className, children, ...props }: LinkProps) => {
         isInertia = false;
     }
 
+    // If it's an internal path (starts with /), let React Router handle it 
+    // to avoid unnecessary Inertia server roundtrips and ensure Routes update.
+    if (href.startsWith('/')) {
+        return (
+            <RouterLink to={href} className={className} {...(props as any)}>
+                {children}
+            </RouterLink>
+        );
+    }
+
     if (isInertia) {
         return (
             <InertiaLink href={href} className={className} {...(props as any)}>

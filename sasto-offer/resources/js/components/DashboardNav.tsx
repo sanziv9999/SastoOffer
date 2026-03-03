@@ -70,17 +70,13 @@ const DashboardNav = () => {
     isInertia = false;
   }
 
-  // Try to get Inertia data, otherwise use fallback
-  let url = '';
+  // Always use React Router location for URL to ensure SPA transitions update the UI
+  const url = location.pathname;
   let user = authUser;
 
   if (isInertia) {
     const page = usePage<any>();
-    url = page.url;
     user = page.props.auth?.user || authUser;
-  } else {
-    // Use React Router location for reactivity
-    url = location.pathname;
   }
 
   const isActive = (path: string) => {

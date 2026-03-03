@@ -150,6 +150,4 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
   );
 };
 
-MyPurchases.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
-
 export default MyPurchases;

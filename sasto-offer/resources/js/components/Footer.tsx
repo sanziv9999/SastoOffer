@@ -4,22 +4,9 @@ import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import Logo from './Logo';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
 
 const Footer = () => {
-  const [openSections, setOpenSections] = useState<{[key: string]: boolean}>({});
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
@@ -56,7 +43,7 @@ const Footer = () => {
               </a>
             </div>
           </div>
-          
+
           {/* Quick Links Section - Desktop */}
           <div className="hidden md:block">
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
@@ -83,7 +70,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Categories Section - Desktop */}
           <div className="hidden md:block">
             <h3 className="text-lg font-semibold mb-4">Categories</h3>
@@ -115,7 +102,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Support Section - Desktop */}
           <div className="hidden md:block">
             <h3 className="text-lg font-semibold mb-4">Support</h3>
@@ -142,7 +129,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Mobile Footer Accordion */}
           <div className="md:hidden space-y-4 col-span-1">
             {/* Quick Links Section - Mobile */}
@@ -151,11 +138,11 @@ const Footer = () => {
               onOpenChange={() => toggleSection('quickLinks')}
               className="border-b pb-2"
             >
-              <CollapsibleTrigger className="flex w-full justify-between items-center py-2">
+              <CollapsibleTrigger className="flex w-full justify-between items-center py-2 group">
                 <h3 className="text-lg font-semibold">Quick Links</h3>
-                <Button variant="ghost" size="sm" className="p-0 h-6 w-6">
+                <div className="p-0 h-6 w-6 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
                   <span className={`transform transition-transform ${openSections['quickLinks'] ? 'rotate-180' : ''}`}>↓</span>
-                </Button>
+                </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <ul className="space-y-2 py-2 pl-2">
@@ -182,18 +169,18 @@ const Footer = () => {
                 </ul>
               </CollapsibleContent>
             </Collapsible>
-            
+
             {/* Categories Section - Mobile */}
             <Collapsible
               open={openSections['categories']}
               onOpenChange={() => toggleSection('categories')}
               className="border-b pb-2"
             >
-              <CollapsibleTrigger className="flex w-full justify-between items-center py-2">
+              <CollapsibleTrigger className="flex w-full justify-between items-center py-2 group">
                 <h3 className="text-lg font-semibold">Categories</h3>
-                <Button variant="ghost" size="sm" className="p-0 h-6 w-6">
+                <div className="p-0 h-6 w-6 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
                   <span className={`transform transition-transform ${openSections['categories'] ? 'rotate-180' : ''}`}>↓</span>
-                </Button>
+                </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <ul className="space-y-2 py-2 pl-2">
@@ -225,18 +212,18 @@ const Footer = () => {
                 </ul>
               </CollapsibleContent>
             </Collapsible>
-            
+
             {/* Support Section - Mobile */}
             <Collapsible
               open={openSections['support']}
               onOpenChange={() => toggleSection('support')}
               className="border-b pb-2"
             >
-              <CollapsibleTrigger className="flex w-full justify-between items-center py-2">
+              <CollapsibleTrigger className="flex w-full justify-between items-center py-2 group">
                 <h3 className="text-lg font-semibold">Support</h3>
-                <Button variant="ghost" size="sm" className="p-0 h-6 w-6">
+                <div className="p-0 h-6 w-6 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
                   <span className={`transform transition-transform ${openSections['support'] ? 'rotate-180' : ''}`}>↓</span>
-                </Button>
+                </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <ul className="space-y-2 py-2 pl-2">
@@ -265,7 +252,7 @@ const Footer = () => {
             </Collapsible>
           </div>
         </div>
-        
+
         {/* Copyright Section */}
         <div className="border-t border-gray-200 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm">
@@ -292,7 +279,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-      
+
       {/* We've removed the duplicate mobile menu since we're using MobileNavigation */}
     </footer>
   );

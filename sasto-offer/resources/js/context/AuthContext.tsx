@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole } from '@/types';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User } from '@/types';
 import { users } from '@/data/mockData';
 import { toast } from '@/lib/toast';
 
@@ -15,13 +15,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = async (email: string, _password: string) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       const foundUser = users.find(u => u.email === email);
       if (foundUser) {
         setUser(foundUser);
@@ -38,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, _password: string) => {
     setIsLoading(true);
     try {
       const userExists = users.some(u => u.email === email);
@@ -47,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       const newUser: User = {
         id: `user${users.length + 1}`,
         name,
@@ -55,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: 'user',
         createdAt: new Date(),
       };
-      
+
       setUser(newUser);
       localStorage.setItem('user', JSON.stringify(newUser));
       toast.success('Account created successfully!');
@@ -70,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    sessionStorage.setItem('loggedOut', 'true');
     toast.success('Logged out successfully');
   };
 
@@ -88,7 +102,7 @@ export function useAuth(): AuthContextType {
       user: null,
       isLoading: false,
       login: async () => { throw new Error('AuthProvider not found'); },
-      logout: () => {},
+      logout: () => { },
       register: async () => { throw new Error('AuthProvider not found'); },
     };
   }

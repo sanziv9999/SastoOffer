@@ -31,12 +31,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   const handleLogout = () => {
-    if (isInertia) {
-      // router.post('/logout');
-      console.log("Inertia logout");
-    } else {
-      logout();
-    }
+    logout();
+    window.location.href = '/login';
   };
 
   return (
