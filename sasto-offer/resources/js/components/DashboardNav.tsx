@@ -16,9 +16,10 @@ import {
   Tags,
   Shield,
   UserCheck,
-  History,
   TrendingUp,
-  ClipboardList
+  ClipboardList,
+  QrCode,
+  Package
 } from 'lucide-react';
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar';
 import { cn } from '@/lib/utils';
@@ -33,14 +34,18 @@ const userLinks = [
 ];
 
 const vendorLinks = [
-  { icon: Store, label: 'Vendor Overview', path: '/vendor' },
+  { icon: Store, label: 'Overview', path: '/vendor' },
+  { icon: QrCode, label: 'Voucher Scanner', path: '/vendor/scanner', highlight: true },
   { icon: PlusCircle, label: 'Create Deal', path: '/vendor/create-deal' },
   { icon: Tags, label: 'Manage Deals', path: '/vendor/deals' },
+  { icon: Package, label: 'Inventory', path: '/vendor/inventory' },
   { icon: ClipboardList, label: 'Orders', path: '/vendor/orders', badge: 3 },
   { icon: BarChart3, label: 'Analytics', path: '/vendor/analytics' },
+  { icon: TrendingUp, label: 'Insights', path: '/vendor/insights' },
   { icon: UserCheck, label: 'Customers', path: '/vendor/customers' },
-  { icon: History, label: 'Customer History', path: '/vendor/customer-history' },
-  { icon: TrendingUp, label: 'Sales History', path: '/vendor/sales-history' },
+  { icon: Star, label: 'Reviews', path: '/vendor/reviews' },
+  { icon: Bell, label: 'Notifications', path: '/vendor/notifications', badge: 4 },
+  { icon: Settings, label: 'Business Settings', path: '/vendor/settings' },
 ];
 
 const adminLinks = [
