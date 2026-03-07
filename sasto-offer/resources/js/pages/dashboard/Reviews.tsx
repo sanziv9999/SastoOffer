@@ -1,5 +1,6 @@
 
 import { Star, MessageSquare } from 'lucide-react';
+import Link from '@/components/Link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -66,7 +67,9 @@ const Reviews = ({ reviews = [], deals = [] }: ReviewsProps) => {
                         {review.createdAt instanceof Date ? review.createdAt.toLocaleDateString() : review.createdAt}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/dashboard/reviews/edit/${review.id}`}>Edit</Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

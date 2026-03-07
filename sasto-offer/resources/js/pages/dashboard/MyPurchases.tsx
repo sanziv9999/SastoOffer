@@ -2,11 +2,9 @@
 import Link from '@/components/Link';
 import { ShoppingBag, Calendar, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
-import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface MyPurchasesProps {
   purchases: any[];
@@ -68,26 +66,28 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
           {purchases?.map((purchase: any) => {
             const deal = purchase.deal || getDealById(purchase.dealId);
             return (
-              <div key={purchase.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
-                <div className="flex-grow">
-                  <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
-                    </span>
-                    <span>Qty: {purchase.quantity}</span>
+              <Link key={purchase.id} href={`/dashboard/purchases/${purchase.id}`} className="block">
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
+                  {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
+                  <div className="flex-grow">
+                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
+                      </span>
+                      <span>Qty: {purchase.quantity}</span>
+                    </div>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
                   </div>
-                  <code className="text-xs font-mono text-muted-foreground">{purchase.couponCode}</code>
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <div className="font-semibold text-primary">${purchase.totalPrice?.toFixed(2)}</div>
+                    <Badge variant={purchase.redeemed ? "outline" : "default"} className={purchase.redeemed ? "text-muted-foreground" : "bg-green-500 hover:bg-green-600"}>
+                      {purchase.redeemed ? "Used" : "Active"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">${purchase.totalPrice?.toFixed(2)}</div>
-                  <Badge variant={purchase.redeemed ? "outline" : "default"} className={purchase.redeemed ? "" : "bg-green-500"}>
-                    {purchase.redeemed ? "Used" : "Active"}
-                  </Badge>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </TabsContent>
@@ -95,26 +95,28 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
           {activePurchases.map((purchase: any) => {
             const deal = purchase.deal || getDealById(purchase.dealId);
             return (
-              <div key={purchase.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
-                <div className="flex-grow">
-                  <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
-                    </span>
-                    <span>Qty: {purchase.quantity}</span>
+              <Link key={purchase.id} href={`/dashboard/purchases/${purchase.id}`} className="block">
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
+                  {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
+                  <div className="flex-grow">
+                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
+                      </span>
+                      <span>Qty: {purchase.quantity}</span>
+                    </div>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
                   </div>
-                  <code className="text-xs font-mono text-muted-foreground">{purchase.couponCode}</code>
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <div className="font-semibold text-primary">${purchase.totalPrice?.toFixed(2)}</div>
+                    <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                      Active
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">${purchase.totalPrice?.toFixed(2)}</div>
-                  <Badge variant="default" className="bg-green-500">
-                    Active
-                  </Badge>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </TabsContent>
@@ -122,26 +124,28 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
           {redeemedPurchases.map((purchase: any) => {
             const deal = purchase.deal || getDealById(purchase.dealId);
             return (
-              <div key={purchase.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
-                <div className="flex-grow">
-                  <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
-                    </span>
-                    <span>Qty: {purchase.quantity}</span>
+              <Link key={purchase.id} href={`/dashboard/purchases/${purchase.id}`} className="block">
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
+                  {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
+                  <div className="flex-grow">
+                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
+                      </span>
+                      <span>Qty: {purchase.quantity}</span>
+                    </div>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
                   </div>
-                  <code className="text-xs font-mono text-muted-foreground">{purchase.couponCode}</code>
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <div className="font-semibold text-muted-foreground">${purchase.totalPrice?.toFixed(2)}</div>
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Used
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">${purchase.totalPrice?.toFixed(2)}</div>
-                  <Badge variant="outline">
-                    Used
-                  </Badge>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </TabsContent>

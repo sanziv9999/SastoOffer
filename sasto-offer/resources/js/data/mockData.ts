@@ -1,4 +1,4 @@
-import { User, Category, Location, Vendor, Deal, Purchase, Review } from '@/types';
+import { User, Category, Location, Vendor, Deal, Purchase, Review, Notification } from '@/types';
 
 // Mock Categories
 export const categories: Category[] = [
@@ -440,4 +440,43 @@ export const cities = [
   "Seattle",
   "Denver",
   "Boston"
+];
+
+// Mock Notifications
+export const notifications: Notification[] = [
+  {
+    id: '1',
+    type: 'deal',
+    title: 'New Deal!',
+    message: 'A new 50% off deal at Gourmet Delights is now available in your area.',
+    time: '2 hours ago',
+    read: false,
+    link: '/deals/1'
+  },
+  {
+    id: '2',
+    type: 'coupon',
+    title: 'Coupon Expiring',
+    message: 'Your coupon for Zen Spa Retreat is expiring in 24 hours. Don\'t forget to use it!',
+    time: '5 hours ago',
+    read: false,
+    link: '/dashboard/purchases'
+  },
+  {
+    id: '3',
+    type: 'system',
+    title: 'Welcome to Sasto Offer',
+    message: 'Thank you for joining our platform. Start exploring the best deals today!',
+    time: '1 day ago',
+    read: true
+  },
+  {
+    id: '4',
+    type: 'deal',
+    title: 'Flash Sale Alert',
+    message: 'Flash sale starting in 30 minutes for all Adventure Tours activities!',
+    time: '3 hours ago',
+    read: false,
+    link: '/search'
+  }
 ];

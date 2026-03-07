@@ -267,8 +267,8 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                             {purchase.redeemed ? "Used" : "Active"}
                           </Badge>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/deals/${purchase.dealId}`}>
-                              View
+                            <Link href={`/dashboard/purchases/${purchase.id}`}>
+                              View Voucher
                             </Link>
                           </Button>
                         </div>
@@ -330,12 +330,14 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                             </div>
 
                             <div className="flex gap-2">
-                              <Button className="flex-1" size="sm">
-                                Show QR Code
+                              <Button className="flex-1" size="sm" asChild>
+                                <Link href={`/dashboard/purchases/${purchase.id}`}>
+                                  View Voucher
+                                </Link>
                               </Button>
                               <Button variant="outline" size="sm" asChild>
-                                <Link href={`/deals/${purchase.dealId}`}>
-                                  Details
+                                <Link href={`/deal/${purchase.dealId}`}>
+                                  Deal Page
                                 </Link>
                               </Button>
                             </div>

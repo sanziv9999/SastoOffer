@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import HomePage from "./HomePage";
 import SearchPage from "./SearchPage";
@@ -22,6 +22,8 @@ import Notifications from "./dashboard/Notifications";
 import Reviews from "./dashboard/Reviews";
 import SavedDeals from "./dashboard/SavedDeals";
 import Settings from "./dashboard/Settings";
+import EditReview from "./dashboard/EditReview";
+import VoucherDetail from "./dashboard/VoucherDetail";
 
 // Dashboard Sub-pages (Vendor)
 import VendorAnalytics from "./vendor/Analytics";
@@ -39,7 +41,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminVendors from "./admin/AdminVendors";
 
 // Mock Data
-import { deals, purchases, reviews, users, vendors } from "@/data/mockData";
+import { deals, purchases, reviews, users, vendors, notifications } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 
 // Dummy stats for Dashboards
@@ -142,12 +144,10 @@ const AppShell = () => {
                     } />
                     <Route path="favorites" element={<SavedDeals favoriteDeals={deals.slice(0, 2)} />} />
                     <Route path="purchases" element={<MyPurchases purchases={purchases} deals={deals} />} />
+                    <Route path="purchases/:id" element={<VoucherDetail purchases={purchases} deals={deals} vendors={vendors} />} />
                     <Route path="reviews" element={<Reviews reviews={reviews} deals={deals} />} />
-                    <Route path="notifications" element={<Notifications notifications={[
-                        { id: '1', type: 'deal', title: 'New Deal!', message: 'A new deal is available in your area.', time: '2 hours ago', read: false },
-                        { id: '2', type: 'coupon', title: 'Coupon Expiring', message: 'Your coupon for Zen Spa is expiring soon.', time: '5 hours ago', read: false },
-                        { id: '3', type: 'system', title: 'Welcome', message: 'Welcome to Sasto Offer!', time: '1 day ago', read: true },
-                    ]} />} />
+                    <Route path="reviews/edit/:id" element={<EditReview reviews={reviews} deals={deals} />} />
+                    <Route path="notifications" element={<Notifications notifications={notifications} />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>
 

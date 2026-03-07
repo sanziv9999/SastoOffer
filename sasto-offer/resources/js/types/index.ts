@@ -107,3 +107,13 @@ export interface Review {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface Notification {
+  id: string;
+  type: 'deal' | 'coupon' | 'system' | 'general';
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  link?: string;
+}
