@@ -47,7 +47,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminVendors from "./admin/AdminVendors";
 
 // Mock Data
-import { deals, purchases, reviews, users, vendors, notifications } from "@/data/mockData";
+import { deals, purchases, reviews, users, vendors, notifications, vendorOrders, vendorCustomers } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 
 // Dummy stats for Dashboards
@@ -168,9 +168,9 @@ const AppShell = () => {
                     } />
                     <Route path="create-deal" element={<VendorCreateDeal />} />
                     <Route path="deals" element={<VendorManageDeals deals={vendorDeals} />} />
-                    <Route path="orders" element={<VendorOrders orders={[]} />} />
+                    <Route path="orders" element={<VendorOrders orders={vendorOrders} />} />
                     <Route path="analytics" element={<VendorAnalytics stats={dummyStats.vendor} topDeals={vendorDeals.slice(0, 5)} />} />
-                    <Route path="customers" element={<VendorCustomers customers={[]} />} />
+                    <Route path="customers" element={<VendorCustomers customers={vendorCustomers} />} />
                     <Route path="customer-history" element={<VendorCustomerHistory history={[]} />} />
                     <Route path="sales-history" element={<VendorSalesHistory sales={[]} />} />
                     <Route path="scanner" element={<VendorScanner />} />

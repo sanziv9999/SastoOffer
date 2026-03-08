@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import Link from '@/components/Link';
 import {
-  BarChart,
   DollarSign,
   Users,
   ShoppingBag,
@@ -46,11 +45,36 @@ interface VendorDashboardProps {
 
 const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
+
+  const filteredDeals = deals?.filter(deal => {
+    const matchesSearch = deal.title.toLowerCase().includes(searchTerm.toLowerCase()) || deal.id?.toString().includes(searchTerm);
+    const matchesStatusDropdown = statusFilter === 'all' ? true : deal.status === statusFilter;
+    const matchesTab = activeTab === 'all' ? true : deal.status === activeTab;
+    return matchesSearch && matchesStatusDropdown && matchesTab;
+  }) || [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchTerm);
   };
+
+  const monthlySales = [
+    { month: 'Jan', amount: 1200 },
+    { month: 'Feb', amount: 1800 },
+    { month: 'Mar', amount: 1500 },
+    { month: 'Apr', amount: 2200 },
+    { month: 'May', amount: 2800 },
+    { month: 'Jun', amount: 2400 },
+  ];
+  const maxSale = Math.max(...monthlySales.map(s => s.amount));
+
+  const trafficData = [
+    { source: 'Organic Search', value: 45, color: 'bg-blue-500' },
+    { source: 'Direct', value: 25, color: 'bg-green-500' },
+    { source: 'Social Media', value: 20, color: 'bg-purple-500' },
+    { source: 'Referral', value: 10, color: 'bg-orange-500' },
+  ];
 
   if (!vendor) {
     return (
@@ -60,7 +84,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
           Your vendor profile is not set up yet. Please create a vendor profile to get started.
         </p>
         <Button asChild>
-          <Link href="/vendor/profile/create">Create Vendor Profile</Link>
+          <Link href="/vendor/settings">Create Vendor Profile</Link>
         </Button>
       </div>
     );
@@ -78,14 +102,14 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button asChild>
-            <Link href="/vendor/deals/create">
+            <Link href="/vendor/create-deal">
               <Plus className="mr-2 h-4 w-4" />
               Create Deal
             </Link>
           </Button>
 
           <Button asChild variant="outline">
-            <Link href="/vendor/profile">
+            <Link href="/vendor/settings">
               Edit Profile
             </Link>
           </Button>
@@ -152,7 +176,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
         </Card>
       </div>
 
-      {/* Charts placeholder */}
+      {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -162,9 +186,23 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
-              <BarChart className="h-10 w-10 mr-2 opacity-20" />
-              <span>Sales Trends Chart</span>
+            <div className="h-[200px] flex items-end justify-between gap-2 px-2 pt-4">
+              {monthlySales.map((data) => (
+                <div key={data.month} className="flex-1 flex flex-col items-center gap-2 group">
+                  <div className="relative w-full flex items-end justify-center h-[150px]">
+                    <div
+                      className="w-full max-w-[30px] bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40 relative"
+                      style={{ height: `${(data.amount / maxSale) * 100}%` }}
+                    >
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
+                        ${data.amount}
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary/20" />
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground">{data.month}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -177,9 +215,21 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
-              <BarChart className="h-10 w-10 mr-2 opacity-20" />
-              <span>Traffic Analysis Chart</span>
+            <div className="h-[200px] flex flex-col justify-center space-y-4 px-2">
+              {trafficData.map((item) => (
+                <div key={item.source} className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>{item.source}</span>
+                    <span className="text-muted-foreground">{item.value}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${item.color} rounded-full`}
+                      style={{ width: `${item.value}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -208,7 +258,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
             </form>
 
             <div className="flex items-center gap-2 w-full md:w-auto">
-              <Select defaultValue="all">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-40">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Status" />
@@ -223,7 +273,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
               </Select>
 
               <Button asChild>
-                <Link href="/vendor/deals/create">
+                <Link href="/vendor/create-deal">
                   <Plus className="mr-2 h-4 w-4" />
                   New Deal
                 </Link>
@@ -231,7 +281,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
             </div>
           </div>
 
-          <Tabs defaultValue="all" className="space-y-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList>
               <TabsTrigger value="all">All Deals</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
@@ -239,8 +289,8 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
               <TabsTrigger value="expired">Expired</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="space-y-4">
-              {deals?.length > 0 ? (
+            <TabsContent value={activeTab} className="space-y-4">
+              {filteredDeals?.length > 0 ? (
                 <div className="rounded-md border">
                   <div className="relative w-full overflow-auto">
                     <table className="w-full caption-bottom text-sm">
@@ -255,7 +305,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {deals.map((deal: any) => (
+                        {filteredDeals.map((deal: any) => (
                           <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
                             <td className="p-4 align-middle">
                               <div className="flex items-center gap-3">
@@ -316,7 +366,7 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
                                   <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
                                 </Button>
                                 <Button variant="ghost" size="sm" asChild>
-                                  <Link href={`/deals/${deal.id}`}>View</Link>
+                                  <Link href={`/deal/${deal.id}`}>View</Link>
                                 </Button>
                               </div>
                             </td>
@@ -334,29 +384,13 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
                     You haven't created any deals yet. Get started by creating your first deal.
                   </p>
                   <Button asChild>
-                    <Link href="/vendor/deals/create">
+                    <Link href="/vendor/create-deal">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Deal
                     </Link>
                   </Button>
                 </div>
               )}
-            </TabsContent>
-            {/* Other tabs placeholder */}
-            <TabsContent value="active" className="space-y-4">
-              <div className="rounded-md border p-8 text-center border-dashed">
-                <p className="text-muted-foreground">Active deals view filtered by status.</p>
-              </div>
-            </TabsContent>
-            <TabsContent value="draft" className="space-y-4">
-              <div className="rounded-md border p-8 text-center border-dashed">
-                <p className="text-muted-foreground">Draft deals view filtered by status.</p>
-              </div>
-            </TabsContent>
-            <TabsContent value="expired" className="space-y-4">
-              <div className="rounded-md border p-8 text-center border-dashed">
-                <p className="text-muted-foreground">Expired deals view filtered by status.</p>
-              </div>
             </TabsContent>
           </Tabs>
         </CardContent>

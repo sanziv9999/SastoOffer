@@ -480,3 +480,95 @@ export const notifications: Notification[] = [
     link: '/search'
   }
 ];
+
+// Vendor-specific Mock Data
+export const vendorOrders = [
+  {
+    id: 'ORD-7721',
+    customer: 'John Doe',
+    deal: '50% Off Luxury 5-Course Dinner for Two',
+    quantity: 1,
+    total: 100.00,
+    status: 'completed',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+  },
+  {
+    id: 'ORD-7722',
+    customer: 'Jane Smith',
+    deal: 'Weekend Brunch Buffet - 40% Off',
+    quantity: 2,
+    total: 96.00,
+    status: 'processing',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+  },
+  {
+    id: 'ORD-7723',
+    customer: 'Robert Wilson',
+    deal: '50% Off Luxury 5-Course Dinner for Two',
+    quantity: 1,
+    total: 100.00,
+    status: 'pending',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+  },
+  {
+    id: 'ORD-7724',
+    customer: 'Emily Brown',
+    deal: '50% Off Luxury 5-Course Dinner for Two',
+    quantity: 1,
+    total: 100.00,
+    status: 'completed',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+  },
+  {
+    id: 'ORD-7725',
+    customer: 'Michael Davis',
+    deal: 'Weekend Brunch Buffet - 40% Off',
+    quantity: 1,
+    total: 48.00,
+    status: 'cancelled',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
+  },
+];
+
+export const vendorCustomers = [
+  {
+    id: 'CUST-001',
+    name: 'John Doe',
+    email: 'john@example.com',
+    city: 'New York',
+    totalOrders: 5,
+    totalSpent: 450.00,
+    rating: 4.8,
+    status: 'active',
+  },
+  {
+    id: 'CUST-002',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    city: 'Los Angeles',
+    totalOrders: 3,
+    totalSpent: 320.00,
+    rating: 5.0,
+    status: 'active',
+  },
+  {
+    id: 'CUST-003',
+    name: 'Robert Wilson',
+    email: 'robert@example.com',
+    city: 'New York',
+    totalOrders: 1,
+    totalSpent: 100.00,
+    rating: 4.2,
+    status: 'active',
+  },
+  {
+    id: 'CUST-004',
+    name: 'Emily Brown',
+    email: 'emily@example.com',
+    city: 'Chicago',
+    totalOrders: 2,
+    totalSpent: 200.00,
+    rating: 4.9,
+    status: 'inactive',
+  },
+];

@@ -7,7 +7,8 @@ import {
     Keyboard,
     CheckCircle2,
     AlertCircle,
-    Loader2
+    Loader2,
+    Upload
 } from 'lucide-react';
 import {
     Card,
@@ -32,6 +33,7 @@ const Scanner = () => {
         dealName?: string;
         customerName?: string;
     }>({ status: null, message: '' });
+    const [scanMode, setScanMode] = useState<'camera' | 'upload'>('camera');
 
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,9 +63,41 @@ const Scanner = () => {
         }, 1500);
     };
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsValidating(true);
+        setScanResult({ status: null, message: '' });
+
+        // Simulate scanning the uploaded image
+        setTimeout(() => {
+            setIsValidating(false);
+            setScanResult({
+                status: 'success',
+                message: 'QR Code detected and validated successfully!',
+                dealName: '50% Off Luxury 5-Course Dinner for Two',
+                customerName: 'John Doe'
+            });
+            toast.success('Voucher Scanned Successfully');
+        }, 2000);
+    };
+
+    const [isRedeemed, setIsRedeemed] = useState(false);
+
+    const handleConfirmRedemption = () => {
+        setIsRedeemed(true);
+        setScanResult(prev => ({
+            ...prev,
+            message: 'Voucher has been successfully redeemed and deactivated.'
+        }));
+        toast.success('Voucher Redeemed Successfully');
+    };
+
     const resetScanner = () => {
         setScanResult({ status: null, message: '' });
         setManualCode('');
+        setIsRedeemed(false);
     };
 
     return (
@@ -76,32 +110,80 @@ const Scanner = () => {
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Camera Scanner View */}
                 <Card className="overflow-hidden bg-black flex flex-col min-h-[400px]">
-                    <CardHeader className="bg-background/10 backdrop-blur-sm z-10 border-b border-white/10">
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <QrCode className="h-5 w-5" />
-                            Camera Feed
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center p-0 relative">
-                        {/* Mock Camera View */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
-                        <div className="relative z-0 w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                            {/* Scan Overlay */}
-                            <div className="relative h-64 w-64 border-2 border-white/20 rounded-2xl overflow-hidden">
-                                <div className="absolute inset-x-0 h-0.5 bg-primary/80 animate-[scan_2s_ease-in-out_infinite]" />
-                                <div className="absolute inset-0 border-[40px] border-black/40" />
-                                {/* Corners */}
-                                <div className="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-primary rounded-tl-sm" />
-                                <div className="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-primary rounded-tr-sm" />
-                                <div className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-primary rounded-bl-sm" />
-                                <div className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-primary rounded-br-sm" />
-                            </div>
-                            <div className="absolute bottom-12 text-white/60 text-sm animate-pulse">
-                                Align QR code within the frame
+                    <CardHeader className="bg-background/10 backdrop-blur-sm z-30 border-b border-white/10 relative">
+                        <div className="flex items-center justify-between w-full">
+                            <CardTitle className="text-white flex items-center gap-2">
+                                {scanMode === 'camera' ? <QrCode className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
+                                {scanMode === 'camera' ? 'Camera Feed' : 'Upload Image'}
+                            </CardTitle>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`text-white hover:bg-white/20 h-8 ${scanMode === 'camera' ? 'bg-white/20' : ''}`}
+                                    onClick={() => setScanMode('camera')}
+                                >
+                                    Camera
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`text-white hover:bg-white/20 h-8 ${scanMode === 'upload' ? 'bg-white/20' : ''}`}
+                                    onClick={() => setScanMode('upload')}
+                                >
+                                    Upload
+                                </Button>
                             </div>
                         </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-center justify-center p-0 relative">
+                        {scanMode === 'upload' ? (
+                            <div className="absolute inset-0 z-20 bg-[#1a1a1a] flex flex-col items-center justify-center p-6 text-center">
+                                <div className="border-2 border-dashed border-white/20 rounded-xl p-8 max-w-sm w-full space-y-4">
+                                    <div className="mx-auto w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                                        <Upload className="h-6 w-6 text-white/70" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-white/90">Click to upload or drag and drop</p>
+                                        <p className="text-xs text-white/50">Upload QR Code (PNG, JPG)</p>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            onChange={handleFileUpload}
+                                            disabled={isValidating}
+                                        />
+                                        <Button variant="secondary" className="w-full" disabled={isValidating}>
+                                            {isValidating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Select File'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Mock Camera View */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
+                                <div className="relative z-0 w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                                    {/* Scan Overlay */}
+                                    <div className="relative h-64 w-64 border-2 border-white/20 rounded-2xl overflow-hidden">
+                                        <div className="absolute inset-x-0 h-0.5 bg-primary/80 animate-[scan_2s_ease-in-out_infinite]" />
+                                        <div className="absolute inset-0 border-[40px] border-black/40" />
+                                        {/* Corners */}
+                                        <div className="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-primary rounded-tl-sm" />
+                                        <div className="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-primary rounded-tr-sm" />
+                                        <div className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-primary rounded-bl-sm" />
+                                        <div className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-primary rounded-br-sm" />
+                                    </div>
+                                    <div className="absolute bottom-12 text-white/60 text-sm animate-pulse">
+                                        Align QR code within the frame
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
-                    <CardFooter className="bg-background/10 backdrop-blur-sm z-10 flex justify-center gap-4 py-4 border-t border-white/10">
+                    <CardFooter className="bg-background/10 backdrop-blur-sm z-10 flex justify-center gap-4 py-4 border-t border-white/10 relative">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
                             <Zap className="h-5 w-5" />
                         </Button>
@@ -113,7 +195,7 @@ const Scanner = () => {
 
                 {/* Manual Entry & Results */}
                 <div className="space-y-6">
-                    <Card h-full>
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Keyboard className="h-5 w-5" />
@@ -129,10 +211,10 @@ const Scanner = () => {
                                         className="text-lg font-mono tracking-widest uppercase h-12"
                                         value={manualCode}
                                         onChange={(e) => setManualCode(e.target.value)}
-                                        disabled={isValidating}
+                                        disabled={isValidating || !!scanResult.status}
                                     />
                                 </div>
-                                <Button className="w-full h-12" disabled={isValidating || !manualCode}>
+                                <Button className="w-full h-12" disabled={isValidating || !manualCode || !!scanResult.status}>
                                     {isValidating ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -148,19 +230,19 @@ const Scanner = () => {
 
                     {/* Result Card */}
                     {scanResult.status && (
-                        <Card className={`animate-in fade-in slide-in-from-bottom-2 border-2 ${scanResult.status === 'success' ? 'border-green-500 bg-green-50/50' : 'border-destructive bg-destructive/5'
+                        <Card className={`animate-in fade-in slide-in-from-bottom-2 border-2 ${scanResult.status === 'success' ? (isRedeemed ? 'border-primary bg-primary/5' : 'border-green-500 bg-green-50/50') : 'border-destructive bg-destructive/5'
                             }`}>
                             <CardContent className="pt-6">
                                 <div className="flex items-start gap-4">
                                     {scanResult.status === 'success' ? (
-                                        <CheckCircle2 className="h-10 w-10 text-green-600 shrink-0" />
+                                        isRedeemed ? <CheckCircle2 className="h-10 w-10 text-primary shrink-0" /> : <CheckCircle2 className="h-10 w-10 text-green-600 shrink-0" />
                                     ) : (
                                         <AlertCircle className="h-10 w-10 text-destructive shrink-0" />
                                     )}
                                     <div className="space-y-1">
-                                        <h3 className={`text-lg font-bold ${scanResult.status === 'success' ? 'text-green-900' : 'text-destructive'
+                                        <h3 className={`text-lg font-bold ${scanResult.status === 'success' ? (isRedeemed ? 'text-primary' : 'text-green-900') : 'text-destructive'
                                             }`}>
-                                            {scanResult.status === 'success' ? 'Voucher Validated' : 'Validation Error'}
+                                            {isRedeemed ? 'Redemption Complete' : (scanResult.status === 'success' ? 'Voucher Validated' : 'Validation Error')}
                                         </h3>
                                         <p className="text-sm text-muted-foreground">{scanResult.message}</p>
 
@@ -176,9 +258,15 @@ const Scanner = () => {
                                                 </div>
                                                 <div className="flex justify-between pt-2 border-t">
                                                     <span className="text-muted-foreground">Status:</span>
-                                                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                                                        Available to Redeem
-                                                    </Badge>
+                                                    {isRedeemed ? (
+                                                        <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-gray-200">
+                                                            Redeemed
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                                                            Available to Redeem
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -186,11 +274,11 @@ const Scanner = () => {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex gap-2">
-                                {scanResult.status === 'success' && (
-                                    <Button className="flex-1 bg-green-600 hover:bg-green-700">Confirm Redemption</Button>
+                                {scanResult.status === 'success' && !isRedeemed && (
+                                    <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleConfirmRedemption}>Confirm Redemption</Button>
                                 )}
                                 <Button variant="outline" className="flex-1" onClick={resetScanner}>
-                                    {scanResult.status === 'success' ? 'Scan Another' : 'Try Again'}
+                                    {isRedeemed || scanResult.status === 'error' ? 'Scan Another' : 'Cancel'}
                                 </Button>
                             </CardFooter>
                         </Card>
