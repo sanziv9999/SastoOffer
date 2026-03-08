@@ -21,6 +21,26 @@ interface AdminReportsProps {
 }
 
 const AdminReports = ({ statsData }: AdminReportsProps) => {
+  const monthlyRevenue = [
+    { month: 'Jan', amount: 15400 },
+    { month: 'Feb', amount: 18200 },
+    { month: 'Mar', amount: 16500 },
+    { month: 'Apr', amount: 21000 },
+    { month: 'May', amount: 24500 },
+    { month: 'Jun', amount: 28900 },
+  ];
+  const maxRev = Math.max(...monthlyRevenue.map(d => d.amount));
+
+  const userGrowth = [
+    { month: 'Jan', users: 120 },
+    { month: 'Feb', users: 180 },
+    { month: 'Mar', users: 250 },
+    { month: 'Apr', users: 310 },
+    { month: 'May', users: 420 },
+    { month: 'Jun', users: 550 },
+  ];
+  const maxUsers = Math.max(...userGrowth.map(d => d.users));
+
   const stats = [
     { label: 'Total Revenue', value: `$${statsData?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: statsData?.revenueChange || '0%' },
     { label: 'Total Sales', value: statsData?.totalSales?.toString() || '0', icon: ShoppingBag, change: statsData?.salesChange || '0%' },
@@ -61,9 +81,21 @@ const AdminReports = ({ statsData }: AdminReportsProps) => {
             <CardDescription>Monthly platform revenue</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
-              <BarChart className="h-10 w-10" />
-              <span className="ml-2">Revenue chart placeholder</span>
+            <div className="h-[250px] flex items-end gap-2 pt-8">
+              {monthlyRevenue.map((data, idx) => (
+                <div key={idx} className="flex flex-col items-center flex-1 gap-2 group relative">
+                  <div className="w-full h-40 flex items-end justify-center relative">
+                    <div
+                      className="w-full max-w-[48px] bg-primary/80 rounded-t-sm transition-all duration-300 group-hover:bg-primary"
+                      style={{ height: `${Math.max((data.amount / maxRev) * 100, 5)}%` }}
+                    />
+                    <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-black text-white text-xs p-1.5 rounded pointer-events-none transition-opacity whitespace-nowrap z-10">
+                      ${data.amount.toLocaleString()}
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">{data.month}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -73,9 +105,21 @@ const AdminReports = ({ statsData }: AdminReportsProps) => {
             <CardDescription>New user registrations over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground border border-dashed rounded-lg">
-              <TrendingUp className="h-10 w-10" />
-              <span className="ml-2">Growth chart placeholder</span>
+            <div className="h-[250px] flex items-end gap-2 pt-8">
+              {userGrowth.map((data, idx) => (
+                <div key={idx} className="flex flex-col items-center flex-1 gap-2 group relative">
+                  <div className="w-full h-40 flex items-end justify-center relative border-b border-primary/20">
+                    <div
+                      className="w-full bg-blue-500/80 rounded-t-sm transition-all duration-300 group-hover:bg-blue-600"
+                      style={{ height: `${Math.max((data.users / maxUsers) * 100, 5)}%` }}
+                    />
+                    <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-black text-white text-xs p-1.5 rounded pointer-events-none transition-opacity whitespace-nowrap z-10">
+                      {data.users} Users
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">{data.month}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

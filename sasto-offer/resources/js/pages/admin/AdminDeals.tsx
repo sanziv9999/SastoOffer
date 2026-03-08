@@ -71,7 +71,7 @@ const AdminDeals = ({ deals }: AdminDealsProps) => {
                       </>
                     )}
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/deals/${deal.id}`}>View</Link>
+                      <Link href={`/deal/${deal.id}`}>View</Link>
                     </Button>
                   </div>
                 </td>

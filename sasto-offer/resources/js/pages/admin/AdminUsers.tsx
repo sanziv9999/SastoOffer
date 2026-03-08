@@ -1,23 +1,69 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { toast } from 'sonner';
 
 interface AdminUsersProps {
   users: any[];
 }
 
-const AdminUsers = ({ users }: AdminUsersProps) => {
+const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState(initialUsers || []);
+
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'user' });
 
   const filteredUsers = users?.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const handleAddUser = () => {
+    if (!formData.name || !formData.email) return;
+    const newUser = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      createdAt: new Date().toISOString()
+    };
+    setUsers([newUser, ...users]);
+    setIsAddUserOpen(false);
+    setFormData({ name: '', email: '', role: 'user' });
+    toast.success('User added successfully');
+  };
+
+  const openEditModal = (user: any) => {
+    setCurrentUser(user);
+    setFormData({ name: user.name, email: user.email, role: user.role });
+    setIsEditUserOpen(true);
+  };
+
+  const handleEditUser = () => {
+    if (!currentUser) return;
+    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...formData } : u));
+    setIsEditUserOpen(false);
+    setCurrentUser(null);
+    toast.success('User updated successfully');
+  };
+
+  const handleSuspend = (id: string) => {
+    if (confirm('Are you sure you want to suspend this user?')) {
+      setUsers(users.filter(u => u.id !== id));
+      toast.error('User suspended');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -26,8 +72,74 @@ const AdminUsers = ({ users }: AdminUsersProps) => {
           <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
           <p className="text-muted-foreground">Manage all registered users on the platform</p>
         </div>
-        <Button><UserPlus className="mr-2 h-4 w-4" />Add User</Button>
+        <Button onClick={() => setIsAddUserOpen(true)}><UserPlus className="mr-2 h-4 w-4" />Add User</Button>
       </div>
+
+      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input placeholder="John Doe" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input placeholder="john@example.com" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddUser}>Add User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditUserOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditUser}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -76,8 +188,8 @@ const AdminUsers = ({ users }: AdminUsersProps) => {
                       </td>
                       <td className="p-4 align-middle">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
-                        <Button variant="ghost" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">Suspend</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleSuspend(u.id)}>Suspend</Button>
                       </td>
                     </tr>
                   )) : (

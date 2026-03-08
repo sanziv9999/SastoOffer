@@ -42,7 +42,10 @@ import VendorNotifications from "./vendor/Notifications";
 
 // Dashboard Sub-pages (Admin)
 import AdminDeals from "./admin/AdminDeals";
+import AdminPendingDeals from "./admin/AdminPendingDeals";
 import AdminReports from "./admin/AdminReports";
+import AdminRevenueReports from "./admin/AdminRevenueReports";
+import AdminUserAnalytics from "./admin/AdminUserAnalytics";
 import AdminUsers from "./admin/AdminUsers";
 import AdminVendors from "./admin/AdminVendors";
 
@@ -197,7 +200,10 @@ const AppShell = () => {
                     <Route path="users" element={<AdminUsers users={users} />} />
                     <Route path="vendors" element={<AdminVendors vendors={vendors} />} />
                     <Route path="deals" element={<AdminDeals deals={deals} />} />
+                    <Route path="deals/pending" element={<AdminPendingDeals pendingDeals={deals.slice(0, 3)} />} />
                     <Route path="reports" element={<AdminReports statsData={dummyStats.admin} />} />
+                    <Route path="reports/revenue" element={<AdminRevenueReports />} />
+                    <Route path="reports/users" element={<AdminUserAnalytics />} />
                 </Route>
 
                 {/* Super Admin Dashboard */}
