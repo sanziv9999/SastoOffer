@@ -5,7 +5,6 @@ import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -14,8 +13,8 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   ArrowLeft, Upload, X, ImagePlus, Sparkles, Loader2,
-  Bold, Italic, List, ListOrdered, AlignLeft, AlignCenter,
-  Megaphone, Star, TrendingUp, Clock, MapPin, Tag, Info
+  Bold, Italic, List, ListOrdered,
+  Megaphone, Clock, Tag, Info
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -36,7 +35,7 @@ const DEAL_TYPE_TAGS: Record<string, string[]> = {
 };
 
 const CreateDeal = () => {
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing } = useForm({
     title: '',
     shortDesc: '',
     description: '',
@@ -141,7 +140,7 @@ const CreateDeal = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/vendor/deals"><ArrowLeft className="h-4 w-4" /></Link>

@@ -67,7 +67,7 @@ const Scanner = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="space-y-6">
             <div className="flex flex-col gap-2">
                 <h1 className="text-2xl font-bold tracking-tight">Voucher Scanner</h1>
                 <p className="text-muted-foreground">Verify customer vouchers instantly via camera or manual entry.</p>
