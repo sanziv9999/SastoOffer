@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Facebook, Apple, Home, ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { users } from '@/data/mockData';
+import { route } from 'ziggy-js';
+import { Link } from '@inertiajs/react';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -61,7 +63,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-muted/30">
       {/* Back to home */}
       <div className="w-full max-w-md mb-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="h-4 w-4" />
           Back to Home
         </Link>
@@ -69,7 +71,7 @@ const LoginPage = () => {
 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
-          <Link to="/" className="flex justify-center mb-2">
+          <Link href="/" className="flex justify-center mb-2">
             <Logo />
           </Link>
           <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
@@ -129,7 +131,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} method='post' action={route('login')}>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
@@ -138,7 +140,7 @@ const LoginPage = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium">Password</label>
-                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -155,7 +157,7 @@ const LoginPage = () => {
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link
-                to="/register"
+                href={route('register')}
                 className="text-primary font-semibold hover:underline"
                 onMouseEnter={() => setShowSignUpHighlight(true)}
                 onMouseLeave={() => setShowSignUpHighlight(false)}

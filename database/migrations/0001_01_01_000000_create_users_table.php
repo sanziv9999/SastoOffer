@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             // $table->string('phone');
             $table->enum('status', ['active', 'pending_verify', 'suspended'])->default('pending_verify');
-            $table->bool('terms')->default(false);
+            $table->boolean('terms')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
            

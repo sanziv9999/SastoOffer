@@ -127,7 +127,7 @@ const AppShell = () => {
         <Routes>
             {/* Auth pages WITHOUT global Navbar/Footer */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            {/* <Route path="/register" element={<RegisterPage />} /> */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
             {/* Site pages with RootLayout (Navbar, Footer) */}

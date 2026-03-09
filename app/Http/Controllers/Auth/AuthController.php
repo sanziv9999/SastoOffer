@@ -8,20 +8,25 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\CustomerProfile;
 use App\Models\VendorProfile;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function showLoginForm(): View
+    public function showLoginForm(): Response
     {
-        return view('auth.login');
+        if (Auth::check()) {
+            return $this->redirectByRole();
+        }
+        return Inertia::render('LoginPage');
     }
 
-    public function login(LoginRequest $request): RedirectResponse
+    public function login(LoginRequest $request): Response
     {
         $request->authenticate();
         $request->session()->regenerate();
@@ -29,17 +34,17 @@ class AuthController extends Controller
         return $this->redirectByRole();
     }
 
-    public function showRegisterForm(): View
+    public function showRegisterForm(): Response
     {
-        return view('auth.register');
+        return Inertia::render('RegisterPage');
     }
 
-    public function register(RegisterRequest $request): RedirectResponse
+    public function register(RegisterRequest $request): Response
     {
         $user = User::create([
             'name'     => $request->validated('name'),
             'email'    => $request->validated('email'),
-            'phone'    => $request->validated('phone'),
+            // 'phone'    => $request->validated('phone'),
             'password' => Hash::make($request->validated('password')),
             'status'   => 'active',
         ]);
@@ -68,37 +73,37 @@ class AuthController extends Controller
         return $this->redirectByRole();
     }
 
-    public function logout(\Illuminate\Http\Request $request): RedirectResponse
+    public function logout(Request $request): Response
     {
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return Inertia::render('LoginPage');
     }
 
-    protected function redirectByRole(): RedirectResponse
+    protected function redirectByRole(): Response
     {
         $user = Auth::user();
 
         if ($user->hasRole('admin')) {
-            return redirect()->intended(route('deals.index'));
+            return Inertia::render('AdminDashboard');
         }
         if ($user->hasRole('vendor')) {
             $profile = $user->vendorProfile ?? null;
             if ($profile) {
-                return redirect()->intended(route('vendor-profiles.show', $profile));
+                return Inertia::render('VendorProfile');
             }
-            return redirect()->intended(route('vendor-profiles.index'));
+            return Inertia::render('VendorDashboard');
         }
         if ($user->hasRole('customer')) {
             $profile = $user->customerProfile ?? null;
             if ($profile) {
-                return redirect()->intended(route('customer-profiles.show', $profile));
+                return Inertia::render('UserDashboard');
             }
-            return redirect()->intended(route('customer-profiles.index'));
+            return Inertia::render('UserDashboard');
         }
 
-        return redirect()->intended(route('deals.index'));
+        return Inertia::render('HomePage');
     }
 }
