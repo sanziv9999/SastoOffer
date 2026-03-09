@@ -1,0 +1,214 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Search, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DashboardLayout from '@/layouts/DashboardLayout';
+import { toast } from 'sonner';
+
+interface AdminUsersProps {
+  users: any[];
+}
+
+const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState(initialUsers || []);
+
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'user' });
+
+  const filteredUsers = users?.filter(u =>
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const handleAddUser = () => {
+    if (!formData.name || !formData.email) return;
+    const newUser = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      createdAt: new Date().toISOString()
+    };
+    setUsers([newUser, ...users]);
+    setIsAddUserOpen(false);
+    setFormData({ name: '', email: '', role: 'user' });
+    toast.success('User added successfully');
+  };
+
+  const openEditModal = (user: any) => {
+    setCurrentUser(user);
+    setFormData({ name: user.name, email: user.email, role: user.role });
+    setIsEditUserOpen(true);
+  };
+
+  const handleEditUser = () => {
+    if (!currentUser) return;
+    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...formData } : u));
+    setIsEditUserOpen(false);
+    setCurrentUser(null);
+    toast.success('User updated successfully');
+  };
+
+  const handleSuspend = (id: string) => {
+    if (confirm('Are you sure you want to suspend this user?')) {
+      setUsers(users.filter(u => u.id !== id));
+      toast.error('User suspended');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+          <p className="text-muted-foreground">Manage all registered users on the platform</p>
+        </div>
+        <Button onClick={() => setIsAddUserOpen(true)}><UserPlus className="mr-2 h-4 w-4" />Add User</Button>
+      </div>
+
+      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input placeholder="John Doe" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input placeholder="john@example.com" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddUser}>Add User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditUserOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditUser}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle>All Users</CardTitle>
+              <CardDescription>{users?.length || 0} total users</CardDescription>
+            </div>
+            <div className="flex w-full md:w-auto">
+              <Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
+              <Button size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="border-b">
+                  <tr>
+                    <th className="h-12 px-4 text-left align-middle font-medium">User</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Email</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Joined</th>
+                    <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length > 0 ? filteredUsers.map(u => (
+                    <tr key={u.id} className="border-b transition-colors hover:bg-muted/50">
+                      <td className="p-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          {u.avatar ? (
+                            <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">{u.name?.charAt(0)}</div>
+                          )}
+                          <span className="font-medium">{u.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 align-middle">{u.email}</td>
+                      <td className="p-4 align-middle">
+                        <Badge variant={u.role === 'admin' ? 'default' : u.role === 'vendor' ? 'secondary' : 'outline'}>
+                          {u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'User'}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                      <td className="p-4 align-middle text-right">
+                        <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleSuspend(u.id)}>Suspend</Button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                        No users found matching your search.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+AdminUsers.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
+
+export default AdminUsers;
