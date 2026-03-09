@@ -20,10 +20,11 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [role, setRole] = useState<'user' | 'vendor'>('user');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email || !password || !confirmPassword) {
       toast({
         title: "Error",
@@ -32,7 +33,7 @@ const RegisterPage = () => {
       });
       return;
     }
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -41,7 +42,7 @@ const RegisterPage = () => {
       });
       return;
     }
-    
+
     if (!acceptTerms) {
       toast({
         title: "Error",
@@ -50,11 +51,15 @@ const RegisterPage = () => {
       });
       return;
     }
-    
+
     try {
       setIsLoading(true);
-      await register(name, email, password);
-      navigate('/dashboard');
+      await register(name, email, password, role);
+      if (role === 'vendor') {
+        navigate('/vendor');
+      } else {
+        navigate('/dashboard');
+      }
       toast({
         title: "Success",
         description: "Your account has been created",
@@ -89,8 +94,8 @@ const RegisterPage = () => {
         <CardContent>
           {/* Social Login Options */}
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => handleSocialRegister('Google')}
             >
@@ -114,16 +119,16 @@ const RegisterPage = () => {
               </svg>
               Google
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => handleSocialRegister('Facebook')}
             >
               <Facebook className="h-5 w-5 mr-2 text-blue-600" />
               Facebook
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => handleSocialRegister('Apple')}
             >
@@ -131,16 +136,37 @@ const RegisterPage = () => {
               Apple
             </Button>
           </div>
-          
+
           <div className="relative mb-6">
             <Separator />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-white px-2 text-sm text-gray-500">OR</span>
             </div>
           </div>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">I want to register as a</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    type="button"
+                    variant={role === 'user' ? 'default' : 'outline'}
+                    onClick={() => setRole('user')}
+                    className="w-full"
+                  >
+                    Customer
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={role === 'vendor' ? 'default' : 'outline'}
+                    onClick={() => setRole('vendor')}
+                    className="w-full"
+                  >
+                    Vendor
+                  </Button>
+                </div>
+              </div>
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">Name</label>
                 <Input
@@ -190,9 +216,9 @@ const RegisterPage = () => {
                 />
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="terms" 
-                  checked={acceptTerms} 
+                <Checkbox
+                  id="terms"
+                  checked={acceptTerms}
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                 />
                 <label

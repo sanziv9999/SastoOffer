@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, _password: string) => {
+  const register = async (name: string, email: string, _password: string, role?: string) => {
     setIsLoading(true);
     try {
       const userExists = users.some(u => u.email === email);
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: `user${users.length + 1}`,
         name,
         email,
-        role: 'user',
+        role: (role || 'user') as any,
         createdAt: new Date(),
       };
 
