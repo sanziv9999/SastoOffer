@@ -1,5 +1,3 @@
-
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +13,6 @@ const LoginPage = () => {
     password: '',
     remember: false,
   });
-  const [showSignUpHighlight, setShowSignUpHighlight] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,10 +26,6 @@ const LoginPage = () => {
     alert(`${provider} login coming soon!`);
   };
 
-  const fillCredentials = (email: string) => {
-    setData('email', email);
-    setData('password', 'password');
-  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-muted/30">
@@ -55,28 +48,6 @@ const LoginPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Test Credentials */}
-          <div className="mb-5 p-3 bg-muted rounded-lg border border-border">
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Quick Login (Demo)</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('admin@sastooffer.test')}>
-                <span className="font-semibold">Admin</span>
-                <span className="text-muted-foreground text-[10px]">admin@sastooffer.test</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('vendor@sastooffer.test')}>
-                <span className="font-semibold">Vendor</span>
-                <span className="text-muted-foreground text-[10px]">vendor@sastooffer...</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('customer@sastooffer.test')}>
-                <span className="font-semibold">Customer</span>
-                <span className="text-muted-foreground text-[10px]">customer@sastooffer...</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('superadmin@sastooffer.test')}>
-                <span className="font-semibold">Super Admin</span>
-                <span className="text-muted-foreground text-[10px]">superadmin@sastooffer...</span>
-              </Button>
-            </div>
-          </div>
 
           {/* Social Login */}
           <div className="grid grid-cols-3 gap-2 mb-5">
@@ -145,20 +116,16 @@ const LoginPage = () => {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="flex-col gap-3">
-          <div className={`text-center p-3 rounded-lg w-full transition-all ${showSignUpHighlight ? 'bg-primary/10 border border-primary/30' : ''}`}>
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link
-                href={route('register')}
-                className="text-primary font-semibold hover:underline"
-                onMouseEnter={() => setShowSignUpHighlight(true)}
-                onMouseLeave={() => setShowSignUpHighlight(false)}
-              >
-                Sign Up
-              </Link>
-            </p>
-          </div>
+        <CardFooter className="justify-center mt-2">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <Link
+              href={route('register')}
+              className="text-primary hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
         </CardFooter>
       </Card>
     </div>
