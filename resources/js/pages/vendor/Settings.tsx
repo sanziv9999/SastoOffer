@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Building2,
     MapPin,
@@ -28,11 +28,122 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-geosearch/dist/geosearch.css';
+import L from 'leaflet';
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+
+// Fix for default Leaflet markers in React
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { toast } from 'sonner';
 
 const VendorSettings = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [mapPosition, setMapPosition] = useState<[number, number]>([27.7172, 85.3240]); // Default to Kathmandu
+    const [addressDetails, setAddressDetails] = useState({
+        province: 'bagmati',
+        district: 'Kathmandu',
+        municipality: 'Kathmandu Metropolitan City',
+        tole: 'Thamel',
+        ward: '1'
+    });
+
+    const fetchAddressDetails = async (lat: number, lng: number) => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+            const data = await response.json();
+
+            if (data && data.address) {
+                const addr = data.address;
+
+                let district = addr.city_district || addr.county || addr.state_district || 'Kathmandu';
+                let municipality = addr.city || addr.town || addr.municipality || 'Kathmandu Metropolitan City';
+                const tole = addr.suburb || addr.neighbourhood || addr.road || 'Thamel';
+
+                // Province mapping (OSM often returns Nepali translations like "बागमती प्रदेश")
+                let province = 'bagmati';
+                const stateStr = (addr.state || '').toLowerCase();
+                if (stateStr.includes('koshi') || stateStr.includes('कोशी')) province = 'koshi';
+                else if (stateStr.includes('madhesh') || stateStr.includes('मधेश')) province = 'madhesh';
+                else if (stateStr.includes('bagmati') || stateStr.includes('बागमती')) province = 'bagmati';
+                else if (stateStr.includes('gandaki') || stateStr.includes('गण्डकी')) province = 'gandaki';
+                else if (stateStr.includes('lumbini') || stateStr.includes('लुम्बिनी')) province = 'lumbini';
+                else if (stateStr.includes('karnali') || stateStr.includes('कर्णाली')) province = 'karnali';
+                else if (stateStr.includes('sudurpashchim') || stateStr.includes('सुदूरपश्चिम')) province = 'sudurpashchim';
+
+                // Try to extract ward number from district/municipality strings like "Kathmandu-01" or "वडा नं १"
+                let ward = addressDetails.ward; // keep existing if not found
+
+                // Common pattern in OSM for Nepal: city_district contains "CityName-WardNumber" (e.g., Kathmandu-01)
+                if (addr.city_district) {
+                    const match = addr.city_district.match(/-(\d+)$/);
+                    if (match) {
+                        ward = parseInt(match[1], 10).toString(); // removes leading zeros
+                        district = addr.county || 'Kathmandu'; // if city_district was actually the ward, fallback to county for district
+                    }
+                }
+
+                // Clean up devanagari numbers or strings if you prefer, but standard parseInt helps with English digits
+
+                setAddressDetails(prev => ({
+                    ...prev,
+                    district: district,
+                    municipality: municipality,
+                    tole: tole,
+                    province: province,
+                    ward: ward
+                }));
+            }
+        } catch (error) {
+            console.error("Error fetching address details:", error);
+        }
+    };
+
+    function LocationPicker() {
+        const map = useMap();
+
+        useEffect(() => {
+            const provider = new OpenStreetMapProvider();
+            const searchControl = new (GeoSearchControl as any)({
+                provider: provider,
+                style: 'bar',
+                showMarker: false,
+                autoClose: true,
+                retainZoomLevel: false,
+                animateZoom: true,
+                keepResult: true,
+                searchLabel: 'Enter address to search'
+            });
+
+            map.addControl(searchControl);
+            return () => {
+                map.removeControl(searchControl);
+            };
+        }, [map]);
+
+        useMapEvents({
+            click(e: any) {
+                setMapPosition([e.latlng.lat, e.latlng.lng]);
+                fetchAddressDetails(e.latlng.lat, e.latlng.lng);
+            },
+            geosearch_showlocation(e: any) {
+                if (e.location && e.location.y && e.location.x) {
+                    setMapPosition([e.location.y, e.location.x]);
+                    fetchAddressDetails(e.location.y, e.location.x);
+                }
+            }
+        } as any);
+
+        return mapPosition ? <Marker position={mapPosition} /> : null;
+    }
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,6 +194,19 @@ const VendorSettings = () => {
                                     <div className="space-y-2">
                                         <Label htmlFor="category">Primary Category</Label>
                                         <Input id="category" defaultValue="Restaurants & Dining" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Business Type</Label>
+                                        <Select defaultValue="hybrid">
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select business type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="services">Services</SelectItem>
+                                                <SelectItem value="product">Product</SelectItem>
+                                                <SelectItem value="hybrid">Hybrid</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
@@ -165,34 +289,90 @@ const VendorSettings = () => {
                                 <CardDescription>Where should customers go to redeem their deals?</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="address">Street Address</Label>
-                                    <Input id="address" defaultValue="123 Main St" />
-                                </div>
-                                <div className="grid gap-4 md:grid-cols-3">
+                                <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="city">City</Label>
-                                        <Input id="city" defaultValue="New York" />
+                                        <Label htmlFor="province">Province</Label>
+                                        <Select
+                                            value={addressDetails.province}
+                                            onValueChange={(val) => setAddressDetails(prev => ({ ...prev, province: val }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select province" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="koshi">Koshi</SelectItem>
+                                                <SelectItem value="madhesh">Madhesh</SelectItem>
+                                                <SelectItem value="bagmati">Bagmati</SelectItem>
+                                                <SelectItem value="gandaki">Gandaki</SelectItem>
+                                                <SelectItem value="lumbini">Lumbini</SelectItem>
+                                                <SelectItem value="karnali">Karnali</SelectItem>
+                                                <SelectItem value="sudurpashchim">Sudurpashchim</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="state">State</Label>
-                                        <Input id="state" defaultValue="NY" />
+                                        <Label htmlFor="district">District</Label>
+                                        <Input
+                                            id="district"
+                                            placeholder="e.g. Kathmandu"
+                                            value={addressDetails.district}
+                                            onChange={(e) => setAddressDetails(prev => ({ ...prev, district: e.target.value }))}
+                                        />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="zip">ZIP Code</Label>
-                                        <Input id="zip" defaultValue="10001" />
+                                        <Label htmlFor="local_level">Municipality / Rural Municipality</Label>
+                                        <Input
+                                            id="local_level"
+                                            placeholder="e.g. Kathmandu Metropolitan City"
+                                            value={addressDetails.municipality}
+                                            onChange={(e) => setAddressDetails(prev => ({ ...prev, municipality: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 flex gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <Label htmlFor="ward">Ward No.</Label>
+                                            <Input
+                                                id="ward"
+                                                type="number"
+                                                placeholder="e.g. 1"
+                                                value={addressDetails.ward}
+                                                onChange={(e) => setAddressDetails(prev => ({ ...prev, ward: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="flex-[2] space-y-2">
+                                            <Label htmlFor="tole">Tole / Street</Label>
+                                            <Input
+                                                id="tole"
+                                                placeholder="e.g. Thamel"
+                                                value={addressDetails.tole}
+                                                onChange={(e) => setAddressDetails(prev => ({ ...prev, tole: e.target.value }))}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 <Separator />
 
                                 <div className="space-y-2">
-                                    <Label>Map Integration</Label>
-                                    <div className="h-64 rounded-lg bg-muted border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground">
-                                        <MapPin className="h-10 w-10 mb-2 opacity-20" />
-                                        <p>Map Preview Placeholder</p>
-                                        <Button variant="link" size="sm">Adjust Coordinates</Button>
+                                    <Label>Pin Location on Map</Label>
+                                    <div className="h-[350px] w-full rounded-lg overflow-hidden border z-10 relative">
+                                        <MapContainer
+                                            center={mapPosition}
+                                            zoom={13}
+                                            scrollWheelZoom={true}
+                                            style={{ height: '100%', width: '100%' }}
+                                        >
+                                            <TileLayer
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            <LocationPicker />
+                                        </MapContainer>
                                     </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Click on the map to place the marker exactly at your business location.
+                                        Current Coordinates: {mapPosition[0].toFixed(5)}, {mapPosition[1].toFixed(5)}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
