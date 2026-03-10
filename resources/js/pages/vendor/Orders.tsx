@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -13,6 +13,12 @@ interface OrdersProps {
 
 const Orders = ({ orders }: OrdersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [localOrders, setLocalOrders] = useState(orders || []);
+
+  const updateOrderStatus = (orderId: string, newStatus: string) => {
+    setLocalOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    toast.success(`Order ${orderId} updated to ${newStatus}`);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -26,16 +32,16 @@ const Orders = ({ orders }: OrdersProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'processing': return 'bg-blue-500';
-      case 'completed': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
+      case 'pending': return 'bg-yellow-500 text-white hover:bg-yellow-600 focus:bg-yellow-600';
+      case 'processing': return 'bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600';
+      case 'completed': return 'bg-green-500 text-white hover:bg-green-600 focus:bg-green-600';
+      case 'cancelled': return 'bg-red-500 text-white hover:bg-red-600 focus:bg-red-600';
       default: return '';
     }
   };
 
   const filterOrders = (status?: string) => {
-    let filteredOrders = orders || [];
+    let filteredOrders = localOrders || [];
     if (status && status !== 'all') filteredOrders = filteredOrders.filter((o: any) => o.status === status);
     if (searchTerm) filteredOrders = filteredOrders.filter((o: any) =>
       o.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,10 +76,23 @@ const Orders = ({ orders }: OrdersProps) => {
               <td className="p-4">{order.quantity}</td>
               <td className="p-4 font-medium">${order.total?.toFixed(2)}</td>
               <td className="p-4">
-                <Badge className={`${getStatusColor(order.status)} flex items-center gap-1 w-fit`}>
-                  {getStatusIcon(order.status)}
-                  {order.status}
-                </Badge>
+                <Select
+                  value={order.status}
+                  onValueChange={(value) => updateOrderStatus(order.id, value)}
+                >
+                  <SelectTrigger className={`w-[130px] h-8 rounded-full border-none shadow-none text-xs font-medium px-2.5 ${getStatusColor(order.status)}`}>
+                    <div className="flex items-center gap-1.5 focus:outline-none">
+                      {getStatusIcon(order.status)}
+                      <SelectValue placeholder="Status" className="capitalize" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
               </td>
             </tr>
           ))}
@@ -95,19 +114,19 @@ const Orders = ({ orders }: OrdersProps) => {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Orders</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{orders?.length || 0}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">{localOrders?.length || 0}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-yellow-600">{orders?.filter((o: any) => o.status === 'pending').length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-yellow-600">{localOrders?.filter((o: any) => o.status === 'pending').length}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Completed</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-green-600">{orders?.filter((o: any) => o.status === 'completed').length}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-green-600">{localOrders?.filter((o: any) => o.status === 'completed').length}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${orders?.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0).toFixed(2)}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">${localOrders?.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0).toFixed(2)}</div></CardContent>
         </Card>
       </div>
 
