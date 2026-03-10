@@ -1,62 +1,37 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Facebook, Apple, Home, ArrowLeft } from 'lucide-react';
+import { Facebook, Apple, ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
-import { users } from '@/data/mockData';
 import { route } from 'ziggy-js';
-import { Link } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 
 const LoginPage = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { data, setData, post, processing, errors, reset } = useForm({
+    email: '',
+    password: '',
+    remember: false,
+  });
   const [showSignUpHighlight, setShowSignUpHighlight] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const authUser = users.find(u => u.email === email);
-      if (authUser) {
-        await login(email, password);
-        const role = authUser.role;
-        if (role === 'super_admin') navigate('/super-admin');
-        else if (role === 'admin') navigate('/admin');
-        else if (role === 'vendor') navigate('/vendor');
-        else navigate('/dashboard');
-
-        toast({ title: "Success", description: `Signed in as ${authUser.name}` });
-      }
-    } catch (error) {
-      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
+    post(route('login'), {
+      onFinish: () => reset('password'),
+    });
   };
 
   const handleSocialLogin = (provider: string) => {
-    toast({ title: "Social Login", description: `${provider} login coming soon!` });
+    alert(`${provider} login coming soon!`);
   };
 
   const fillCredentials = (email: string) => {
-    setEmail(email);
-    setPassword('password123');
+    setData('email', email);
+    setData('password', 'password');
   };
 
   return (
@@ -84,21 +59,21 @@ const LoginPage = () => {
           <div className="mb-5 p-3 bg-muted rounded-lg border border-border">
             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Quick Login (Demo)</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('john@example.com')}>
-                <span className="font-semibold">Customer</span>
-                <span className="text-muted-foreground text-[10px]">john@example.com</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('michael@gourmetdelights.com')}>
-                <span className="font-semibold">Vendor</span>
-                <span className="text-muted-foreground text-[10px]">michael@gourmet...</span>
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('admin@example.com')}>
+              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('admin@sastooffer.test')}>
                 <span className="font-semibold">Admin</span>
-                <span className="text-muted-foreground text-[10px]">admin@example.com</span>
+                <span className="text-muted-foreground text-[10px]">admin@sastooffer.test</span>
               </Button>
-              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('superadmin@example.com')}>
+              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('vendor@sastooffer.test')}>
+                <span className="font-semibold">Vendor</span>
+                <span className="text-muted-foreground text-[10px]">vendor@sastooffer...</span>
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('customer@sastooffer.test')}>
+                <span className="font-semibold">Customer</span>
+                <span className="text-muted-foreground text-[10px]">customer@sastooffer...</span>
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="text-xs h-auto py-2 flex-col items-start" onClick={() => fillCredentials('superadmin@sastooffer.test')}>
                 <span className="font-semibold">Super Admin</span>
-                <span className="text-muted-foreground text-[10px]">superadmin@example...</span>
+                <span className="text-muted-foreground text-[10px]">superadmin@sastooffer...</span>
               </Button>
             </div>
           </div>
@@ -131,23 +106,41 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} method='post' action={route('login')}>
+          <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
-                <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={data.email}
+                  onChange={(e) => setData('email', e.target.value)}
+                  required
+                  className={errors.email ? 'border-destructive' : ''}
+                />
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium">Password</label>
-                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  <Link href="/forgot-password" disable-nprogress="true" className="text-xs text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={data.password}
+                  onChange={(e) => setData('password', e.target.value)}
+                  required
+                  className={errors.password ? 'border-destructive' : ''}
+                />
+                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full" disabled={processing}>
+                {processing ? "Signing in..." : "Sign In"}
               </Button>
             </div>
           </form>
@@ -171,5 +164,6 @@ const LoginPage = () => {
     </div>
   );
 };
+
 
 export default LoginPage;

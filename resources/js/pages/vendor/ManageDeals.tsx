@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Package } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { useEffect } from 'react';
+import { usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 
 interface ManageDealsProps {
   deals: any[];
@@ -16,6 +19,16 @@ interface ManageDealsProps {
 
 const ManageDeals = ({ deals }: ManageDealsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { flash } = usePage().props as any;
+
+  useEffect(() => {
+    if (flash?.success) {
+      toast.success(flash.success);
+    }
+    if (flash?.error) {
+      toast.error(flash.error);
+    }
+  }, [flash]);
 
   const filterDeals = (status?: string) => {
     let filtered = deals || [];

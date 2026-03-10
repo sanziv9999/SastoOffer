@@ -27,6 +27,85 @@ class DealController extends Controller
         return view('deals.index', compact('deals'));
     }
 
+    public function dashboard(Request $request)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (!$vendor) {
+            return \Inertia\Inertia::render('VendorDashboard', [
+                'vendor' => null,
+                'stats' => null,
+                'deals' => [],
+            ]);
+        }
+
+        $deals = Deal::where('vendor_id', $vendor->id)
+            ->with(['subCategory', 'offerTypes', 'images'])
+            ->latest()
+            ->get()
+            ->map(function ($deal) {
+                $offer = $deal->offerTypes->first()?->pivot;
+                return [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'status' => $deal->status,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : 0,
+                    'originalPrice' => $offer ? (float) $offer->original_price : 0,
+                    'quantitySold' => 0, // Placeholder
+                    'maxQuantity' => $deal->total_inventory,
+                    'endDate' => $deal->ends_at?->toIso8601String(),
+                    'image' => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                ];
+            });
+
+        $stats = [
+            'totalRevenue' => 0, // Placeholder
+            'totalSales' => 0,   // Placeholder
+            'activeDeals' => $deals->where('status', 'active')->count(),
+            'totalDeals' => $deals->count(),
+        ];
+
+        return \Inertia\Inertia::render('VendorDashboard', [
+            'vendor' => $vendor,
+            'stats' => $stats,
+            'deals' => $deals,
+        ]);
+    }
+
+    public function manageDeals(Request $request)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (!$vendor) {
+            return redirect()->route('vendor.dashboard')->with('error', 'Vendor profile not found.');
+        }
+
+        $deals = Deal::where('vendor_id', $vendor->id)
+            ->with(['subCategory', 'offerTypes', 'images'])
+            ->latest()
+            ->get()
+            ->map(function ($deal) {
+                $offer = $deal->offerTypes->first()?->pivot;
+                return [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'status' => $deal->status,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : 0,
+                    'originalPrice' => $offer ? (float) $offer->original_price : 0,
+                    'quantitySold' => 0,
+                    'maxQuantity' => $deal->total_inventory,
+                    'endDate' => $deal->ends_at?->toIso8601String(),
+                    'image' => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                ];
+            });
+
+        return \Inertia\Inertia::render('vendor/ManageDeals', [
+            'deals' => $deals,
+        ]);
+    }
+
     public function create()
     {
         $vendors = VendorProfile::orderBy('business_name')->get();
@@ -36,23 +115,98 @@ class DealController extends Controller
         return view('deals.create', compact('vendors', 'subCategories', 'offerTypes'));
     }
 
-    public function store(StoreDealRequest $request)
+    public function store(Request $request)
     {
-        $data = $request->validated();
-        if (empty($data['slug'])) {
-            $data['slug'] = Str::slug($data['title']);
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('vendor')) {
+            return back()->withErrors(['error' => 'Unauthorized. Only vendors can create deals.']);
         }
-        $data['status'] = $data['status'] ?? 'draft';
-        $data['is_featured'] = $request->boolean('is_featured');
 
-        $offerTypesInput = $request->input('offer_types', []);
-        unset($data['offer_types']);
+        $vendor = $user->vendorProfile;
+        if (!$vendor) {
+             // Fallback for demo/early stage
+             $vendor = VendorProfile::first(); 
+        }
 
-        $deal = Deal::create($data);
+        $data = $request->all();
+        \Illuminate\Support\Facades\Log::info('Deal Creation Request:', [
+            'data' => array_keys($data),
+            'files' => array_keys($request->allFiles()),
+            'has_featurePhoto' => $request->hasFile('featurePhoto'),
+            'has_gallery' => $request->hasFile('gallery'),
+        ]);
 
-        $this->syncDealOffers($deal, $offerTypesInput);
+        // Map React fields to DB fields
+        $dealData = [
+            'vendor_id' => $vendor->id,
+            'business_sub_category_id' => (int) $data['categoryId'],
+            'title' => $data['title'],
+            'slug' => Str::slug($data['title']) . '-' . rand(1000, 9999),
+            'short_description' => $data['shortDesc'],
+            'long_description' => $data['description'],
+            'status' => 'active', 
+            'total_inventory' => $data['maxQuantity'] ?: null,
+            'starts_at' => $data['startDate'] ?: now(),
+            'ends_at' => $data['endDate'] ?: now()->addDays(30),
+            'is_featured' => $request->boolean('requestFeatured'),
+            'highlights' => $data['tags'],
+        ];
 
-        return redirect()->route('deals.index')->with('success', 'Deal created successfully.');
+        $deal = Deal::create($dealData);
+
+        // Handle Feature Photo
+        if ($request->hasFile('featurePhoto')) {
+            $path = $request->file('featurePhoto')->store('deals/covers', 'public');
+            \Illuminate\Support\Facades\Log::info('Feature photo stored:', ['path' => $path]);
+            $deal->images()->create([
+                'attribute_name' => 'feature_photo',
+                'image_url' => '/storage/' . $path,
+                'sort_order' => 0,
+            ]);
+        }
+
+        // Handle Gallery Photos
+        if ($request->hasFile('gallery')) {
+            \Illuminate\Support\Facades\Log::info('Processing gallery photos:', ['count' => count($request->file('gallery'))]);
+            foreach ($request->file('gallery') as $index => $file) {
+                $path = $file->store('deals/gallery', 'public');
+                \Illuminate\Support\Facades\Log::info('Gallery photo stored:', ['path' => $path]);
+                $deal->images()->create([
+                    'attribute_name' => 'gallery',
+                    'image_url' => '/storage/' . $path,
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        }
+
+        $offerTypeId = $data['offerTypeId'] ?? null;
+        $offerType = $offerTypeId ? OfferType::find($offerTypeId) : null;
+
+        if ($offerType) {
+            $params = [];
+            $uiType = $data['uiType'] ?? 'percentage';
+
+            if ($uiType === 'percentage') {
+                $params['discount_percent'] = $data['discountPercentage'];
+            } elseif (in_array($uiType, ['fixed', 'flash', 'bundle'])) {
+                $params['discount_amount'] = (float)$data['originalPrice'] - (float)$data['discountedPrice'];
+            } elseif ($uiType === 'bogo') {
+                $params['buy_quantity'] = 1;
+                $params['get_quantity'] = 1;
+                $params['get_discount_percent'] = 100;
+            }
+
+            $service = app(DealOfferService::class);
+            $service->attachOfferToDeal($deal, $offerType, [
+                'original_price' => (float)$data['originalPrice'],
+                'discounted_price' => (float)$data['discountedPrice'], // Note: service uses original_price and params to calculate final_price
+                'params' => $params,
+                'status' => 'active',
+                'currency_code' => 'NPR',
+            ]);
+        }
+
+        return redirect()->route('vendor.deals.index')->with('success', 'Deal created and published successfully!');
     }
 
     public function show(Deal $deal)

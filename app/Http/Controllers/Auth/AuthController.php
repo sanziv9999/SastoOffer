@@ -92,7 +92,7 @@ class AuthController extends Controller
         if ($user->hasRole('vendor')) {
             $profile = $user->vendorProfile ?? null;
             if ($profile) {
-                return Inertia::render('VendorProfile');
+                return Inertia::render('VendorDashboard');
             }
             return Inertia::render('VendorDashboard');
         }

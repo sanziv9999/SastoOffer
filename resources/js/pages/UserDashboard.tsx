@@ -1,40 +1,40 @@
-
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from '@/components/Link';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  ShoppingBag, 
-  Calendar, 
-  Clock, 
-  Tag, 
+import {
+  ShoppingBag,
+  Calendar,
+  Clock,
+  Tag,
   Star,
   Search
 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { deals, purchases } from '@/data/mockData';
 import { formatDistanceToNow } from 'date-fns';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const [userPurchases, setUserPurchases] = useState(purchases);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     // Simulate API call
     setTimeout(() => {
@@ -42,18 +42,18 @@ const UserDashboard = () => {
       setIsLoading(false);
     }, 1000);
   }, [user]);
-  
+
   const getDealById = (dealId: string) => {
     return deals.find(deal => deal.id === dealId);
   };
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would filter from the backend
     // For now, we'll just log the search term
     console.log('Searching for:', searchTerm);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -63,7 +63,7 @@ const UserDashboard = () => {
             Here's an overview of your purchases and saved deals.
           </p>
         </div>
-        
+
         <form onSubmit={handleSearch} className="flex w-full md:w-auto">
           <Input
             placeholder="Search purchases..."
@@ -76,7 +76,7 @@ const UserDashboard = () => {
           </Button>
         </form>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -138,7 +138,7 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Tabs for purchases */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
@@ -146,7 +146,7 @@ const UserDashboard = () => {
           <TabsTrigger value="active">Active Coupons</TabsTrigger>
           <TabsTrigger value="redeemed">Redeemed</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="all" className="space-y-4">
           <div className="rounded-md border">
             {isLoading ? (
@@ -186,23 +186,23 @@ const UserDashboard = () => {
                     {userPurchases.map(purchase => {
                       const purchaseDeal = getDealById(purchase.dealId);
                       return (
-                        <tr 
-                          key={purchase.id} 
+                        <tr
+                          key={purchase.id}
                           className="border-b transition-colors hover:bg-muted/50"
                         >
                           <td className="p-4 align-middle">
                             <div className="flex items-center gap-3">
                               {purchaseDeal ? (
                                 <>
-                                  <img 
-                                    src={purchaseDeal.image} 
+                                  <img
+                                    src={purchaseDeal.image}
                                     alt={purchaseDeal.title}
                                     className="h-10 w-10 rounded object-cover"
                                   />
                                   <div>
                                     <div className="font-medium">
-                                      {purchaseDeal.title.length > 30 
-                                        ? `${purchaseDeal.title.substring(0, 30)}...` 
+                                      {purchaseDeal.title.length > 30
+                                        ? `${purchaseDeal.title.substring(0, 30)}...`
                                         : purchaseDeal.title}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
@@ -227,7 +227,7 @@ const UserDashboard = () => {
                             ${purchase.totalPrice.toFixed(2)}
                           </td>
                           <td className="p-4 align-middle">
-                            <Badge 
+                            <Badge
                               variant={purchase.redeemed ? "outline" : "default"}
                               className={purchase.redeemed ? "" : "bg-green-500"}
                             >
@@ -240,12 +240,12 @@ const UserDashboard = () => {
                             </code>
                           </td>
                           <td className="p-4 align-middle text-right">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               asChild
                             >
-                              <Link to={`/deals/${purchase.dealId}`}>
+                              <Link href={`/deals/${purchase.dealId}`}>
                                 View Deal
                               </Link>
                             </Button>
@@ -263,13 +263,13 @@ const UserDashboard = () => {
                   You haven't made any purchases yet.
                 </p>
                 <Button asChild>
-                  <Link to="/">Explore Deals</Link>
+                  <Link href="/">Explore Deals</Link>
                 </Button>
               </div>
             )}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="active" className="space-y-4">
           {userPurchases.filter(p => !p.redeemed).length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -301,7 +301,7 @@ const UserDashboard = () => {
                             {purchase.couponCode}
                           </code>
                         </div>
-                        
+
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Clock className="h-4 w-4 mr-1" />
                           {purchaseDeal && (
@@ -310,13 +310,13 @@ const UserDashboard = () => {
                             </span>
                           )}
                         </div>
-                        
+
                         <div className="flex gap-2 mt-4">
                           <Button className="w-full" size="sm">
                             Show QR Code
                           </Button>
                           <Button variant="outline" size="sm" asChild>
-                            <Link to={`/deals/${purchase.dealId}`}>
+                            <Link href={`/deals/${purchase.dealId}`}>
                               Details
                             </Link>
                           </Button>
@@ -333,12 +333,12 @@ const UserDashboard = () => {
                 You don't have any active coupons at the moment.
               </p>
               <Button asChild>
-                <Link to="/">Explore Deals</Link>
+                <Link href="/">Explore Deals</Link>
               </Button>
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="redeemed" className="space-y-4">
           {userPurchases.filter(p => p.redeemed).length > 0 ? (
             <div className="rounded-md border">
@@ -369,23 +369,23 @@ const UserDashboard = () => {
                       .map(purchase => {
                         const purchaseDeal = getDealById(purchase.dealId);
                         return (
-                          <tr 
-                            key={purchase.id} 
+                          <tr
+                            key={purchase.id}
                             className="border-b transition-colors hover:bg-muted/50"
                           >
                             <td className="p-4 align-middle">
                               <div className="flex items-center gap-3">
                                 {purchaseDeal ? (
                                   <>
-                                    <img 
-                                      src={purchaseDeal.image} 
+                                    <img
+                                      src={purchaseDeal.image}
                                       alt={purchaseDeal.title}
                                       className="h-10 w-10 rounded object-cover"
                                     />
                                     <div>
                                       <div className="font-medium">
-                                        {purchaseDeal.title.length > 30 
-                                          ? `${purchaseDeal.title.substring(0, 30)}...` 
+                                        {purchaseDeal.title.length > 30
+                                          ? `${purchaseDeal.title.substring(0, 30)}...`
                                           : purchaseDeal.title}
                                       </div>
                                       <div className="text-xs text-muted-foreground">
@@ -410,8 +410,8 @@ const UserDashboard = () => {
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <span>
-                                  {purchase.redeemedAt ? 
-                                    formatDistanceToNow(new Date(purchase.redeemedAt), { addSuffix: true }) : 
+                                  {purchase.redeemedAt ?
+                                    formatDistanceToNow(new Date(purchase.redeemedAt), { addSuffix: true }) :
                                     'N/A'}
                                 </span>
                               </div>
@@ -420,12 +420,12 @@ const UserDashboard = () => {
                               ${purchase.totalPrice.toFixed(2)}
                             </td>
                             <td className="p-4 align-middle text-right">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 asChild
                               >
-                                <Link to={`/deals/${purchase.dealId}`}>
+                                <Link href={`/deals/${purchase.dealId}`}>
                                   View Deal
                                 </Link>
                               </Button>
@@ -444,7 +444,7 @@ const UserDashboard = () => {
                 You haven't redeemed any coupons yet.
               </p>
               <Button asChild>
-                <Link to="/dashboard/active">View Active Coupons</Link>
+                <Link href="/dashboard">View Active Coupons</Link>
               </Button>
             </div>
           )}
@@ -453,5 +453,7 @@ const UserDashboard = () => {
     </div>
   );
 };
+
+UserDashboard.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default UserDashboard;

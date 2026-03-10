@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from '@/components/Link';
 import {
   DollarSign,
@@ -31,29 +31,58 @@ import {
 } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { useAuth } from '@/context/AuthContext';
+import { vendors } from '@/data/mockData';
+import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
 
 interface VendorDashboardProps {
-  vendor: any;
-  stats: {
+  vendor?: any;
+  stats?: {
     totalRevenue: number;
     totalSales: number;
     activeDeals: number;
     totalDeals: number;
   };
-  deals: any[];
+  deals?: any[];
 }
 
-const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
+const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeals }: VendorDashboardProps) => {
+  const { user } = useAuth();
+  const { flash } = usePage().props as any;
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
 
-  const filteredDeals = deals?.filter(deal => {
+  useEffect(() => {
+    if (flash?.success) {
+      toast.success(flash.success);
+    }
+    if (flash?.error) {
+      toast.error(flash.error);
+    }
+  }, [flash]);
+
+  // Find vendor profile from props or mock data
+  const vendor = propVendor || vendors.find(v => v.contactEmail === user?.email || v.userId === user?.id) || vendors[0];
+
+  // Get deals for this vendor - prioritize real data from props
+  const vendorDeals = propDeals || [];
+
+  // Default stats if not provided
+  const stats = propStats || {
+    totalRevenue: 0,
+    totalSales: 0,
+    activeDeals: vendorDeals.filter(d => d.status === 'active').length,
+    totalDeals: vendorDeals.length
+  };
+
+  const filteredDeals = vendorDeals.filter(deal => {
     const matchesSearch = deal.title.toLowerCase().includes(searchTerm.toLowerCase()) || deal.id?.toString().includes(searchTerm);
     const matchesStatusDropdown = statusFilter === 'all' ? true : deal.status === statusFilter;
     const matchesTab = activeTab === 'all' ? true : deal.status === activeTab;
     return matchesSearch && matchesStatusDropdown && matchesTab;
-  }) || [];
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,12 +366,16 @@ const VendorDashboard = ({ vendor, stats, deals }: VendorDashboardProps) => {
                             <td className="p-4 align-middle">
                               <Badge
                                 variant={
-                                  deal.status === 'active' ? 'default' :
-                                    deal.status === 'expired' ? 'secondary' :
-                                      deal.status === 'draft' ? 'outline' :
-                                        'destructive'
+                                  deal.status === 'active' ? 'secondary' :
+                                    deal.status === 'pending' ? 'outline' :
+                                      deal.status === 'rejected' ? 'destructive' :
+                                        'outline'
                                 }
-                                className={deal.status === 'active' ? 'bg-green-500' : undefined}
+                                className={
+                                  deal.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-none' :
+                                    deal.status === 'pending' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-none' :
+                                      ''
+                                }
                               >
                                 {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
                               </Badge>

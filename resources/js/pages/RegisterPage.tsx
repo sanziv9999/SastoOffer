@@ -1,88 +1,32 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { router } from '@inertiajs/react';
-import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { Facebook, Apple } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Link, useForm } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 const RegisterPage = () => {
-  const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [role, setRole] = useState<'customer' | 'vendor'>('customer');
+  const { data, setData, post, processing, errors, reset } = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    role: 'customer' as 'customer' | 'vendor',
+    terms: false,
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!acceptTerms) {
-      toast({
-        title: "Error",
-        description: "Please accept the terms and conditions",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    router.post('/register', {
-      name,
-      email,
-      password,
-      password_confirmation: confirmPassword,
-      role,
-      terms: acceptTerms,
-    }, {
-      onSuccess: () => {
-        toast({
-          title: "Success",
-          description: "Your account has been created",
-        });
-      },
-      onError: (errors) => {
-        const errorMessages = Object.values(errors).flat().join(". ");
-        toast({
-          title: "Registration Failed",
-          description: errorMessages || "An error occurred during registration. Please try again.",
-          variant: "destructive",
-        });
-      },
-      onFinish: () => setIsLoading(false),
+    post(route('register'), {
+      onFinish: () => reset('password', 'password_confirmation'),
     });
   };
 
   const handleSocialRegister = (provider: string) => {
-    toast({
-      title: "Social Registration",
-      description: `${provider} signup coming soon!`,
-    });
+    alert(`${provider} signup coming soon!`);
   };
 
   return (
@@ -147,28 +91,29 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} method="post" action="/register">
+          <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">I want to register as a</label>
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     type="button"
-                    variant={role === 'customer' ? 'default' : 'outline'}
-                    onClick={() => setRole('customer')}
+                    variant={data.role === 'customer' ? 'default' : 'outline'}
+                    onClick={() => setData('role', 'customer')}
                     className="w-full"
                   >
                     Customer
                   </Button>
                   <Button
                     type="button"
-                    variant={role === 'vendor' ? 'default' : 'outline'}
-                    onClick={() => setRole('vendor')}
+                    variant={data.role === 'vendor' ? 'default' : 'outline'}
+                    onClick={() => setData('role', 'vendor')}
                     className="w-full"
                   >
                     Vendor
                   </Button>
                 </div>
+                {errors.role && <p className="text-xs text-destructive">{errors.role}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">Name</label>
@@ -176,11 +121,12 @@ const RegisterPage = () => {
                   id="name"
                   type="text"
                   placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={data.name}
+                  onChange={(e) => setData('name', e.target.value)}
                   required
-                  className="w-full"
+                  className={errors.name ? 'border-destructive' : ''}
                 />
+                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
@@ -188,11 +134,12 @@ const RegisterPage = () => {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={data.email}
+                  onChange={(e) => setData('email', e.target.value)}
                   required
-                  className="w-full"
+                  className={errors.email ? 'border-destructive' : ''}
                 />
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">Password</label>
@@ -200,42 +147,45 @@ const RegisterPage = () => {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={data.password}
+                  onChange={(e) => setData('password', e.target.value)}
                   required
-                  className="w-full"
+                  className={errors.password ? 'border-destructive' : ''}
                 />
+                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</label>
+                <label htmlFor="password_confirmation" className="text-sm font-medium">Confirm Password</label>
                 <Input
-                  id="confirmPassword"
+                  id="password_confirmation"
                   type="password"
                   placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={data.password_confirmation}
+                  onChange={(e) => setData('password_confirmation', e.target.value)}
                   required
-                  className="w-full"
+                  className={errors.password_confirmation ? 'border-destructive' : ''}
                 />
+                {errors.password_confirmation && <p className="text-xs text-destructive">{errors.password_confirmation}</p>}
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
-                  checked={acceptTerms}
-                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                  checked={data.terms}
+                  onCheckedChange={(checked) => setData('terms', checked as boolean)}
                 />
                 <label
                   htmlFor="terms"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   I accept the{' '}
-                  <Link to="/terms" className="text-primary hover:underline">
+                  <Link href="/terms" className="text-primary hover:underline">
                     terms and conditions
                   </Link>
                 </label>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Create account"}
+              {errors.terms && <p className="text-xs text-destructive">{errors.terms}</p>}
+              <Button type="submit" className="w-full" disabled={processing}>
+                {processing ? "Creating account..." : "Create account"}
               </Button>
             </div>
           </form>
@@ -243,7 +193,7 @@ const RegisterPage = () => {
         <CardFooter className="justify-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link href={route('login')} className="text-primary hover:underline">
               Sign in
             </Link>
           </p>

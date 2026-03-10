@@ -19,19 +19,23 @@ const queryClient = new QueryClient();
 
 createInertiaApp({
   title: (title) => `${title} - ${appName}`,
-  resolve: (name) => resolvePageComponent(`./Pages/${name}.tsx`, import.meta.glob('./Pages/**/*.tsx')),
+  resolve: (name) => {
+    const page = resolvePageComponent(`./Pages/${name}.tsx`, import.meta.glob('./Pages/**/*.tsx'));
+    page.then((module: any) => {
+      module.default.layout = module.default.layout || ((page: any) => <AuthProvider>{page}</AuthProvider>);
+    });
+    return page;
+  },
   setup({ el, App, props }) {
     const root = createRoot(el);
     root.render(
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <App {...props} />
-            </BrowserRouter>
-          </AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <App {...props} />
+          </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
     );

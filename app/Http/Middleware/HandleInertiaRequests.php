@@ -37,7 +37,20 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'role' => $request->user()->getRoleNames()->first() ?? 'customer',
+                ] : null,
+            ],
+            'categories' => \App\Models\BusinessSubCategory::active()->orderBy('name')->get(['id', 'name', 'slug']),
+            'offerTypes' => \App\Models\OfferType::where('is_active', true)->get(['id', 'name', 'display_name']),
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('error'),
+            ],
         ];
     }
 }

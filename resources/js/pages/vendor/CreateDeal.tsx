@@ -1,6 +1,5 @@
-
-import { useState, useRef, useCallback } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useForm, usePage } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, Upload, X, ImagePlus, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Megaphone, Clock, Tag, Info
+  Megaphone, Clock, Tag, Info, Percent, Banknote, ShoppingCart
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -35,15 +34,18 @@ const DEAL_TYPE_TAGS: Record<string, string[]> = {
 };
 
 const CreateDeal = () => {
+  const { categories, offerTypes } = usePage().props as any;
   const { data, setData, post, processing } = useForm({
     title: '',
     shortDesc: '',
     description: '',
-    category: 'food',
-    dealType: 'percentage',
+    categoryId: categories?.[0]?.id || '',
+    offerTypeId: offerTypes?.[0]?.id || '',
+    uiType: 'percentage' as 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle',
     tags: [] as string[],
     originalPrice: '',
     discountedPrice: '',
+    discountPercentage: '',
     maxQuantity: '',
     startDate: '',
     endDate: '',
@@ -66,6 +68,45 @@ const CreateDeal = () => {
   const featureInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const getUIType = (id: string | number): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' => {
+    const name = offerTypes?.find((ot: any) => ot.id.toString() === id.toString())?.name;
+    if (name === 'percentage_discount') return 'percentage';
+    if (name === 'fixed_amount_discount') return 'fixed';
+    if (name === 'bogo') return 'bogo';
+    if (name === 'flash_sale') return 'flash';
+    return 'fixed';
+  };
+
+  const uiType = getUIType(data.offerTypeId);
+
+  // Sync uiType in form data
+  useEffect(() => {
+    setData('uiType', uiType);
+  }, [data.offerTypeId, uiType]);
+
+  // Auto-calculate prices based on deal type
+  useEffect(() => {
+    if (uiType === 'percentage') {
+      const original = parseFloat(data.originalPrice);
+      const percent = parseFloat(data.discountPercentage);
+      if (!isNaN(original) && !isNaN(percent)) {
+        const discounted = original - (original * percent / 100);
+        if (data.discountedPrice !== discounted.toFixed(2)) {
+          setData(d => ({ ...d, discountedPrice: discounted.toFixed(2) }));
+        }
+      }
+    } else if (uiType === 'fixed' || uiType === 'flash' || uiType === 'bundle') {
+      const original = parseFloat(data.originalPrice);
+      const discounted = parseFloat(data.discountedPrice);
+      if (!isNaN(original) && !isNaN(discounted) && original > 0) {
+        const percent = ((original - discounted) / original) * 100;
+        if (data.discountPercentage !== percent.toFixed(0)) {
+          setData(d => ({ ...d, discountPercentage: percent.toFixed(0) }));
+        }
+      }
+    }
+  }, [data.originalPrice, data.discountPercentage, data.discountedPrice, uiType]);
 
   const handleFeaturePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,15 +140,18 @@ const CreateDeal = () => {
   const generateAITags = useCallback(async () => {
     setIsGeneratingTags(true);
     await new Promise(r => setTimeout(r, 800));
-    const catTags = SUGGESTED_TAGS_MAP[data.category] || SUGGESTED_TAGS_MAP.food;
-    const typeTags = DEAL_TYPE_TAGS[data.dealType] || DEAL_TYPE_TAGS.percentage;
+
+    const selectedCategory = categories?.find((c: any) => c.id.toString() === data.categoryId.toString());
+    const categorySlug = selectedCategory?.slug || 'food';
+    const catTags = SUGGESTED_TAGS_MAP[categorySlug] || SUGGESTED_TAGS_MAP.food;
+    const typeTags = DEAL_TYPE_TAGS[uiType] || DEAL_TYPE_TAGS.percentage;
     const titleWords = data.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
     const allSuggestions = [...new Set([...typeTags, ...catTags.slice(0, 5), ...titleWords.slice(0, 3)])];
     const newTags = allSuggestions.filter(t => !data.tags.includes(t));
     setData('tags', [...new Set([...data.tags, ...newTags])].slice(0, 15));
     setIsGeneratingTags(false);
     toast.success(`${newTags.length} AI-suggested tags added.`);
-  }, [data.category, data.dealType, data.title, data.tags]);
+  }, [data.categoryId, data.offerTypeId, uiType, data.title, data.tags, categories]);
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase().replace(/\s+/g, '-');
@@ -214,11 +258,11 @@ const CreateDeal = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Deal Title *</Label>
-              <Input placeholder="Catchy title" value={data.title} onChange={e => setData('title', e.target.value)} required />
+              <Input placeholder="Catchy title (e.g. 50% Off Special Lunch Combo)" value={data.title} onChange={e => setData('title', e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label>Short Description *</Label>
-              <Input placeholder="Brief overview" value={data.shortDesc} onChange={e => setData('shortDesc', e.target.value)} required maxLength={120} />
+              <Input placeholder="Brief overview for the card" value={data.shortDesc} onChange={e => setData('shortDesc', e.target.value)} required maxLength={120} />
             </div>
 
             <div className="space-y-2">
@@ -240,29 +284,144 @@ const CreateDeal = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Deal Type</Label>
-                <Select value={data.dealType} onValueChange={v => setData('dealType', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={data.offerTypeId?.toString()} onValueChange={v => {
+                  setData(d => ({ ...d, offerTypeId: v, discountPercentage: '', discountedPrice: '' }));
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percentage">Percentage Discount</SelectItem>
-                    <SelectItem value="fixed">Fixed Price</SelectItem>
-                    <SelectItem value="bogo">Buy One Get One</SelectItem>
-                    <SelectItem value="bundle">Bundle</SelectItem>
-                    <SelectItem value="flash">⚡ Flash Sale</SelectItem>
+                    {offerTypes?.map((ot: any) => (
+                      <SelectItem key={ot.id} value={ot.id.toString()}>{ot.display_name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={data.category} onValueChange={v => setData('category', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={data.categoryId?.toString()} onValueChange={v => setData('categoryId', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="food">Food & Dining</SelectItem>
-                    <SelectItem value="beauty">Beauty & Spa</SelectItem>
-                    <SelectItem value="travel">Travel</SelectItem>
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="entertainment">Entertainment</SelectItem>
+                    {categories?.map((cat: any) => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dynamic Pricing Section */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-primary/5 pb-4">
+            <CardTitle className="flex items-center gap-2">
+              {uiType === 'percentage' && <Percent className="h-5 w-5 text-primary" />}
+              {(uiType === 'fixed' || uiType === 'flash') && <Banknote className="h-5 w-5 text-primary" />}
+              {(uiType === 'bogo' || uiType === 'bundle') && <ShoppingCart className="h-5 w-5 text-primary" />}
+              Pricing Details
+            </CardTitle>
+            <CardDescription>
+              {uiType === 'percentage' && "Set the original price and the discount percentage."}
+              {uiType === 'fixed' && "Set the original price and the final offer price."}
+              {uiType === 'bogo' && "Set the unit price for the buy-one-get-one offer."}
+              {uiType === 'bundle' && "Set the bundle's total original value and special price."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+
+              {/* Original Price - Always shown except maybe BOGO can be different, but let's keep it for value comparison */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">
+                  {uiType === 'bundle' ? 'Total Bundle Value ($)' : 'Original Price ($) *'}
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="pl-7"
+                    value={data.originalPrice}
+                    onChange={e => setData('originalPrice', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Column 2 */}
+              {uiType === 'percentage' ? (
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-primary flex items-center gap-1">
+                    <Percent className="h-3.5 w-3.5" /> Discount Percentage (%) *
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder="e.g. 50"
+                      value={data.discountPercentage}
+                      onChange={e => setData('discountPercentage', e.target.value)}
+                      required
+                    />
+                    <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-primary">
+                    {uiType === 'bogo' ? 'Unit Price ($) *' : 'Offer Price ($) *'}
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      className="pl-7"
+                      value={data.discountedPrice}
+                      onChange={e => setData('discountedPrice', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Column 3 - Calculation Results/Max Qty */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Max Quantity Available</Label>
+                <Input
+                  type="number"
+                  placeholder="Unlimited"
+                  value={data.maxQuantity}
+                  onChange={e => setData('maxQuantity', e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground">Leave empty for unlimited</p>
+              </div>
+
+            </div>
+
+            {/* Price Preview / Summary */}
+            <div className="mt-6 p-4 rounded-lg bg-muted/30 border border-dashed flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-center sm:text-left">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">You're offering</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-primary">
+                      {uiType === 'percentage' ? `${data.discountPercentage || 0}% OFF` :
+                        uiType === 'bogo' ? 'BOGO FREE' :
+                          `$${(data.originalPrice ? parseFloat(data.originalPrice) - parseFloat(data.discountedPrice || '0') : 0).toFixed(2)} savings`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Customer pays</p>
+                  <p className="text-xl font-bold">${parseFloat(data.discountedPrice || '0').toFixed(2)}</p>
+                </div>
+                {uiType === 'percentage' && data.originalPrice && (
+                  <Badge variant="outline" className="text-xs line-through opacity-70">
+                    ${parseFloat(data.originalPrice).toFixed(2)}
+                  </Badge>
+                )}
               </div>
             </div>
           </CardContent>
@@ -296,25 +455,6 @@ const CreateDeal = () => {
           </CardContent>
         </Card>
 
-        {/* Pricing */}
-        <Card>
-          <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Original Price ($) *</Label>
-              <Input type="number" value={data.originalPrice} onChange={e => setData('originalPrice', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Discounted Price ($) *</Label>
-              <Input type="number" value={data.discountedPrice} onChange={e => setData('discountedPrice', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Max Quantity</Label>
-              <Input type="number" value={data.maxQuantity} onChange={e => setData('maxQuantity', e.target.value)} />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Schedule */}
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Schedule</CardTitle></CardHeader>
@@ -333,13 +473,19 @@ const CreateDeal = () => {
         {/* Promotion */}
         <Card className="border-primary/30">
           <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" /> Promotion</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <Label>Homepage Featured Banner</Label>
+          <CardContent className="space-y-6">
+            <div className="flex items-start justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
+              <div className="space-y-1">
+                <Label className="text-base">Homepage Featured Banner</Label>
+                <p className="text-sm text-muted-foreground">Display your deal in the main rotating banner on the landing page.</p>
+              </div>
               <Switch checked={data.requestHomepagePromo} onCheckedChange={v => setData('requestHomepagePromo', v)} />
             </div>
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <Label>Featured Deal Badge</Label>
+            <div className="flex items-start justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
+              <div className="space-y-1">
+                <Label className="text-base">Featured Deal Badge</Label>
+                <p className="text-sm text-muted-foreground">Add a "Featured" badge and priority sorting in search results.</p>
+              </div>
               <Switch checked={data.requestFeatured} onCheckedChange={v => setData('requestFeatured', v)} />
             </div>
           </CardContent>
@@ -347,7 +493,14 @@ const CreateDeal = () => {
 
         <div className="flex justify-end gap-3 pb-8">
           <Button type="button" variant="outline" asChild><Link href="/vendor/deals">Cancel</Link></Button>
-          <Button type="submit" disabled={processing}>{processing ? 'Creating…' : 'Submit for Review'}</Button>
+          <Button type="submit" size="lg" disabled={processing} className="px-8 shadow-lg shadow-primary/20">
+            {processing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : 'Submit for Review'}
+          </Button>
         </div>
       </form>
     </div>
