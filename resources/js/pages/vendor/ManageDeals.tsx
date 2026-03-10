@@ -99,7 +99,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
         <Package className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
         <h3 className="text-lg font-semibold mb-2">No deals found</h3>
         <p className="text-muted-foreground mb-4">No deals match your criteria.</p>
-        <Button asChild><Link href="/vendor/deals/create"><Plus className="mr-2 h-4 w-4" />Create Deal</Link></Button>
+        <Button asChild><Link href="/vendor/create-deal"><Plus className="mr-2 h-4 w-4" />Create Deal</Link></Button>
       </div>
     )
   );
@@ -111,7 +111,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
           <h1 className="text-2xl font-bold tracking-tight">Manage Deals</h1>
           <p className="text-muted-foreground">View and manage all your deals</p>
         </div>
-        <Button asChild><Link href="/vendor/deals/create"><Plus className="mr-2 h-4 w-4" />Create Deal</Link></Button>
+        <Button asChild><Link href="/vendor/create-deal"><Plus className="mr-2 h-4 w-4" />Create Deal</Link></Button>
       </div>
 
       <Card>

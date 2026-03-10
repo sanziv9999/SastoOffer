@@ -33,12 +33,8 @@ import VendorCustomers from "./vendor/Customers";
 import VendorManageDeals from "./vendor/ManageDeals";
 import VendorOrders from "./vendor/Orders";
 import VendorSalesHistory from "./vendor/SalesHistory";
-import VendorScanner from "./vendor/Scanner";
 import VendorReviews from "./vendor/Reviews";
 import VendorSettings from "./vendor/Settings";
-import VendorInventory from "./vendor/Inventory";
-import VendorInsights from "./vendor/Insights";
-import VendorNotifications from "./vendor/Notifications";
 
 // Dashboard Sub-pages (Admin)
 import AdminDeals from "./admin/AdminDeals";
@@ -176,12 +172,8 @@ const AppShell = () => {
                     <Route path="customers" element={<VendorCustomers customers={vendorCustomers} />} />
                     <Route path="customer-history" element={<VendorCustomerHistory history={[]} />} />
                     <Route path="sales-history" element={<VendorSalesHistory sales={[]} />} />
-                    <Route path="scanner" element={<VendorScanner />} />
                     <Route path="reviews" element={<VendorReviews reviews={reviews} deals={vendorDeals} />} />
                     <Route path="settings" element={<VendorSettings />} />
-                    <Route path="inventory" element={<VendorInventory deals={vendorDeals} />} />
-                    <Route path="insights" element={<VendorInsights />} />
-                    <Route path="notifications" element={<VendorNotifications />} />
                 </Route>
 
                 {/* Admin Dashboard */}
