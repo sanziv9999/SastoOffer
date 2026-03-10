@@ -67,6 +67,7 @@ const CreateDeal = () => {
 
   const featureInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const shortEditorRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getUIType = (id: string | number): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' => {
@@ -163,10 +164,18 @@ const CreateDeal = () => {
 
   const removeTag = (tag: string) => setData('tags', data.tags.filter(t => t !== tag));
 
-  const execCommand = (command: string, value?: string) => {
+  const execCommand = (command: string, target: 'shortDesc' | 'description', value?: string) => {
     document.execCommand(command, false, value);
-    if (editorRef.current) {
+    if (target === 'shortDesc' && shortEditorRef.current) {
+      setData('shortDesc', shortEditorRef.current.innerHTML);
+    } else if (target === 'description' && editorRef.current) {
       setData('description', editorRef.current.innerHTML);
+    }
+  };
+
+  const onShortDescChange = () => {
+    if (shortEditorRef.current) {
+      setData('shortDesc', shortEditorRef.current.innerHTML);
     }
   };
 
@@ -262,22 +271,33 @@ const CreateDeal = () => {
             </div>
             <div className="space-y-2">
               <Label>Short Description *</Label>
-              <Input placeholder="Brief overview for the card" value={data.shortDesc} onChange={e => setData('shortDesc', e.target.value)} required maxLength={120} />
+              <div className="border rounded-lg overflow-hidden">
+                <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 bg-muted/50 border-b">
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('bold', 'shortDesc')} className="p-1.5 rounded hover:bg-background"><Bold className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('italic', 'shortDesc')} className="p-1.5 rounded hover:bg-background"><Italic className="h-4 w-4" /></button>
+                  <Separator orientation="vertical" className="h-5 mx-1" />
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('insertUnorderedList', 'shortDesc')} className="p-1.5 rounded hover:bg-background"><List className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('insertOrderedList', 'shortDesc')} className="p-1.5 rounded hover:bg-background"><ListOrdered className="h-4 w-4" /></button>
+                </div>
+                <div ref={shortEditorRef} contentEditable suppressContentEditableWarning
+                  onInput={onShortDescChange}
+                  className="min-h-[80px] px-3 py-2 text-sm focus:outline-none prose prose-sm max-w-none [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5" />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Full Description *</Label>
               <div className="border rounded-lg overflow-hidden">
                 <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 bg-muted/50 border-b">
-                  <button type="button" onClick={() => execCommand('bold')} className="p-1.5 rounded hover:bg-background"><Bold className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => execCommand('italic')} className="p-1.5 rounded hover:bg-background"><Italic className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('bold', 'description')} className="p-1.5 rounded hover:bg-background"><Bold className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('italic', 'description')} className="p-1.5 rounded hover:bg-background"><Italic className="h-4 w-4" /></button>
                   <Separator orientation="vertical" className="h-5 mx-1" />
-                  <button type="button" onClick={() => execCommand('insertUnorderedList')} className="p-1.5 rounded hover:bg-background"><List className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => execCommand('insertOrderedList')} className="p-1.5 rounded hover:bg-background"><ListOrdered className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('insertUnorderedList', 'description')} className="p-1.5 rounded hover:bg-background"><List className="h-4 w-4" /></button>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCommand('insertOrderedList', 'description')} className="p-1.5 rounded hover:bg-background"><ListOrdered className="h-4 w-4" /></button>
                 </div>
                 <div ref={editorRef} contentEditable suppressContentEditableWarning
                   onInput={onDescriptionChange}
-                  className="min-h-[140px] px-3 py-2 text-sm focus:outline-none prose prose-sm max-w-none" />
+                  className="min-h-[140px] px-3 py-2 text-sm focus:outline-none prose prose-sm max-w-none [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5" />
               </div>
             </div>
 
