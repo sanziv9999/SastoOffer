@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Offer Oasis - Minimalist Desktop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style type="text/tailwindcss">
+        :root {
+            --primary: #7C5CFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #FFFFFF;
+            color: var(--text-main);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <header class="bg-white sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-8 h-24 flex items-center justify-between">
+            <a class="flex items-center gap-2 shrink-0" href="index.html"><span
+                    class="material-symbols-outlined text-[var(--primary)] text-3xl">local_offer</span>
+                <h1 class="text-xl font-bold tracking-tight text-[var(--primary)]">Offer Oasis</h1>
+            </a>
+            <div class="flex-1 flex items-center justify-center max-w-2xl px-12">
+                <div class="relative w-full flex items-center gap-4">
+                    <div
+                        class="flex items-center gap-1 shrink-0 cursor-pointer hover:text-[var(--primary)] transition-colors">
+                        <span class="material-symbols-outlined text-slate-400">location_on</span>
+                        <span class="text-sm font-medium">All Cities</span>
+                        <span class="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
+                    </div>
+                    <div class="h-4 w-[1px] bg-slate-200"></div>
+                    <div class="relative flex-1">
+                        <input
+                            class="w-full bg-transparent border-none py-2 pl-8 pr-4 text-sm focus:ring-0 placeholder-slate-400"
+                            placeholder="Search for deals..." type="text" />
+                        <span
+                            class="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-8 shrink-0">
+                <button class="text-slate-500 hover:text-[var(--primary)] transition-colors relative">
+                    <span class="material-symbols-outlined text-2xl">favorite</span>
+                </button>
+                <button class="text-slate-500 hover:text-[var(--primary)] transition-colors relative">
+                    <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+                </button>
+                <button
+                    class="bg-[var(--primary)] text-white px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-[#6b4ae6] transition-all">
+                    Sign In
+                </button>
+            </div>
+        </div>
+
+        <!-- navbar........ -->
+        <nav class="max-w-7xl mx-auto px-8 pb-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-8">
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">restaurant</span>
+                        Restaurants <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">spa</span>
+                        Beauty &amp; Spa <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">confirmation_number</span>
+                        Activities <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">flight</span>
+                        Travel <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">devices</span>
+                        Electronics <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">home_repair_service</span>
+                        Home Services <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                    <a class="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">fitness_center</span>
+                        Health <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </a>
+                </div>
+                <a class="flex items-center gap-1.5 text-[var(--primary)] text-xs font-bold uppercase tracking-wider border-l border-[var(--border-color)] pl-8"
+                    href="#">
+                    <span class="material-symbols-outlined text-lg">grid_view</span>
+                    All Deals
+                </a>
+            </div>
+        </nav>
+    </header>
+
+
+    <main class="max-w-7xl mx-auto p-4 flex flex-col md:flex-row gap-8">
+        <aside class="w-full md:w-64 space-y-8 hidden md:block">
+            <h2 class="text-2xl font-bold">All Deals</h2>
+            <div class="space-y-6">
+                <div class="space-y-3">
+                    <label class="font-semibold text-sm">Search</label>
+                    <div class="relative">
+                        <input class="w-full border-slate-300  rounded-md py-2 px-3 text-sm focus:ring-primary"
+                            placeholder="Search deals..." type="text" />
+                        <button class="absolute right-0 top-0 bottom-0 bg-primary text-white px-2 rounded-r-md">
+                            <span class="material-symbols-outlined text-sm">search</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-sm">Categories</label>
+                        <span class="material-symbols-outlined text-sm">expand_less</span>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm">
+                            <input checked="" class="text-primary focus:ring-primary" name="cat" type="radio" /> All
+                            Categories
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Restaurants
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Beauty &amp; Spa
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Activities
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Travel
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Electronics
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="cat" type="radio" /> Home Services
+                        </label>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-sm">Price Range</label>
+                        <span class="material-symbols-outlined text-sm">expand_less</span>
+                    </div>
+                    <input class="w-full accent-primary" max="1000" min="0" type="range" value="0" />
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>$0</span>
+                        <span>$1000</span>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-sm">Deal Type</label>
+                        <span class="material-symbols-outlined text-sm">expand_less</span>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm">
+                            <input checked="" class="text-primary focus:ring-primary" name="type" type="radio" /> All
+                            Types
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="type" type="radio" /> Percentage Off
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="type" type="radio" /> Fixed Price
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input class="text-primary focus:ring-primary" name="type" type="radio" /> Buy One Get One
+                        </label>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-sm">Options</label>
+                        <span class="material-symbols-outlined text-sm">expand_less</span>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm">
+                        <input class="rounded text-primary focus:ring-primary" type="checkbox" /> Featured Deals Only
+                    </label>
+                </div>
+                <button
+                    class="w-full bg-[#7C5CFF] text-white py-2 rounded-lg font-semibold hover:bg-opacity-90 transition-all">Apply
+                    Filters</button>
+            </div>
+        </aside>
+        <div class="flex-1 space-y-6">
+            <div class="flex items-center justify-between">
+                <span class="text-slate-500 text-sm">6 results</span>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-500">Sort by:</span>
+                    <select class="border-slate-300  rounded-md py-1 px-3 focus:ring-primary">
+                        <option>Relevance</option>
+                        <option>Price: Low to High</option>
+                        <option>Price: High to Low</option>
+                        <option>Newest</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <!-- results....... -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div
+                    class="bg-white  border border-slate-200 rounded-xl overflow-hidden group hover:shadow-lg hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Luxury Dinner" class="w-full h-full object-cover"
+                            src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format" />
+                        <div
+                            class="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            Featured</div>
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            50% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">restaurant</span> Restaurants</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> New York</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800  group-hover:text-primary transition-colors line-clamp-2">
+                            50% Off Luxury 5-Course Dinner for Two</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$100</span>
+                            <span class="text-sm text-slate-400 line-through">$200</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <a href="detail.html"
+                            class="w-full py-2 border border-slate-200  rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </a>
+                    </div>
+                </div>
+                <div
+                    class="bg-white  border border-slate-200  rounded-xl overflow-hidden group hover:shadow-lg  hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Spa Day" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtqTrU5s6iza2vbaNDP4WBAIgxzMx0kf6tlKfKInYtQ-OkThvHx8_NkEziwdkR4PjabA8cTKgVDh5-oxuzWIe_Piy-qfedAtMdElAsJSwvtFq3Q8w9B0ZIZBfp7T-GaROZXFkKwLmv9_uipplg4yrNEFHL-ZsegCtdyjUhBFbsFG6hJQzeDmt5lvgQ8nsVyace5R6tf1uctV_oyJHiqIg5gx3WLiUfEnkFuobv2xJVjQN753EF4tJXZEPA-BJM9I8qHm8vvXA0s1Iu" />
+                        <div
+                            class="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            Featured</div>
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            30% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">spa</span> Beauty &amp; Spa</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> Los Angeles</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800  group-hover:text-primary transition-colors line-clamp-2">
+                            Luxury Spa Day Package - 30% Off</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$210</span>
+                            <span class="text-sm text-slate-400 line-through">$300</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <button
+                            class="w-full py-2 border border-slate-200 rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="bg-white  border border-slate-200  rounded-xl overflow-hidden group hover:shadow-lg hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Mountain Tour" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWOK66gSQOXKOz8ZWDu9TjwJ5g5UC8ktjGM9sJv1Ptc1y9BnYoSvIK0uqGKX7xsqlyfudWJP1mRMwLAerfLOKVt4jzlKF9hHgNuuv3ER8NtYugGODDlADlEMvyIr-MEMdgu5bn9jHh-TcFI9XYt7_OYj4nJJmVYum3e3JhWQcnl9JOG1ikwgVF7a67aXrW2lympKuU9vRxoIICFostdQwI4c-UQnJvqndSiXNPTEu6O3MZVLblWVw09KFbug-nSy25FnuIrX3QUxqA" />
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            50% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">hiking</span> Activities</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> Chicago</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 group-hover:text-primary transition-colors line-clamp-2">
+                            Guided Mountain Hiking Tour - Buy 1 Get 1 Free</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$75</span>
+                            <span class="text-sm text-slate-400 line-through">$150</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <button
+                            class="w-full py-2 border border-slate-200 rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="bg-white border border-slate-200  rounded-xl overflow-hidden group hover:shadow-lg hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Brunch" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDofB0VY7rn6Q0_JdueC0zy2W5VnqQoH4fRHpTCOHpqyEX_U-7TYX6Vc4yOlgHREBNj5oM1vQLouzmrp1DQga7m0NMbmcpu7l3mUQLGX6CLJhQ5HuqRRsIlUBT_lm1_cpmywuhPWfcnqRfXSOUnwDeZStD10ektBXPHKhLP4kOKArVmkMZBXMoP9DydvRwJrIheB9U9z3LUnec-RLM4wdqA6JWug3TvLsfe9fVOjRkBXdEi5saKs7ouoYhAi9jwU2rt3vzL3fK1kebl" />
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            40% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">restaurant</span> Restaurants</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> New York</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800  group-hover:text-primary transition-colors line-clamp-2">
+                            Weekend Brunch Buffet - 40% Off</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$48</span>
+                            <span class="text-sm text-slate-400 line-through">$80</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <button
+                            class="w-full py-2 border border-slate-200  rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="bg-white  border border-slate-200  rounded-xl overflow-hidden group hover:shadow-lg hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Facial Treatment" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKoHesF3yUFq1zG9kBTdDkznc11UKilwDZPsvGawboyc2Dmf9QGKQ3uOrkWyoP-BvDz7F4m9DJ5C8qx9AN7EXZTiwMtWVSNPLSNWzfAXK6crmZZmppKG_oF_6hK2OtP578Rscjco-05A-bZ9wGRgdaSCK9j88HdyVTXZqyepIDv8gG69XjVQi7Co5F5m1Roy2f5c68VgSJqlf2yX5pdz2XNUTAczJ1dx7Ko4kgvsrE6a8eJ_uTIVKe1rOViO91v0tGtd1KVLzcsZAm" />
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            33% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">spa</span> Beauty &amp; Spa</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> Los Angeles</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800  group-hover:text-primary transition-colors line-clamp-2">
+                            Premium Facial Treatment Bundle - Save $75</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$150</span>
+                            <span class="text-sm text-slate-400 line-through">$225</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <button
+                            class="w-full py-2 border border-slate-200  rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="bg-white  border border-slate-200  rounded-xl overflow-hidden group hover:shadow-lg hover:scale-105 transition-all">
+                    <div class="relative aspect-video">
+                        <img alt="Rafting" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_aFP2r7z3N_DJiyJ_FmRfprEfzrdDIzrPNkYL1ODLIdpo3elVHnJvev_nxKX1izEpfdrgFVcmaLXvN67Z8GMPhE18e4gNFBtKfXMcR6SnF4NY3jZFU0orLggrsXCttenR2qItAQN2npLOqw6JlN0dM9s3c6carAYK5zH_UeMphq3XP2to7cqba2ABz-SkvYH7vHdZ96qQtB6zQIyr0yM5okwXAsJcbeZ0nq3oQyK_BPmcNk2fbwjGc0NZ-i0OxqtLXVt5s_4Psm7R" />
+                        <div
+                            class="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            Featured</div>
+                        <div
+                            class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            25% OFF</div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div
+                            class="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">hiking</span> Activities</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">location_on</span> Chicago</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800  group-hover:text-primary transition-colors line-clamp-2">
+                            White Water Rafting Adventure - 25% Off</h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-bold text-primary">$90</span>
+                            <span class="text-sm text-slate-400 line-through">$120</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[10px] text-orange-500 font-medium">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            Ends about 2 days ago
+                        </div>
+                        <button
+                            class="w-full py-2 border border-slate-200  rounded-lg text-sm font-semibold flex items-center justify-center gap-1 hover:bg-green-600 hover:text-white transition-colors">
+                            View Deal <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <footer class="bg-white border-t border-slate-50 mt-30 pb-20">
+        <div class="max-w-7xl mx-auto px-8 pt-20 grid grid-cols-4 gap-12">
+            <div>
+                <div class="flex items-center gap-2 mb-8">
+                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">local_offer</span>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900">Offer Oasis</h1>
+                </div>
+                <p class="text-slate-400 text-sm leading-relaxed max-w-xs">Find the best deals and offers from your
+                    favorite businesses. We bring you the most exclusive discounts every day.</p>
+            </div>
+            <div>
+                <h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Company</h5>
+                <ul class="space-y-4 text-sm text-slate-400">
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">About Us</a></li>
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">Careers</a></li>
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">Press</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Support</h5>
+                <ul class="space-y-4 text-sm text-slate-400">
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">Help Center</a></li>
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">Partner Support</a></li>
+                    <li><a class="hover:text-[var(--primary)] transition-colors" href="#">Terms</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Newsletter</h5>
+                <div class="flex flex-col gap-4">
+                    <input
+                        class="bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-[var(--primary)]"
+                        placeholder="Email address" type="email" />
+                    <button
+                        class="bg-slate-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-black transition-colors">Subscribe</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div
+            class="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-slate-50 flex items-center justify-between text-xs text-slate-300 font-medium">
+            <span>© 2024 Offer Oasis. Refined design.</span>
+            <div class="flex items-center gap-8">
+                <a href="#">
+                    Instagram</a>
+                <a href="#">
+                    Facebook</a>
+                <a href="#">
+                    LinkedIn</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<title>Offer Oasis - Minimalist Desktop</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<style type="text/tailwindcss">
+		:root {
+            --primary: #7C5CFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #FFFFFF;
+            color: var(--text-main);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+        }
+    </style>
+	<style>
+		body {
+			min-height: max(884px, 100dvh);
+		}
+	</style>
+</head>
+
+<body class="min-h-screen">
+	<header class="bg-white sticky top-0 z-50">
+		<div class="max-w-7xl mx-auto px-8 h-24 flex items-center justify-between">
+			<a class="flex items-center gap-2 shrink-0" href="index.html"><span
+					class="material-symbols-outlined text-[var(--primary)] text-3xl">local_offer</span>
+				<h1 class="text-xl font-bold tracking-tight text-[var(--primary)]">Offer Oasis</h1>
+			</a>
+			<div class="flex-1 flex items-center justify-center max-w-2xl px-12">
+				<div class="relative w-full flex items-center gap-4">
+					<div
+						class="flex items-center gap-1 shrink-0 cursor-pointer hover:text-[var(--primary)] transition-colors">
+						<span class="material-symbols-outlined text-slate-400">location_on</span>
+						<span class="text-sm font-medium">All Cities</span>
+						<span class="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
+					</div>
+					<div class="h-4 w-[1px] bg-slate-400"></div>
+					<div class="mx-auto my-24 w-full max-max-w-[31.25rem] font-['Roboto',_Arial,_sans-serif]">
+						<div class="flex w-full flex-row items-center">
+							<input  type="text" name="searchQueryInput" placeholder="Search"
+								class="h-[2.8rem] w-full rounded-[1.625rem] border-none bg-[#f5f5f5] py-0 pl-[1.5rem] pr-[3.5rem] text-base outline-none" />
+							<button  type="submit" name="searchQuerySubmit"
+								class="ml-[-3.5rem] h-[2.8rem] w-[3.5rem] cursor-pointer border-none bg-transparent outline-none">
+								<svg class="mx-auto h-6 w-6" viewBox="0 0 24 24">
+									<path fill="#666666"
+										d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+								</svg>
+							</button>
+						</div>
+					</div>
+
+				</div>
+			</div>
+			<div class="flex items-center gap-8 shrink-0">
+				<button class="text-slate-500 hover:text-[var(--primary)] transition-colors relative">
+					<span class="material-symbols-outlined text-2xl">favorite</span>
+				</button>
+				<button class="text-slate-500 hover:text-[var(--primary)] transition-colors relative">
+					<span class="material-symbols-outlined text-2xl">shopping_cart</span>
+				</button>
+				<a href="login.html"
+					class="bg-[var(--primary)] text-white px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-[#6b4ae6] transition-all">
+					Sign In
+				</a>
+			</div>
+		</div>
+
+
+		<!-- navbar........ -->
+		<nav id="navbar" class="max-w-7xl mx-auto px-8 pb-4 transition-all duration-300">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-8">
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">restaurant</span>
+						Restaurants <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">spa</span>
+						Beauty &amp; Spa <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">confirmation_number</span>
+						Activities <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">flight</span>
+						Travel <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">devices</span>
+						Electronics <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">home_repair_service</span>
+						Home Services <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+					<a class="flex items-center gap-1.5 text-xs font-medium  hover:text-[var(--primary)] transition-colors whitespace-nowrap uppercase tracking-wider"
+						href="#">
+						<span class="material-symbols-outlined text-lg">fitness_center</span>
+						Health <span class="material-symbols-outlined text-sm">expand_more</span>
+					</a>
+				</div>
+				<a class="flex items-center gap-1.5 text-[var(--primary)] text-xs font-bold uppercase tracking-wider border-l border-[var(--border-color)] pl-8"
+					href="deals.html">
+					<span class="material-symbols-outlined text-lg">grid_view</span>
+					All Deals
+				</a>
+			</div>
+		</nav>
+	</header>
+
+
+	<main class="max-w-7xl mx-auto px-8 py-12">
+		<section class="mb-12 cursor-pointer">
+			<a href="deals.html">
+				<div class="relative rounded-[32px] overflow-hidden aspect-[21/7] shadow-2xl group">
+					<img alt="Summer Interior" class="absolute inset-0 w-full h-full object-cover"
+						src="https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format" />
+					<div
+						class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex flex-col justify-center px-20">
+						<h2 class="text-6xl font-extrabold text-white mb-4 leading-tight">Summer Deals</h2>
+						<p class="text-white/90 text-xl mb-8 max-w-md">Up to 70% off on selected summer items</p>
+						<button
+							class="bg-white text-slate-900 w-fit px-8 py-3.5 rounded-2xl text-base font-bold flex items-center gap-3 hover:bg-slate-100 transition-colors">
+							View Offers
+							<span class="material-symbols-outlined text-xl">arrow_forward</span>
+						</button>
+					</div>
+					<button
+						class="absolute left-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white w-12 h-12 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+						<span class="material-symbols-outlined">chevron_left</span>
+					</button>
+					<button
+						class="absolute right-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white w-12 h-12 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+						<span class="material-symbols-outlined">chevron_right</span>
+					</button>
+				</div>
+			</a>
+		</section>
+
+
+		<!-- body -->
+		<div class="flex items-center justify-between mb-12">
+			<h3 class="text-3xl font-light text-slate-900 tracking-tight">Discover Oasis</h3>
+			<div class="flex items-center gap-6">
+				<a href="" class="px-2  rounded-full border hover:bg-slate-100 transition-colors">View more</a>
+			</div>
+		</div>
+		<div class="grid grid-cols-4 gap-x-8 gap-y-16 ">
+			<a class="group cursor-pointer " href="detail.html">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl ">
+					<img alt="Dinner"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">50%
+							OFF</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Restaurants</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						Luxury 5-Course Dinner for Two</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$100</span>
+						<span class="text-sm text-slate-300 line-through">$200</span>
+					</div>
+				</div>
+			</a>
+			<div class="group cursor-pointer">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl">
+					<img alt="Spa"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFv5V13tJFhVx_Lsg2e0YwaxEzTqwXuLL6NwYlsnf98jxJOkTMyuDxp17Qmi2QzOV05Tg_ZTyD1FdTh7W8E7mSqOahFxm_BpM-LRkqeZHQYuuaPMo45pTQqT8Z9LXLvjBeAoA79dQNFmk-48vkxN_TcmINUYqbzzBAL3dS2QCpl8ggb9BUZu0zuzdVUh2_pVwKuOgssSh_6JkeMkxOzPKWYwLQXzJpR69B7iUGqMKAuRmNfb8_2W00K6_pqw0nDTjbS2YxAPign9EM" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">30%
+							OFF</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Beauty &amp;
+							Spa</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						Luxury Spa Day Package</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$210</span>
+						<span class="text-sm text-slate-300 line-through">$300</span>
+					</div>
+				</div>
+			</div>
+			<div class="group cursor-pointer">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl">
+					<img alt="Hiking"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&auto=format" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">BOGO</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Activities</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						Guided Mountain Hiking Tour</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$75</span>
+						<span class="text-sm text-slate-300 line-through">$150</span>
+					</div>
+				</div>
+			</div>
+			<div class="group cursor-pointer">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl">
+					<img alt="Brunch"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&auto=format" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">40%
+							OFF</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Restaurants</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						Weekend Brunch Buffet</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$48</span>
+						<span class="text-sm text-slate-300 line-through">$80</span>
+					</div>
+				</div>
+			</div>
+			<div class="group cursor-pointer">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl">
+					<img alt="Facial"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">33%
+							OFF</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Beauty &amp;
+							Spa</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						Premium Facial Treatment</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$150</span>
+						<span class="text-sm text-slate-300 line-through">$225</span>
+					</div>
+				</div>
+			</div>
+			<div class="group cursor-pointer">
+				<div class="relative aspect-[5/5] mb-6 overflow-hidden rounded-xl">
+					<img alt="Rafting"
+						class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPFqQuclju1_UuzgaBVcaLPJ41IO0vgLWqEtQMtV1yAt8fJNY_CAfzpkD11fxSJyjoGsO2YJ2MXVOgLCMXX7gKfOXo8NlHcdVvtifamtnxN8PcCJiWCkglmZRHppjvVxAGV-cUfZehgJjDlVAmI8cMDdBnw7KF49W3dGgrAa-krC1U-yVPEDyNpyJ505ovXVZCkw8BZlN_hNxv-EWuc_3w1dEIWQYPCuN_wJIWdyuZ5xOVInJz8AosbaaBi1cYc8VwGHCmro_jiSIL" />
+					<div class="absolute top-4 left-4">
+						<span
+							class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-green-600">25%
+							OFF</span>
+					</div>
+				</div>
+				<div class="space-y-3">
+					<div class="flex justify-between items-start">
+						<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Activities</span>
+						<span
+							class="material-symbols-outlined text-slate-300 hover:text-red-400 transition-colors">favorite</span>
+					</div>
+					<h4
+						class="text-base font-medium text-slate-800 leading-snug group-hover:text-[var(--primary)] transition-colors">
+						White Water Rafting Adventure</h4>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-bold text-[var(--primary)]">$90</span>
+						<span class="text-sm text-slate-300 line-through">$120</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+
+	<!-- popular brands.............. -->
+
+	<section class="text-center max-w-7xl mx-auto px-8 py-12">
+		<h2 class="text-2xl font-bold mb-10 ">Popular Brands</h2>
+		<div class="flex flex-wrap justify-center gap-8 md:gap-12">
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Gourmet Delights" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhF2g2wJRI4-I2P5am5YvW-bLYwlKpdNUj-fYMvXUskwz-z4rxmjtMweYTt-4WHjcG8EPeWRwMnT7xdR9HvidtoW0onGB69d_qpxf2Zw0la4MbwStM1VP0wFUbMwE1OdhTvbXg1DXvZeXYguYiz6-tbYYjanBHmSH9bzDf5XX3gh2l-MNAbM3Xym3U34S-FDpAg1hEXIejyqiOhqevdNSVWabcYVjriAFqUFb8Xkf6G34goxsgFiQ7EUrD3UM9JdXtwmMv4Evxczkw" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Gourmet Delights</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Tech Haven" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsJpxEF_lVrIfl19sjaaMOZ2rlQ8fyIm4O14EhLR1aXyrg8YOKOyzVCcf5Odc-MIpzkfoOiqM6rp4OslD7ecaP1TVgEcAjh1FNAqBRH7Y8vv7DtVfO6qzPXa9HLbXlKjnAU6NYUUkZZbaImyN5BGbQvYzH-LdvV9aZorqlKCB3HFE1O9FHEfFbsqh3LHk_o9mt0jxA_p2M-Lvlb44U2xUiBKEB3YQZnPPKyttdWTNW6o9geWfrGrAug7QXi88Bhf3G4C2K4YFw11cN" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Tech Haven</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Wellness Spa" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIVQVY7CHxbxhebqtPhyROC1zHeCwu-OhWqxoz44l_1UXhfRG-d6W_s7KBIBiMDeDVBJU9fWuXMdivdAqEMqLAE__PL4xN8RsLhR8-gt1knLyrnFw7x0PgIWG1lDH6FA_UUBeboWz3is5aF8L078OV3zeXhV0DWVdRYhyYlu_03TgRqIOkzyFgVr3uxJleId3XgM8ZEdv5_5TENZHGgcUi_Gc9E0A9g3BHX6mSK0Aw3tKSyEDu5k1fp11Ix72Sj3FPAcFRkIpXb9CR" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Wellness Spa</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Adventure Tours" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuCy-OlhmmTTGIuliezx70H2x0EdwqzaF2oNSaaOuFlqN0VK-_7STg5ZX4pFz9bYJfk4htVANV1BscwCVasMmL_UJOd06qYlHtsbWP0rIZr6gwz_SEs2DfJzBiPKrYJ4t2HRypseYBqNohrrcpBLrI1_xk40SN4QZtVdlCiVKEYapv7pnDu7iwnL3DqMzWf5IO5XX9kzbXwL0T31mPoMLIK2t1g2aDqHDWqFDOniEmCE3rc01yrucuw92RvDvUB5vAYkNXjZZuISACko" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Adventure Tours</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Style Boutique" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9T4uXl3gDDclLiXPu7Y84n__DZCqkKX46-2VWcUa7XpUav-hnFhoVym4tw8nGokTGPqoLCvUCmpS2C_g0FUWSJWjeI3WVQCGgK3NIV5LZEtU0XuyKKLk6r_zQGYyNOtCEWr9ctQx2n21gN87jxNGW_AOMra3VZkoD-LFRCzq_JD2pzJE94k5rd9MHBZ2PtPOJqVJ_7JRIhgauJV0tA8Av-DTzcDOSzbdzrus_pdtXnllp7gpxcG6x64jY1uKpI1QcLE0t-fk1anIA" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Style Boutique</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Fitness Pro" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUb8jXas5UVVJ7dM82qtnWZTRMaeyP2cI8wlyTmsd2DLuCooTjxNGHCYUeACMUvaNiBpeyW5if6ZqDy4Z8uBZ4NHke6_THVWy8OVGdI4cCB5TSQ0fuePfJnxHw9QpgUn2TuOpXn0cKF7lVrddGxf4YW28zXQsE3MC4Z18A0AwYrjen5C-K4uKwatLzIhlAmlmQNpJy9iHmByGPldKcHN71sxZYvPcGGK9-TWZPqn7DfmLBPhQf4ZwlXCmyEy9EGkVMdt42G9mfkY-h" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Fitness Pro</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Home Decor" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTWno4kTEp_eK2x02QepMH6qZC1DmfepYn270czWkoVTvdGTSE2J8bbeaww07IyX7cpa2hNrfBaQhZP59HrYg06EJF7oLx_oE1krA-ArInEBZfH7Kdl4xOuhIAga2iGq9nqnqgWfRhv7gVYagMVSNh3d6tQCrm4DClzwxUmef7JetJvcC02tD_wvGQ_QgEtc9uObitUoQohOynvoGZIvgWMSyntNcEAHAj-1EGj4y8Q_JICRl4VsEKdxxNk2CV8dZaa06yzTrLR_rP" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Home Decor</span>
+			</div>
+			<div class="flex flex-col items-center gap-3">
+				<div
+					class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-1 ring-slate-100 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+					<img alt="Bookworm" class="w-full h-full object-cover"
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPvN5Fcmxjyy11LyqW1Fku6R8Bxq-iSAh-xfgCEyLa6K-reZjYN24-ueRWjZzw9HeZFYAYxy64xJa1r1SBj2eesakx81kBqANnRIPHJzsjUwxGMLJxccZp_bdlisZqtfzQROuvDxDjDx62-yvGoUXNfeR69JnLRocYkWIyEOPxnxOXOkhijbogVOUyzCF5CKcQ1g3y5BATOWeBIniLgk9PnfZC7X-TP0sZDG2xj0-V3qqY23RgnwuMJxk1Vpe3rl2w1M-2C3gHft2j" />
+				</div>
+				<span class="text-xs font-semibold text-slate-600">Bookworm</span>
+			</div>
+		</div>
+	</section>
+
+
+
+	<footer class="bg-white border-t border-slate-50 mt-32 pb-20">
+		<div class="max-w-7xl mx-auto px-8 pt-20 grid grid-cols-4 gap-12">
+			<div>
+				<div class="flex items-center gap-2 mb-8">
+					<span class="material-symbols-outlined text-[var(--primary)] text-2xl">local_offer</span>
+					<h1 class="text-lg font-bold tracking-tight text-slate-900">Offer Oasis</h1>
+				</div>
+				<p class="text-slate-400 text-sm leading-relaxed max-w-xs">Find the best deals and offers from your
+					favorite businesses. We bring you the most exclusive discounts every day.</p>
+			</div>
+			<div>
+				<h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Company</h5>
+				<ul class="space-y-4 text-sm text-slate-400">
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">About Us</a></li>
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">Careers</a></li>
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">Press</a></li>
+				</ul>
+			</div>
+			<div>
+				<h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Support</h5>
+				<ul class="space-y-4 text-sm text-slate-400">
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">Help Center</a></li>
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">Partner Support</a></li>
+					<li><a class="hover:text-[var(--primary)] transition-colors" href="#">Terms</a></li>
+				</ul>
+			</div>
+			<div>
+				<h5 class="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Newsletter</h5>
+				<div class="flex flex-col gap-4">
+					<input
+						class="bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-[var(--primary)]"
+						placeholder="Email address" type="email" />
+					<button
+						class="bg-slate-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-black transition-colors">Subscribe</button>
+				</div>
+			</div>
+		</div>
+
+
+		<div
+			class="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-slate-50 flex items-center justify-between text-xs text-slate-300 font-medium">
+			<span>© 2024 Offer Oasis. Refined design.</span>
+			<div class="flex items-center gap-8">
+				<a href="#">
+					Instagram</a>
+				<a href="#">
+					Facebook</a>
+				<a href="#">
+					LinkedIn</a>
+			</div>
+		</div>
+	</footer>
+
+</body>
+
+</html>
