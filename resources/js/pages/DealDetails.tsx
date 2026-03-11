@@ -1,64 +1,30 @@
-
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import Link from '@/components/Link';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  Clock, 
-  MapPin, 
-  Heart, 
-  Share2, 
-  Check, 
-  Star, 
+import {
+  Clock,
+  MapPin,
+  Heart,
+  Share2,
+  Check,
+  Star,
+  ShoppingCart,
+  Tag,
+  ChevronLeft,
   AlertTriangle,
-  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/lib/toast';
-import { deals, vendors, reviews } from '@/data/mockData';
+import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { Deal, Vendor } from '@/types';
 
 const DealDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { deal } = usePage().props as any;
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [deal, setDeal] = useState<Deal | null>(null);
-  const [vendor, setVendor] = useState<Vendor | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(true);
-  
-  // Fetch deal data
-  useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      const foundDeal = deals.find(d => d.id === id);
-      setDeal(foundDeal || null);
-      
-      if (foundDeal) {
-        const foundVendor = vendors.find(v => v.id === foundDeal.vendorId);
-        setVendor(foundVendor || null);
-      }
-      
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [id]);
-  
-  if (loading) {
-    return (
-      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="h-12 w-48 bg-gray-200 rounded"></div>
-          <div className="h-6 w-32 bg-gray-200 rounded"></div>
-          <div className="h-24 w-full max-w-lg bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-  
+
   if (!deal) {
     return (
       <div className="container py-12 text-center min-h-[60vh] flex flex-col items-center justify-center">
@@ -68,85 +34,80 @@ const DealDetails = () => {
           The deal you're looking for doesn't exist or may have expired.
         </p>
         <Button asChild>
-          <Link to="/">Back to Homepage</Link>
+          <Link href="/">Back to Homepage</Link>
         </Button>
       </div>
     );
   }
-  
+
+  const discountedPrice = deal.discountedPrice ?? 0;
+  const originalPrice = deal.originalPrice ?? 0;
+  const savingsAmount = originalPrice > 0 ? originalPrice - discountedPrice : 0;
+  const discountPct =
+    typeof deal.discountPercent === 'number' && deal.discountPercent > 0
+      ? deal.discountPercent
+      : originalPrice > 0
+        ? Math.round((savingsAmount / originalPrice) * 100)
+        : 0;
+
+  const featureImage = deal.images?.find((img: any) => img.attribute_name === 'feature_photo');
+  const galleryImages = deal.images?.filter((img: any) => img.attribute_name === 'gallery') ?? [];
+
+  const timeLeft = deal.ends_at
+    ? formatDistanceToNow(new Date(deal.ends_at), { addSuffix: true })
+    : null;
+
   const handleAddToCart = () => {
     if (!user) {
-      toast.error("Please log in to purchase this deal");
+      toast.error('Please log in to purchase this deal');
       return;
     }
-    
-    // In a real app, this would add to cart in database/context
-    toast.success(`Added to cart: ${quantity} x ${deal.title}`);
+    toast.success(`Added to cart: ${quantity} × ${deal.title}`);
   };
-  
+
   const handleBuyNow = () => {
     if (!user) {
-      toast.error("Please log in to purchase this deal");
+      toast.error('Please log in to purchase this deal');
       return;
     }
-    
-    navigate(`/checkout/${deal.id}?qty=${quantity}`);
+    window.location.href = `/checkout/${deal.id}?qty=${quantity}`;
   };
-  
-  const incrementQuantity = () => {
-    if (deal.maxQuantity && quantity >= deal.maxQuantity) {
-      toast.error(`Maximum ${deal.maxQuantity} per order`);
-      return;
-    }
-    setQuantity(prev => prev + 1);
-  };
-  
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
-  
-  const timeLeft = formatDistanceToNow(new Date(deal.endDate), { addSuffix: true });
-  const discountPercentage = deal.discountPercentage || 
-    Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100);
-  
-  const dealReviews = reviews.filter(review => review.dealId === deal.id);
-  
+
   return (
-    <div className="container py-8">
+    <div className="container py-8 max-w-7xl mx-auto px-4">
       {/* Breadcrumb */}
-      <div className="text-sm mb-6 flex items-center">
-        <Link to="/" className="text-muted-foreground hover:text-foreground">
-          Home
-        </Link>
-        <span className="mx-2">/</span>
-        <Link to="/search" className="text-muted-foreground hover:text-foreground">
-          Deals
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="font-medium truncate">{deal.title}</span>
+      <div className="text-sm mb-6 flex items-center gap-1 text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+        <span>/</span>
+        <Link href="/" className="hover:text-foreground transition-colors">Deals</Link>
+        <span>/</span>
+        <span className="font-medium text-foreground truncate">{deal.title}</span>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Left Column - Images */}
+        {/* Left Column – Images */}
         <div>
-          <div className="bg-white rounded-lg overflow-hidden shadow-md mb-4">
-            <img 
-              src={deal.image} 
-              alt={deal.title}
-              className="w-full aspect-video object-cover"
-            />
-          </div>
-          
-          {/* Additional images */}
-          {deal.images && deal.images.length > 0 && (
+          {featureImage ? (
+            <div className="rounded-2xl overflow-hidden shadow-md mb-3 bg-muted">
+              <img
+                src={featureImage.image_url}
+                alt={deal.title}
+                className="w-full aspect-video object-cover"
+              />
+            </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden shadow-md mb-3 bg-muted/40 w-full aspect-video flex items-center justify-center">
+              <Tag className="h-16 w-16 text-muted-foreground/30" />
+            </div>
+          )}
+
+          {galleryImages.length > 0 && (
             <div className="grid grid-cols-4 gap-2">
-              {deal.images.map((image, index) => (
-                <div key={index} className="bg-white rounded-lg overflow-hidden shadow-sm">
-                  <img 
-                    src={image} 
-                    alt={`${deal.title} - Image ${index + 1}`}
+              {galleryImages.map((img: any) => (
+                <div key={img.id} className="rounded-lg overflow-hidden shadow-sm bg-muted">
+                  <img
+                    src={img.image_url}
+                    alt={deal.title}
                     className="w-full aspect-square object-cover"
                   />
                 </div>
@@ -154,278 +115,194 @@ const DealDetails = () => {
             </div>
           )}
         </div>
-        
-        {/* Right Column - Details */}
+
+        {/* Right Column – Details */}
         <div>
-          {/* Title and badges */}
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="secondary" className="text-xs">
-                {deal.type === 'bogo' ? 'Buy One Get One' : `${discountPercentage}% Off`}
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {discountPct > 0 && (
+              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-none">
+                {discountPct}% Off
               </Badge>
-              {deal.featured && (
-                <Badge variant="default" className="text-xs">
-                  Featured
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-xs">
-                {deal.categoryId === '1' ? 'Restaurant' : 
-                 deal.categoryId === '2' ? 'Beauty & Spa' :
-                 deal.categoryId === '3' ? 'Activities' : 'Other'}
-              </Badge>
-            </div>
-            
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">{deal.title}</h1>
-            
-            {/* Rating */}
-            <div className="flex items-center mb-4">
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                <span className="font-medium">{deal.averageRating?.toFixed(1)}</span>
-              </div>
-              <span className="mx-2 text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{dealReviews.length} reviews</span>
-              {vendor && (
-                <>
-                  <span className="mx-2 text-muted-foreground">•</span>
-                  <Link to={`/vendor/${vendor.id}`} className="text-primary hover:underline">
-                    {vendor.businessName}
-                  </Link>
-                </>
-              )}
-            </div>
+            )}
+            {deal.is_featured && (
+              <Badge variant="default" className="text-xs">Featured</Badge>
+            )}
+            {deal.subCategory && (
+              <Badge variant="outline" className="text-xs">{deal.subCategory.name}</Badge>
+            )}
+            <Badge
+              className={`text-xs border-none ${deal.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+            >
+              {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
+            </Badge>
           </div>
-          
+
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">{deal.title}</h1>
+
+          {/* Vendor */}
+          {deal.vendor && (
+            <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+              <span>By</span>
+              <Link
+                href={`/vendor-profile/${deal.vendor.id}`}
+                className="text-primary font-medium hover:underline"
+              >
+                {deal.vendor.business_name}
+              </Link>
+            </div>
+          )}
+
           {/* Price */}
-          <div className="bg-muted/50 p-4 rounded-lg mb-6">
+          <div className="bg-muted/50 p-5 rounded-xl mb-6">
             <div className="flex items-end gap-3 mb-2">
               <span className="text-3xl font-bold text-primary">
-                ${deal.discountedPrice.toFixed(2)}
+                NPR {discountedPrice.toFixed(2)}
               </span>
-              <span className="text-lg text-muted-foreground line-through">
-                ${deal.originalPrice.toFixed(2)}
-              </span>
-              <span className="text-sm font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
-                Save ${(deal.originalPrice - deal.discountedPrice).toFixed(2)}
-              </span>
-            </div>
-            
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>
-                {new Date() > new Date(deal.endDate) 
-                  ? 'Offer expired' 
-                  : `Offer ends ${timeLeft}`}
-              </span>
-              
-              {deal.maxQuantity && (
-                <span className="ml-4">
-                  {deal.quantitySold} / {deal.maxQuantity} sold
+              {originalPrice > 0 && (
+                <span className="text-lg text-muted-foreground line-through">
+                  NPR {originalPrice.toFixed(2)}
+                </span>
+              )}
+              {savingsAmount > 0 && (
+                <span className="text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  Save NPR {savingsAmount.toFixed(2)}
                 </span>
               )}
             </div>
+
+            {timeLeft && (
+              <div className="flex items-center text-sm text-muted-foreground mt-2">
+                <Clock className="h-4 w-4 mr-1.5" />
+                <span>
+                  {deal.ends_at && new Date() > new Date(deal.ends_at)
+                    ? 'Offer expired'
+                    : `Offer ends ${timeLeft}`}
+                </span>
+              </div>
+            )}
           </div>
-          
-          {/* Add to Cart */}
-          <div className="mb-6">
-            <div className="flex items-center mb-3">
-              <span className="mr-4">Quantity:</span>
+
+          {/* Quantity + Actions */}
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">Quantity:</span>
               <div className="flex items-center">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-r-none" 
-                  onClick={decrementQuantity}
+                <Button
+                  variant="outline" size="icon"
+                  className="h-8 w-8 rounded-r-none"
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                >
-                  -
-                </Button>
-                <div className="h-8 px-4 flex items-center justify-center border-y border-input">
+                >–</Button>
+                <div className="h-8 px-4 flex items-center justify-center border-y border-input text-sm font-medium">
                   {quantity}
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-l-none" 
-                  onClick={incrementQuantity}
-                  disabled={deal.maxQuantity ? quantity >= deal.maxQuantity : false}
-                >
-                  +
-                </Button>
+                <Button
+                  variant="outline" size="icon"
+                  className="h-8 w-8 rounded-l-none"
+                  onClick={() => setQuantity(q => q + 1)}
+                >+</Button>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-3">
-              <Button 
-                onClick={handleAddToCart}
-                variant="outline"
-                className="flex-1 min-w-[140px]"
-              >
+              <Button onClick={handleAddToCart} variant="outline" className="flex-1 min-w-[140px]">
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Add to Cart
               </Button>
-              <Button 
-                onClick={handleBuyNow}
-                className="flex-1 min-w-[140px]"
-              >
+              <Button onClick={handleBuyNow} className="flex-1 min-w-[140px]">
                 Buy Now
               </Button>
             </div>
+
+            <div className="flex gap-3">
+              <Button variant="ghost" size="sm">
+                <Heart className="mr-1 h-4 w-4" /> Save
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Share2 className="mr-1 h-4 w-4" /> Share
+              </Button>
+            </div>
           </div>
-          
-          {/* Actions */}
-          <div className="flex space-x-4 mb-6">
-            <Button variant="ghost" size="sm">
-              <Heart className="mr-1 h-4 w-4" />
-              Save
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Share2 className="mr-1 h-4 w-4" />
-              Share
-            </Button>
-          </div>
-          
+
           {/* Highlights */}
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">Highlights</h3>
-            <ul className="space-y-2">
-              {[
-                'Valid for dine-in only',
-                'Reservation required',
-                'Cannot be combined with other offers',
-                'Tax and gratuity not included'
-              ].map((item, index) => (
-                <li key={index} className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {deal.highlights && deal.highlights.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3">Highlights</h3>
+              <ul className="space-y-2">
+                {deal.highlights.map((item: string, i: number) => (
+                  <li key={i} className="flex items-start text-sm">
+                    <Check className="h-4 w-4 text-primary mr-2 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
-      
-      {/* Description & Details */}
-      <div className="mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold mb-4">Description</h2>
-            <div className="prose max-w-none">
-              <p>{deal.description}</p>
+
+      {/* Description Section */}
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {deal.short_description && (
+            <div>
+              <h2 className="text-xl font-bold mb-4">Summary</h2>
+              <div
+                className="prose max-w-none text-sm text-muted-foreground"
+                dangerouslySetInnerHTML={{ __html: deal.short_description }}
+              />
             </div>
-            
-            <Separator className="my-8" />
-            
-            <h2 className="text-xl font-bold mb-4">Redemption Instructions</h2>
-            <div className="prose max-w-none">
-              <p>{deal.redemptionInstructions}</p>
-            </div>
-            
-            <Separator className="my-8" />
-            
-            <h2 className="text-xl font-bold mb-4">Reviews</h2>
-            {dealReviews.length > 0 ? (
-              <div className="space-y-6">
-                {dealReviews.map(review => (
-                  <div key={review.id} className="border-b pb-4">
-                    <div className="flex items-center mb-2">
-                      <div className="flex items-center mr-3">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`h-4 w-4 ${i < review.rating ? 'text-yellow-500' : 'text-gray-300'}`}
-                            fill={i < review.rating ? 'currentColor' : 'none'}
-                          />
-                        ))}
-                      </div>
-                      <span className="font-medium">User</span>
-                      <span className="mx-2 text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">{formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}</span>
-                    </div>
-                    <p>{review.comment}</p>
-                  </div>
-                ))}
+          )}
+
+          {deal.long_description && (
+            <>
+              <Separator />
+              <div>
+                <h2 className="text-xl font-bold mb-4">Full Description</h2>
+                <div
+                  className="prose max-w-none text-sm"
+                  dangerouslySetInnerHTML={{ __html: deal.long_description }}
+                />
               </div>
-            ) : (
-              <p className="text-muted-foreground">No reviews yet.</p>
-            )}
-          </div>
-          
-          <div>
-            {vendor && (
-              <div className="bg-white shadow-md rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-3">About the Vendor</h3>
-                <div className="flex items-center mb-4">
-                  {vendor.logo ? (
-                    <img 
-                      src={vendor.logo} 
-                      alt={vendor.businessName}
-                      className="h-12 w-12 rounded-full mr-3"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
-                      {vendor.businessName.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="font-medium">{vendor.businessName}</h4>
-                    <div className="flex items-center text-sm">
-                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span>{vendor.averageRating.toFixed(1)}</span>
-                    </div>
+            </>
+          )}
+        </div>
+
+        {/* Vendor Sidebar */}
+        <div>
+          {deal.vendor && (
+            <div className="bg-card border rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-3">About the Vendor</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                  {deal.vendor.business_name?.charAt(0)}
+                </div>
+                <div>
+                  <h4 className="font-medium">{deal.vendor.business_name}</h4>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Star className="h-3.5 w-3.5 text-yellow-500 mr-1" />
+                    <span>Verified Vendor</span>
                   </div>
                 </div>
-                
-                <p className="text-sm text-muted-foreground mb-4">
-                  {vendor.description}
-                </p>
-                
-                {vendor.location && (
-                  <div className="flex items-start text-sm mb-4">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 mr-2" />
-                    <div>
-                      <p>{vendor.location.address}</p>
-                      <p>{vendor.location.city}, {vendor.location.state} {vendor.location.zipCode}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <Button asChild variant="outline" className="w-full">
-                  <Link to={`/vendor/${vendor.id}`}>
-                    View Profile
-                  </Link>
-                </Button>
               </div>
-            )}
-            
-            <div className="bg-muted/30 rounded-lg p-6 mt-6">
-              <h3 className="text-lg font-semibold mb-3">Similar Deals</h3>
-              <div className="space-y-4">
-                {deals
-                  .filter(d => d.id !== deal.id && d.categoryId === deal.categoryId)
-                  .slice(0, 3)
-                  .map(similarDeal => (
-                    <Link 
-                      key={similarDeal.id} 
-                      to={`/deals/${similarDeal.id}`}
-                      className="flex gap-3 hover:bg-muted/50 p-2 rounded -m-2"
-                    >
-                      <img 
-                        src={similarDeal.image} 
-                        alt={similarDeal.title}
-                        className="h-16 w-16 object-cover rounded"
-                      />
-                      <div>
-                        <h4 className="font-medium line-clamp-2">{similarDeal.title}</h4>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-primary font-semibold">${similarDeal.discountedPrice.toFixed(2)}</span>
-                          <span className="text-muted-foreground line-through">${similarDeal.originalPrice.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-              </div>
+
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/vendor-profile/${deal.vendor.id}`}>
+                  <MapPin className="mr-2 h-4 w-4" />
+                  View Profile
+                </Link>
+              </Button>
             </div>
+          )}
+
+          <div className="mt-4">
+            <Button asChild variant="ghost" className="w-full">
+              <Link href="/">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Back to Deals
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

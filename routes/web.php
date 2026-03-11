@@ -25,6 +25,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vendor/deals', [\App\Http\Controllers\DealController::class, 'manageDeals'])->name('vendor.deals.index');
     Route::get('/vendor/deals/create', [\App\Http\Controllers\DealController::class, 'create'])->name('vendor.deals.create');
     Route::post('/vendor/deals', [\App\Http\Controllers\DealController::class, 'store'])->name('vendor.deals.store');
+    Route::get('/vendor/deals/{deal}/edit', [\App\Http\Controllers\DealController::class, 'editDeal'])->name('vendor.deals.edit');
+    Route::put('/vendor/deals/{deal}', [\App\Http\Controllers\DealController::class, 'updateDeal'])->name('vendor.deals.update');
     
     // Vendor Profile & Settings
     Route::get('/vendor/settings', [\App\Http\Controllers\VendorProfileController::class, 'edit'])->name('vendor.settings');
@@ -32,6 +34,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vendor-profile/{vendorProfile:id}', [\App\Http\Controllers\VendorProfileController::class, 'show'])->name('vendor-profile.show');
     Route::put('/vendor-profiles/{vendorProfile}', [\App\Http\Controllers\VendorProfileController::class, 'update'])->name('vendor-profiles.update');
 });
+
+// Public Deal routes
+Route::get('/deals/{deal}', [\App\Http\Controllers\DealController::class, 'showDeal'])->name('deals.show');
 
 // Admin Routes
 Route::middleware(['auth'])->group(function () {

@@ -214,6 +214,157 @@ class DealController extends Controller
         return redirect()->route('vendor.deals.index')->with('success', 'Deal created and published successfully!');
     }
 
+    /**
+     * Public deal view (Inertia)
+     */
+    public function showDeal(Deal $deal)
+    {
+        $deal->load(['vendor', 'subCategory', 'offerTypes', 'images']);
+
+        $offer = $deal->offerTypes->first()?->pivot;
+
+        return \Inertia\Inertia::render('DealDetails', [
+            'deal' => [
+                'id'               => $deal->id,
+                'title'            => $deal->title,
+                'short_description' => $deal->short_description,
+                'long_description' => $deal->long_description,
+                'status'           => $deal->status,
+                'highlights'       => $deal->highlights,
+                'ends_at'          => $deal->ends_at?->toIso8601String(),
+                'is_featured'      => $deal->is_featured,
+                'discountedPrice'  => $offer ? (float) $offer->final_price : null,
+                'originalPrice'    => $offer ? (float) $offer->original_price : null,
+                'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
+                'images'           => $deal->images->map(fn($img) => [
+                    'id'             => $img->id,
+                    'image_url'      => $img->image_url,
+                    'attribute_name' => $img->attribute_name,
+                ]),
+                'vendor'           => $deal->vendor ? [
+                    'id'            => $deal->vendor->id,
+                    'business_name' => $deal->vendor->business_name,
+                ] : null,
+                'subCategory'      => $deal->subCategory ? [
+                    'id'   => $deal->subCategory->id,
+                    'name' => $deal->subCategory->name,
+                ] : null,
+            ],
+        ]);
+    }
+
+    /**
+     * Vendor: edit deal form (Inertia)
+     */
+    public function editDeal(Deal $deal)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        // Security: ensure the deal belongs to this vendor
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $subCategories = BusinessSubCategory::active()->orderBy('display_order')->get();
+        $offerTypes    = OfferType::where('is_active', true)->orderBy('display_name')->get();
+        $deal->load(['offerTypes', 'images']);
+
+        $offer = $deal->offerTypes->first()?->pivot;
+
+        return \Inertia\Inertia::render('vendor/EditDeal', [
+            'deal'       => [
+                'id'               => $deal->id,
+                'title'            => $deal->title,
+                'shortDesc'        => $deal->short_description,
+                'description'      => $deal->long_description,
+                'categoryId'       => $deal->business_sub_category_id,
+                'offerTypeId'      => $deal->offerTypes->first()?->id,
+                'tags'             => $deal->highlights ?? [],
+                'originalPrice'    => $offer ? (string) $offer->original_price : '',
+                'discountedPrice'  => $offer ? (string) $offer->final_price : '',
+                'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
+                'maxQuantity'      => $deal->total_inventory ? (string) $deal->total_inventory : '',
+                'startDate'        => $deal->starts_at?->format('Y-m-d'),
+                'endDate'          => $deal->ends_at?->format('Y-m-d'),
+                'requestFeatured'  => $deal->is_featured,
+                'status'           => $deal->status,
+                'images'           => $deal->images->map(fn($img) => [
+                    'id'             => $img->id,
+                    'image_url'      => $img->image_url,
+                    'attribute_name' => $img->attribute_name,
+                ]),
+            ],
+            'categories' => $subCategories,
+            'offerTypes' => $offerTypes,
+        ]);
+    }
+
+    /**
+     * Vendor: update deal
+     */
+    public function updateDeal(Request $request, Deal $deal)
+    {
+        $user   = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $data = $request->all();
+
+        $deal->update([
+            'business_sub_category_id' => (int) ($data['categoryId'] ?? $deal->business_sub_category_id),
+            'title'                    => $data['title'] ?? $deal->title,
+            'slug'                     => Str::slug($data['title'] ?? $deal->title) . '-' . $deal->id,
+            'short_description'        => $data['shortDesc'] ?? $deal->short_description,
+            'long_description'         => $data['description'] ?? $deal->long_description,
+            'total_inventory'          => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
+            'starts_at'                => !empty($data['startDate']) ? $data['startDate'] : $deal->starts_at,
+            'ends_at'                  => !empty($data['endDate']) ? $data['endDate'] : $deal->ends_at,
+            'is_featured'              => $request->boolean('requestFeatured'),
+            'highlights'               => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
+        ]);
+
+        // Handle Feature Photo replacement
+        if ($request->hasFile('featurePhoto')) {
+            $deal->images()->where('attribute_name', 'feature_photo')->delete();
+            $path = $request->file('featurePhoto')->store('deals/covers', 'public');
+            $deal->images()->create([
+                'attribute_name' => 'feature_photo',
+                'image_url'      => '/storage/' . $path,
+                'sort_order'     => 0,
+            ]);
+        }
+
+        // Handle Gallery: delete removed images
+        $keptIds = $request->input('keptGalleryIds', []);
+        if (is_string($keptIds)) {
+            $keptIds = json_decode($keptIds, true) ?? [];
+        }
+        $keptIds = array_map('intval', (array) $keptIds);
+
+        $deal->images()
+            ->where('attribute_name', 'gallery')
+            ->whereNotIn('id', $keptIds)
+            ->delete();
+
+        // Append new gallery photos
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $index => $file) {
+                $path = $file->store('deals/gallery', 'public');
+                $deal->images()->create([
+                    'attribute_name' => 'gallery',
+                    'image_url'      => '/storage/' . $path,
+                    'sort_order'     => $index + 1,
+                ]);
+            }
+        }
+
+        return redirect()->route('vendor.deals.index')->with('success', 'Deal updated successfully!');
+    }
+
     public function show(Deal $deal)
     {
         $deal->load(['vendor', 'subCategory', 'offerTypes', 'images']);

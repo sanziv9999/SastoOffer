@@ -20,7 +20,7 @@ const queryClient = new QueryClient();
 createInertiaApp({
   title: (title) => `${title} - ${appName}`,
   resolve: (name) => {
-    const page = resolvePageComponent(`./Pages/${name}.tsx`, import.meta.glob('./Pages/**/*.tsx'));
+    const page = resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx'));
     page.then((module: any) => {
       module.default.layout = module.default.layout || ((page: any) => <AuthProvider>{page}</AuthProvider>);
     });

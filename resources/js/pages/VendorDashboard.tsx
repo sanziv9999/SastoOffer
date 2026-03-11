@@ -131,7 +131,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button asChild>
-            <Link href="/vendor/create-deal">
+            <Link href="/vendor/deals/create">
               <Plus className="mr-2 h-4 w-4" />
               Create Deal
             </Link>
@@ -302,7 +302,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
               </Select>
 
               <Button asChild>
-                <Link href="/vendor/create-deal">
+                <Link href="/vendor/deals/create">
                   <Plus className="mr-2 h-4 w-4" />
                   New Deal
                 </Link>
@@ -396,10 +396,10 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                             <td className="p-4 align-middle text-right">
                               <div className="flex justify-end gap-2">
                                 <Button variant="outline" size="sm" asChild>
-                                  <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
+                                  <a href={`/vendor/deals/${deal.id}/edit`}>Edit</a>
                                 </Button>
                                 <Button variant="ghost" size="sm" asChild>
-                                  <Link href={`/deal/${deal.id}`}>View</Link>
+                                  <a href={`/deals/${deal.id}`}>View</a>
                                 </Button>
                               </div>
                             </td>
@@ -417,7 +417,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                     You haven't created any deals yet. Get started by creating your first deal.
                   </p>
                   <Button asChild>
-                    <Link href="/vendor/create-deal">
+                    <Link href="/vendor/deals/create">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Deal
                     </Link>
