@@ -15,8 +15,8 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredVendors = vendors?.filter(v =>
-    v.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.contactEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+    v.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.public_email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   return (
@@ -47,6 +47,7 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
                   <tr>
                     <th className="h-12 px-4 text-left align-middle font-medium">Business</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Contact</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Rating</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Joined</th>
                     <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
@@ -58,24 +59,29 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
                           {v.logo ? (
-                            <img src={v.logo} alt={v.businessName} className="h-8 w-8 rounded object-cover" />
+                            <img src={v.logo} alt={v.business_name} className="h-8 w-8 rounded object-cover" />
                           ) : (
-                            <div className="h-8 w-8 rounded bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">{v.businessName?.charAt(0)}</div>
+                            <div className="h-8 w-8 rounded bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">{v.business_name?.charAt(0)}</div>
                           )}
                           <div>
-                            <span className="font-medium">{v.businessName}</span>
+                            <span className="font-medium">{v.business_name}</span>
                             <p className="text-xs text-muted-foreground">{v.description?.substring(0, 50)}...</p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 align-middle">{v.contactEmail}</td>
+                      <td className="p-4 align-middle">{v.public_email}</td>
+                      <td className="p-4 align-middle">
+                        <Badge variant="outline" className="capitalize">
+                          {v.primary_category?.name || 'Uncategorized'}
+                        </Badge>
+                      </td>
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           <span>{v.averageRating?.toFixed(1) || '0.0'}</span>
                         </div>
                       </td>
-                      <td className="p-4 align-middle">{v.createdAt ? new Date(v.createdAt).toLocaleDateString() : 'N/A'}</td>
+                      <td className="p-4 align-middle">{v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
                         <Button variant="ghost" size="sm">View</Button>
                         <Button variant="ghost" size="sm" className="text-destructive">Suspend</Button>

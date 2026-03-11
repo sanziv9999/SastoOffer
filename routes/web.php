@@ -24,4 +24,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vendor/dashboard', [\App\Http\Controllers\DealController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/vendor/deals', [\App\Http\Controllers\DealController::class, 'manageDeals'])->name('vendor.deals.index');
     Route::post('/vendor/deals', [\App\Http\Controllers\DealController::class, 'store'])->name('vendor.deals.store');
+    
+    // Vendor Profile & Settings
+    Route::get('/vendor/settings', [\App\Http\Controllers\VendorProfileController::class, 'edit'])->name('vendor.settings');
+    Route::put('/vendor/settings', [\App\Http\Controllers\VendorProfileController::class, 'updateSettings'])->name('vendor.settings.update');
+    Route::get('/vendor-profile/{vendorProfile:id}', [\App\Http\Controllers\VendorProfileController::class, 'show'])->name('vendor-profile.show');
+    Route::put('/vendor-profiles/{vendorProfile}', [\App\Http\Controllers\VendorProfileController::class, 'update'])->name('vendor-profiles.update');
+});
+
+// Admin Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/vendors', [\App\Http\Controllers\VendorProfileController::class, 'index'])->name('admin.vendors.index');
 });

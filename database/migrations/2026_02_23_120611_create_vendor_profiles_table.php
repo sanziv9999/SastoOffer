@@ -53,11 +53,11 @@ return new class extends Migration
             $table->string('website_url')->nullable();
             $table->string('public_email')->nullable();
             $table->string('public_phone')->nullable();
-            $table->string('business_hours')->nullable();
+            $table->json('business_hours')->nullable();
             $table->json('social_media')->nullable();
 
-            // Default location (pickup / main shop location)
-            $table->foreignId('default_location_id')
+            // Default address (pickup / main shop location)
+            $table->foreignId('default_address_id')
                   ->nullable()
                   ->constrained('addresses')
                   ->nullOnDelete();
@@ -79,7 +79,7 @@ return new class extends Migration
             $table->dropForeign(['user_id']);
             $table->dropForeign(['primary_category_id']);
             $table->dropForeign(['verified_by_user_id']);
-            $table->dropForeign(['default_location_id']);
+            $table->dropForeign(['default_address_id']);
         });
 
         Schema::dropIfExists('vendor_profiles');

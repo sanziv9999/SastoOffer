@@ -22,7 +22,7 @@ class StoreAddressRequest extends FormRequest
             'district'       => ['sometimes', 'string', 'max:100'],
             'municipality'   => ['nullable', 'string', 'max:100'],
             'ward_no'        => ['nullable', 'string', 'max:20'],
-            'tole'           => ['sometimes', 'string', 'size:2'],
+            'tole'           => ['sometimes', 'string', 'max:255'],
             'latitude'       => ['nullable', 'numeric', 'between:-90,90'],
             'longitude'      => ['nullable', 'numeric', 'between:-180,180'],
             'is_default'     => ['nullable', 'boolean'],

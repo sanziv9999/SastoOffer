@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import MobileNavigation from '@/components/MobileNavigation';
 
-const RootLayout = () => {
+const RootLayout = ({ children }: { children?: React.ReactNode }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showFullHeader, setShowFullHeader] = useState(true);
   const lastScrollY = useRef(0);
@@ -41,7 +41,7 @@ const RootLayout = () => {
       {/* Dynamic spacer */}
       <div className={`transition-all duration-300 ${isScrolled && !showFullHeader ? 'h-14 md:h-14' : 'h-28 md:h-32'}`} />
       <main className="flex-grow">
-        <Outlet />
+        {children || <Outlet />}
       </main>
       <Footer />
       <MobileNavigation />

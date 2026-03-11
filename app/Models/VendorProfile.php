@@ -31,6 +31,8 @@ class VendorProfile extends Model
 
     protected $casts = [
         'verified_at' => 'datetime',
+        'business_hours' => 'array',
+        'social_media' => 'array',
     ];
 
     // ─── Relationships ────────────────────────────────────────

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\VendorProfile;
-use App\Models\BusinessType;
+use App\Models\PrimaryCategory;
 use App\Models\Address;
 use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class VendorProfileController extends Controller
 {
@@ -20,14 +21,14 @@ class VendorProfileController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('vendor-profiles.index', compact('vendors'));
+        return Inertia::render('admin/AdminVendors', compact('vendors'));
     }
 
     public function create()
     {
         $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
 
-        return view('vendor-profiles.create', compact('primaryCategories'));
+        return Inertia::render('vendor-profiles/Create', compact('primaryCategories'));
     }
 
     public function store(StoreVendorProfileRequest $request)
@@ -39,6 +40,19 @@ class VendorProfileController extends Controller
             $data['social_media'] = array_filter($data['social_media'], fn($item) => !empty($item['platform']) && !empty($item['url']));
         }
 
+        // Handle Address creation
+        $addressFields = ['province', 'district', 'municipality', 'ward_no', 'tole', 'latitude', 'longitude'];
+        $hasAddressData = collect($data)->only($addressFields)->filter()->isNotEmpty();
+
+        if ($hasAddressData) {
+            $addressData = collect($data)->only($addressFields)->toArray();
+            $addressData['user_id'] = $data['user_id'];
+            $addressData['label'] = 'Pickup Point';
+
+            $address = Address::create($addressData);
+            $data['default_address_id'] = $address->id;
+        }
+
         VendorProfile::create($data);
 
         return redirect()->route('vendor-profiles.index')->with('success', 'Vendor profile created successfully.');
@@ -46,19 +60,28 @@ class VendorProfileController extends Controller
 
     public function show(VendorProfile $vendorProfile)
     {
-        $vendorProfile->load(['user', 'primaryCategory', 'defaultLocation', 'images']);
+        $vendorProfile->load(['user', 'primaryCategory', 'defaultAddress', 'images']);
         $addresses = Address::where('user_id', $vendorProfile->user_id)->latest()->get();
 
-        return view('vendor-profiles.show', compact('vendorProfile', 'addresses'));
+        return Inertia::render('VendorProfile', compact('vendorProfile', 'addresses'));
     }
 
-    public function edit(VendorProfile $vendorProfile)
+    public function edit(Request $request)
     {
+        $vendorProfile = VendorProfile::firstOrCreate(
+            ['user_id' => auth()->id()],
+            [
+                'business_name' => auth()->user()->name . ' Business',
+                'slug' => \Illuminate\Support\Str::slug(auth()->user()->name . uniqid()),
+                'business_type' => 'service',
+            ]
+        );
+        
         $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
-        $addresses = Address::where('user_id', $vendorProfile->user_id)->latest()->get();
-        $vendorProfile->load('images');
+        $addresses = Address::where('user_id', auth()->id())->latest()->get();
+        $vendorProfile->load(['images', 'defaultAddress']);
 
-        return view('vendor-profiles.edit', compact('vendorProfile', 'primaryCategories', 'addresses'));
+        return Inertia::render('vendor/Settings', compact('vendorProfile', 'primaryCategories', 'addresses'));
     }
 
     public function update(UpdateVendorProfileRequest $request, VendorProfile $vendorProfile)
@@ -70,9 +93,51 @@ class VendorProfileController extends Controller
             $data['social_media'] = array_filter($data['social_media'], fn($item) => !empty($item['platform']) && !empty($item['url']));
         }
 
+        // Handle Address update/create
+        $addressFields = ['province', 'district', 'municipality', 'ward_no', 'tole', 'latitude', 'longitude'];
+        $hasAddressData = collect($data)->only($addressFields)->filter()->isNotEmpty();
+
+        if ($hasAddressData) {
+            $addressData = collect($data)->only($addressFields)->toArray();
+            $addressData['user_id'] = $vendorProfile->user_id;
+            $addressData['label'] = 'Pickup Point'; // Default label for vendor profile address
+
+            if ($vendorProfile->default_address_id) {
+                Address::where('id', $vendorProfile->default_address_id)->update($addressData);
+            } else {
+                $address = Address::create($addressData);
+                $data['default_address_id'] = $address->id;
+            }
+        }
+
         $vendorProfile->update($data);
 
-        return redirect()->route('vendor-profiles.show', $vendorProfile)->with('success', 'Vendor profile updated successfully.');
+        // Handle Image Uploads (Polymorphic)
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('vendor_profiles/logos', 'public');
+            $vendorProfile->images()->where('attribute_name', 'logo')->delete();
+            $vendorProfile->images()->create([
+                'attribute_name' => 'logo',
+                'image_url' => '/storage/' . $path,
+            ]);
+        }
+
+        if ($request->hasFile('cover')) {
+            $path = $request->file('cover')->store('vendor_profiles/covers', 'public');
+            $vendorProfile->images()->where('attribute_name', 'cover')->delete();
+            $vendorProfile->images()->create([
+                'attribute_name' => 'cover',
+                'image_url' => '/storage/' . $path,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Vendor profile updated successfully.');
+    }
+
+    public function updateSettings(UpdateVendorProfileRequest $request)
+    {
+        $vendorProfile = VendorProfile::where('user_id', auth()->id())->firstOrFail();
+        return $this->update($request, $vendorProfile);
     }
 
     public function destroy(VendorProfile $vendorProfile)
