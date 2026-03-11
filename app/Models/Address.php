@@ -13,9 +13,8 @@ class Address extends Model
 
     protected $fillable = [
         'user_id',
-        'address_line', 'city', 'state_province',
-        'postal_code', 'country_code', 'latitude', 'longitude',
-        'timezone', 'is_default', 'label',
+        'province', 'district', 'municipality', 'ward_no', 'tole', 'latitude', 'longitude',
+        'is_default', 'label'
     ];
 
     public function user()

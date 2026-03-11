@@ -18,13 +18,17 @@ class StoreVendorProfileRequest extends FormRequest
             'user_id'              => ['required', 'exists:users,id', 'unique:vendor_profiles,user_id'],
             'business_name'        => ['required', 'string', 'max:150'],
             'slug'                 => ['nullable', 'string', 'max:180', 'unique:vendor_profiles,slug'],
-            'business_type_id'     => ['nullable', 'exists:business_types,id'],
-            'pan_number'           => ['nullable', 'string', 'max:50', 'unique:vendor_profiles,pan_number'],
+            'primary_category_id'  => ['nullable', 'exists:primary_categories,id'],
             'verified_status'      => ['nullable', 'in:pending,verified,rejected,suspended'],
-            'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
             'description'          => ['nullable', 'string'],
             'website_url'          => ['nullable', 'url', 'max:255'],
-            'default_location_id'  => ['nullable', 'exists:addresses,id'],
+            'public_email'         => ['nullable', 'email', 'max:255'],
+            'public_phone'         => ['nullable', 'string', 'max:20'],
+            'business_hours'       => ['nullable', 'string'],
+            'social_media'         => ['nullable', 'array'],
+            'social_media.*.platform' => ['string'],
+            'social_media.*.url' => ['url'],
+            'default_address_id'  => ['nullable', 'exists:addresses,id'],
         ];
     }
 

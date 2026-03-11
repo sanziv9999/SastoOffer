@@ -14,18 +14,17 @@ return new class extends Migration
     Schema::create('addresses', function (Blueprint $table) {
     $table->id();
     $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    $table->string('address_line');
-    $table->string('city');
-    $table->string('state_province')->nullable();
-    $table->string('postal_code')->nullable();
-    $table->char('country_code', 2); // 'NP'
+    $table->string('province');
+    $table->string('district');
+    $table->string('municipality');
+    $table->string('ward_no');
+    $table->string('tole');
     $table->decimal('latitude', 10, 8)->nullable();
     $table->decimal('longitude', 11, 8)->nullable();
-    $table->string('timezone')->nullable(); // 'Asia/Kathmandu'
     $table->boolean('is_default')->default(true);
     $table->enum('label', [
         'Home', 'Office', 'Work', 'Pickup Point', 'Friend/Family', 'Other', 'Warehouse'
-    ])->nullable()->change();
+    ])->nullable();
     $table->timestamps();
 
     $table->index('user_id');

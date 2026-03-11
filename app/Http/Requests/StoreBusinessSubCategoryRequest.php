@@ -14,7 +14,7 @@ class StoreBusinessSubCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'business_type_id' => ['required', 'exists:business_types,id'],
+            'primary_category_id' => ['required', 'exists:primary_categories,id'],
             'name'             => ['required', 'string', 'max:255'],
             'slug'             => ['nullable', 'string', 'max:255', 'unique:business_sub_categories,slug'],
             'description'      => ['nullable', 'string'],

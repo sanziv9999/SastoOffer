@@ -19,14 +19,18 @@ class UpdateVendorProfileRequest extends FormRequest
         return [
             'business_name'        => ['sometimes', 'string', 'max:150'],
             'slug'                 => ['nullable', 'string', 'max:180', Rule::unique('vendor_profiles', 'slug')->ignore($vendor?->id)],
-            'business_type_id'     => ['nullable', 'exists:business_types,id'],
-            'pan_number'           => ['nullable', 'string', 'max:50', Rule::unique('vendor_profiles', 'pan_number')->ignore($vendor?->id)],
+            'primary_category_id'  => ['nullable', 'exists:primary_categories,id'],
             'verified_status'      => ['sometimes', 'in:pending,verified,rejected,suspended'],
             'verified_by_user_id'  => ['nullable', 'exists:users,id'],
-            'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
             'description'          => ['nullable', 'string'],
             'website_url'          => ['nullable', 'url', 'max:255'],
-            'default_location_id'  => ['nullable', 'exists:addresses,id'],
+            'public_email'         => ['nullable', 'email', 'max:255'],
+            'public_phone'         => ['nullable', 'string', 'max:20'],
+            'business_hours'       => ['nullable', 'string'],
+            'social_media'         => ['nullable', 'array'],
+            'social_media.*.platform' => ['string'],
+            'social_media.*.url' => ['url'],
+            'default_address_id'  => ['nullable', 'exists:addresses,id'],
         ];
     }
 }

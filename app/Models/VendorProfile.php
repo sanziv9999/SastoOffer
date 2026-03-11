@@ -23,7 +23,9 @@ class VendorProfile extends Model
         'public_email',
         'public_phone',
         'website_url',
-        'default_location_id',
+        'business_hours',
+        'social_media',
+        'default_address_id',
     ];
 
     protected $casts = [
@@ -51,9 +53,9 @@ class VendorProfile extends Model
         return $this->belongsTo(User::class, 'verified_by_user_id');
     }
 
-    public function defaultLocation()
+    public function defaultAddress()
     {
-        return $this->belongsTo(Address::class, 'default_location_id');
+        return $this->belongsTo(Address::class, 'default_address_id');
     }
 
     /**

@@ -17,7 +17,7 @@ class UpdateBusinessSubCategoryRequest extends FormRequest
         $subCategory = $this->route('business_sub_category');
 
         return [
-            'business_type_id' => ['sometimes', 'exists:business_types,id'],
+            'primary_category_id' => ['sometimes', 'exists:primary_categories,id'],
             'name'             => ['sometimes', 'string', 'max:255'],
             'slug'             => ['nullable', 'string', 'max:255', Rule::unique('business_sub_categories', 'slug')->ignore($subCategory->id)],
             'description'      => ['nullable', 'string'],

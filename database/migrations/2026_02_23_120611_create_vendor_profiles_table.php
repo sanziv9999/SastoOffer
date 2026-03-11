@@ -48,6 +48,8 @@ return new class extends Migration
             $table->string('website_url')->nullable();
             $table->string('public_email')->nullable();
             $table->string('public_phone')->nullable();
+            $table->string('business_hours')->nullable();
+            $table->json('social_media')->nullable();
 
             // Default location (pickup / main shop location)
             $table->foreignId('default_location_id')
