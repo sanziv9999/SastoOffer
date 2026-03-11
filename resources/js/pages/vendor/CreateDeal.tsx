@@ -47,6 +47,7 @@ const CreateDeal = () => {
     discountedPrice: '',
     discountPercentage: '',
     maxQuantity: '',
+    status: 'active',
     startDate: '',
     endDate: '',
     locationAddress: '',
@@ -54,10 +55,6 @@ const CreateDeal = () => {
     termsConditions: '',
     featurePhoto: null as File | null,
     gallery: [] as File[],
-    requestHomepagePromo: false,
-    requestFeatured: false,
-    requestUrgentDeal: false,
-    requestEmailBlast: false,
   });
 
   const [tagInput, setTagInput] = useState('');
@@ -302,7 +299,7 @@ const CreateDeal = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Deal Type</Label>
                 <Select value={data.offerTypeId?.toString()} onValueChange={v => {
@@ -324,6 +321,17 @@ const CreateDeal = () => {
                     {categories?.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={data.status} onValueChange={v => setData('status', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -487,27 +495,6 @@ const CreateDeal = () => {
             <div className="space-y-2">
               <Label>End Date *</Label>
               <Input type="date" value={data.endDate} onChange={e => setData('endDate', e.target.value)} required />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Promotion */}
-        <Card className="border-primary/30">
-          <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" /> Promotion</CardTitle></CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-start justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
-              <div className="space-y-1">
-                <Label className="text-base">Homepage Featured Banner</Label>
-                <p className="text-sm text-muted-foreground">Display your deal in the main rotating banner on the landing page.</p>
-              </div>
-              <Switch checked={data.requestHomepagePromo} onCheckedChange={v => setData('requestHomepagePromo', v)} />
-            </div>
-            <div className="flex items-start justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
-              <div className="space-y-1">
-                <Label className="text-base">Featured Deal Badge</Label>
-                <p className="text-sm text-muted-foreground">Add a "Featured" badge and priority sorting in search results.</p>
-              </div>
-              <Switch checked={data.requestFeatured} onCheckedChange={v => setData('requestFeatured', v)} />
             </div>
           </CardContent>
         </Card>

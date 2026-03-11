@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   ArrowLeft, X, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Megaphone, Clock, Tag, Info, Percent, Banknote, ShoppingCart, Save,
+  Clock, Tag, Info, Percent, Banknote, ShoppingCart, Save,
   Upload, ImagePlus
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -52,6 +51,7 @@ const EditDeal = () => {
         ? String(existingDeal.discountPercent)
         : '',
     maxQuantity: existingDeal?.maxQuantity || '',
+    status: existingDeal?.status || 'active',
     startDate: existingDeal?.startDate || '',
     endDate: existingDeal?.endDate || '',
     requestFeatured: existingDeal?.requestFeatured || false,
@@ -68,8 +68,12 @@ const EditDeal = () => {
   // New upload previews
   const [featurePreview, setFeaturePreview] = useState<string | null>(null);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
-  // Track which existing gallery images the user wants to keep (by id)
-  const [keptGalleryIds, setKeptGalleryIds] = useState<number[]>(existingGallery.map((img: any) => img.id));
+  // Track which existing gallery images the user wants to keep (by id) in form data
+  useEffect(() => {
+    const ids = existingGallery.map((img: any) => img.id);
+    setData('keptGalleryIds', ids);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingDeal?.id]);
 
   const featureInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -176,7 +180,7 @@ const EditDeal = () => {
     const files = e.target.files;
     if (files) {
       const newFiles = Array.from(files);
-      const combined = [...data.gallery, ...newFiles].slice(0, 8 - keptGalleryIds.length);
+      const combined = [...data.gallery, ...newFiles].slice(0, 8 - (data.keptGalleryIds?.length ?? 0));
       setData('gallery', combined);
       newFiles.forEach(file => {
         const reader = new FileReader();
@@ -192,19 +196,15 @@ const EditDeal = () => {
   };
 
   const removeExistingGalleryImage = (id: number) => {
-    setKeptGalleryIds(prev => prev.filter(kept => kept !== id));
+    setData('keptGalleryIds', (data.keptGalleryIds ?? []).filter((kept: number) => kept !== id));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Sync latest keptGalleryIds then submit
-    setData(prev => ({ ...prev, keptGalleryIds }));
-    setTimeout(() => {
-      put(`/vendor/deals/${existingDeal.id}`, {
-        forceFormData: true,
-        onSuccess: () => toast.success('Deal updated successfully!'),
-      });
-    }, 0);
+    put(`/vendor/deals/${existingDeal.id}`, {
+      forceFormData: true,
+      onSuccess: () => toast.success('Deal updated successfully!'),
+    });
   };
 
   return (
@@ -272,7 +272,7 @@ const EditDeal = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* Existing gallery images */}
                 {existingGallery
-                  .filter((img: any) => keptGalleryIds.includes(img.id))
+                  .filter((img: any) => (data.keptGalleryIds ?? []).includes(img.id))
                   .map((img: any) => (
                     <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border group">
                       <img src={img.image_url} alt="Gallery" className="w-full h-full object-cover" />
@@ -299,7 +299,7 @@ const EditDeal = () => {
                   </div>
                 ))}
                 {/* Add more button */}
-                {(keptGalleryIds.length + galleryPreviews.length) < 8 && (
+                {(((data.keptGalleryIds ?? []).length + galleryPreviews.length) < 8) && (
                   <button type="button" onClick={() => galleryInputRef.current?.click()}
                     className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
                     <ImagePlus className="h-5 w-5" />
@@ -373,6 +373,17 @@ const EditDeal = () => {
                     {categories?.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={data.status} onValueChange={v => setData('status', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -493,20 +504,6 @@ const EditDeal = () => {
             <div className="space-y-2">
               <Label>End Date *</Label>
               <Input type="date" value={data.endDate} onChange={e => setData('endDate', e.target.value)} required />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Promotion */}
-        <Card className="border-primary/30">
-          <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" /> Promotion</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-start justify-between p-4 border rounded-xl hover:bg-muted/30 transition-colors">
-              <div className="space-y-1">
-                <Label className="text-base">Featured Deal Badge</Label>
-                <p className="text-sm text-muted-foreground">Add a "Featured" badge and priority sorting in search results.</p>
-              </div>
-              <Switch checked={data.requestFeatured} onCheckedChange={v => setData('requestFeatured', v)} />
             </div>
           </CardContent>
         </Card>

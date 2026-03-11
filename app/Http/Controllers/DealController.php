@@ -148,7 +148,7 @@ class DealController extends Controller
             'slug' => Str::slug($data['title'] ?? 'untitled') . '-' . rand(1000, 9999),
             'short_description' => $data['shortDesc'] ?? null,
             'long_description' => $data['description'] ?? null,
-            'status' => 'active', 
+            'status' => $data['status'] ?? 'active',
             'total_inventory' => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
             'starts_at' => !empty($data['startDate']) ? $data['startDate'] : now(),
             'ends_at' => !empty($data['endDate']) ? $data['endDate'] : now()->addDays(30),
@@ -160,8 +160,9 @@ class DealController extends Controller
         $deal = Deal::create($dealData);
 
         // Handle Feature Photo
-        if ($request->hasFile('featurePhoto')) {
-            $path = $request->file('featurePhoto')->store('deals/covers', 'public');
+        $featurePhoto = $request->file('featurePhoto');
+        if ($featurePhoto instanceof \Illuminate\Http\UploadedFile && $featurePhoto->isValid()) {
+            $path = $featurePhoto->store('deals/covers', 'public');
             \Illuminate\Support\Facades\Log::info('Feature photo stored:', ['path' => $path]);
             $deal->images()->create([
                 'attribute_name' => 'feature_photo',
@@ -171,9 +172,14 @@ class DealController extends Controller
         }
 
         // Handle Gallery Photos
-        if ($request->hasFile('gallery')) {
-            \Illuminate\Support\Facades\Log::info('Processing gallery photos:', ['count' => count($request->file('gallery'))]);
-            foreach ($request->file('gallery') as $index => $file) {
+        $galleryFiles = $request->file('gallery');
+        if (is_array($galleryFiles) && count($galleryFiles) > 0) {
+            $validGallery = array_values(array_filter(
+                $galleryFiles,
+                fn ($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
+            ));
+            \Illuminate\Support\Facades\Log::info('Processing gallery photos:', ['count' => count($validGallery)]);
+            foreach ($validGallery as $index => $file) {
                 $path = $file->store('deals/gallery', 'public');
                 \Illuminate\Support\Facades\Log::info('Gallery photo stored:', ['path' => $path]);
                 $deal->images()->create([
@@ -325,12 +331,14 @@ class DealController extends Controller
             'ends_at'                  => !empty($data['endDate']) ? $data['endDate'] : $deal->ends_at,
             'is_featured'              => $request->boolean('requestFeatured'),
             'highlights'               => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
+            'status'                   => $data['status'] ?? $deal->status,
         ]);
 
         // Handle Feature Photo replacement
-        if ($request->hasFile('featurePhoto')) {
+        $featurePhoto = $request->file('featurePhoto');
+        if ($featurePhoto instanceof \Illuminate\Http\UploadedFile && $featurePhoto->isValid()) {
             $deal->images()->where('attribute_name', 'feature_photo')->delete();
-            $path = $request->file('featurePhoto')->store('deals/covers', 'public');
+            $path = $featurePhoto->store('deals/covers', 'public');
             $deal->images()->create([
                 'attribute_name' => 'feature_photo',
                 'image_url'      => '/storage/' . $path,
@@ -341,7 +349,13 @@ class DealController extends Controller
         // Handle Gallery: delete removed images
         $keptIds = $request->input('keptGalleryIds', []);
         if (is_string($keptIds)) {
-            $keptIds = json_decode($keptIds, true) ?? [];
+            // Support both JSON-encoded and comma-separated formats
+            $decoded = json_decode($keptIds, true);
+            if (is_array($decoded)) {
+                $keptIds = $decoded;
+            } else {
+                $keptIds = array_filter(array_map('intval', explode(',', $keptIds)));
+            }
         }
         $keptIds = array_map('intval', (array) $keptIds);
 
@@ -351,14 +365,69 @@ class DealController extends Controller
             ->delete();
 
         // Append new gallery photos
-        if ($request->hasFile('gallery')) {
-            foreach ($request->file('gallery') as $index => $file) {
+        $galleryFiles = $request->file('gallery');
+        if (is_array($galleryFiles) && count($galleryFiles) > 0) {
+            $validGallery = array_values(array_filter(
+                $galleryFiles,
+                fn ($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
+            ));
+            foreach ($validGallery as $index => $file) {
                 $path = $file->store('deals/gallery', 'public');
                 $deal->images()->create([
                     'attribute_name' => 'gallery',
                     'image_url'      => '/storage/' . $path,
                     'sort_order'     => $index + 1,
                 ]);
+            }
+        }
+
+        // ─── Sync Offer Type & Pricing (pivot: deal_offer_type) ─────────────
+
+        $offerTypeId = $data['offerTypeId'] ?? null;
+        $offerType   = $offerTypeId ? OfferType::find($offerTypeId) : null;
+
+        if ($offerType) {
+            $params = [];
+            $uiType = $data['uiType'] ?? 'percentage';
+
+            if ($uiType === 'percentage') {
+                $params['discount_percent'] = (float) ($data['discountPercentage'] ?? 0);
+            } elseif (in_array($uiType, ['fixed', 'flash', 'bundle'], true)) {
+                $original   = (float) ($data['originalPrice'] ?? 0);
+                $discounted = (float) ($data['discountedPrice'] ?? 0);
+                $params['discount_amount'] = max(0, $original - $discounted);
+            } elseif ($uiType === 'bogo') {
+                $params['buy_quantity']         = 1;
+                $params['get_quantity']         = 1;
+                $params['get_discount_percent'] = 100;
+            }
+
+            $service = app(DealOfferService::class);
+
+            $payload = [
+                'original_price' => (float) ($data['originalPrice'] ?? 0),
+                'currency_code'  => 'NPR',
+                'params'         => $params,
+                'status'         => 'active',
+            ];
+
+            // If pivot exists for this offer type, update; otherwise attach new
+            $existingPivot = DealOfferType::where('deal_id', $deal->id)
+                ->where('offer_type_id', $offerType->id)
+                ->first();
+
+            if ($existingPivot) {
+                $service->updateOfferOnDeal($deal, $offerType, $payload);
+            } else {
+                $service->attachOfferToDeal($deal, $offerType, $payload);
+            }
+
+            // Ensure only the selected offer type remains attached to this deal
+            $deal->load('offerTypes');
+            foreach ($deal->offerTypes as $attached) {
+                if ($attached->id !== $offerType->id) {
+                    $service->removeOfferFromDeal($deal, $attached);
+                }
             }
         }
 
