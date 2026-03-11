@@ -32,7 +32,14 @@ class VendorProfileController extends Controller
 
     public function store(StoreVendorProfileRequest $request)
     {
-        VendorProfile::create($request->validated());
+        $data = $request->validated();
+
+        // Handle social media array
+        if (isset($data['social_media'])) {
+            $data['social_media'] = array_filter($data['social_media'], fn($item) => !empty($item['platform']) && !empty($item['url']));
+        }
+
+        VendorProfile::create($data);
 
         return redirect()->route('vendor-profiles.index')->with('success', 'Vendor profile created successfully.');
     }
@@ -56,7 +63,14 @@ class VendorProfileController extends Controller
 
     public function update(UpdateVendorProfileRequest $request, VendorProfile $vendorProfile)
     {
-        $vendorProfile->update($request->validated());
+        $data = $request->validated();
+
+        // Handle social media array
+        if (isset($data['social_media'])) {
+            $data['social_media'] = array_filter($data['social_media'], fn($item) => !empty($item['platform']) && !empty($item['url']));
+        }
+
+        $vendorProfile->update($data);
 
         return redirect()->route('vendor-profiles.show', $vendorProfile)->with('success', 'Vendor profile updated successfully.');
     }

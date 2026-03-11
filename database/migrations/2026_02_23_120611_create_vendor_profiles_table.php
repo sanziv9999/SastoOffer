@@ -27,6 +27,11 @@ return new class extends Migration
                   ->constrained('primary_categories')
                   ->nullOnDelete();
     
+            $table->enum('business_type', [
+                'service',
+                'product',
+                'hybrid',
+            ])->default('service');
             
             // Verification workflow
             $table->enum('verified_status', [

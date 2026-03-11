@@ -21,7 +21,6 @@ class DatabaseSeeder extends Seeder
             PrimaryCategorySeeder::class,
             BusinessSubCategorySeeder::class,
             OfferTypeSeeder::class,
-            AddressSeeder::class,
         ]);
     }
 }

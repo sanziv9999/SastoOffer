@@ -17,6 +17,7 @@ class StoreVendorProfileRequest extends FormRequest
         return [
             'user_id'              => ['required', 'exists:users,id', 'unique:vendor_profiles,user_id'],
             'business_name'        => ['required', 'string', 'max:150'],
+            'business_type'        => ['nullable', 'in:service,product,hybrid'],
             'slug'                 => ['nullable', 'string', 'max:180', 'unique:vendor_profiles,slug'],
             'primary_category_id'  => ['nullable', 'exists:primary_categories,id'],
             'verified_status'      => ['nullable', 'in:pending,verified,rejected,suspended'],

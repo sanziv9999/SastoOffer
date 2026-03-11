@@ -16,16 +16,15 @@ class StoreAddressRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'user_id'        => ['required', 'exists:users,id'],
-            'address_line'   => ['required', 'string'],
-            'city'           => ['required', 'string', 'max:100'],
-            'state_province' => ['nullable', 'string', 'max:100'],
-            'postal_code'    => ['nullable', 'string', 'max:20'],
-            'country_code'   => ['required', 'string', 'size:2'],
+      return [
+            'user_id'        => ['sometimes', 'exists:users,id'],
+            'province'       => ['sometimes', 'string'],
+            'district'       => ['sometimes', 'string', 'max:100'],
+            'municipality'   => ['nullable', 'string', 'max:100'],
+            'ward_no'        => ['nullable', 'string', 'max:20'],
+            'tole'           => ['sometimes', 'string', 'size:2'],
             'latitude'       => ['nullable', 'numeric', 'between:-90,90'],
             'longitude'      => ['nullable', 'numeric', 'between:-180,180'],
-            'timezone'       => ['nullable', 'string', 'max:50'],
             'is_default'     => ['nullable', 'boolean'],
             'label'          => ['nullable', 'string', 'in:Home,Office,Work,Pickup Point,Friend/Family,Other,Warehouse'],
         ];

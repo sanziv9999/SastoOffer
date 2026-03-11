@@ -15,6 +15,7 @@ class VendorProfile extends Model
         'user_id',
         'business_name',
         'slug',
+        'business_type',
         'primary_category_id',
         'verified_status',
         'verified_at',

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('phone', 20)->nullable()->index();
 
             // foreign key to address table
-            $table->foreignId('delivery_address_id')
+            $table->foreignId('default_address_id')
                     ->nullable()
                     ->constrained('addresses')
                     ->nullOnDelete();
