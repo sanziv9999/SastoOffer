@@ -35,6 +35,23 @@ class VendorProfileController extends Controller
     {
         $data = $request->validated();
 
+        // Normalize business hours: keep only rows with a day, cast flags/fields
+        if (isset($data['business_hours']) && is_array($data['business_hours'])) {
+            $data['business_hours'] = collect($data['business_hours'])
+                ->filter(fn ($row) => !empty($row['day']))
+                ->values()
+                ->map(function ($row) {
+                    $isClosed = in_array($row['is_closed'] ?? false, [1, '1', true, 'true'], true);
+                    return [
+                        'day'       => $row['day'],
+                        'open'      => $isClosed ? null : ($row['open'] ?? null),
+                        'close'     => $isClosed ? null : ($row['close'] ?? null),
+                        'is_closed' => $isClosed,
+                    ];
+                })
+                ->all();
+        }
+
         // Handle social media array
         if (isset($data['social_media'])) {
             $data['social_media'] = array_filter($data['social_media'], fn($item) => !empty($item['platform']) && !empty($item['url']));
@@ -87,6 +104,23 @@ class VendorProfileController extends Controller
     public function update(UpdateVendorProfileRequest $request, VendorProfile $vendorProfile)
     {
         $data = $request->validated();
+
+        // Normalize business hours on update as well
+        if (isset($data['business_hours']) && is_array($data['business_hours'])) {
+            $data['business_hours'] = collect($data['business_hours'])
+                ->filter(fn ($row) => !empty($row['day']))
+                ->values()
+                ->map(function ($row) {
+                    $isClosed = in_array($row['is_closed'] ?? false, [1, '1', true, 'true'], true);
+                    return [
+                        'day'       => $row['day'],
+                        'open'      => $isClosed ? null : ($row['open'] ?? null),
+                        'close'     => $isClosed ? null : ($row['close'] ?? null),
+                        'is_closed' => $isClosed,
+                    ];
+                })
+                ->all();
+        }
 
         // Handle social media array
         if (isset($data['social_media'])) {

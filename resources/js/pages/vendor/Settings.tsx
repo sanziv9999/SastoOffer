@@ -61,7 +61,13 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
         public_email: vendorProfile?.public_email || '',
         public_phone: vendorProfile?.public_phone || '',
         website_url: vendorProfile?.website_url || '',
-        business_hours: Array.isArray(vendorProfile?.business_hours) ? vendorProfile.business_hours : [
+        business_hours: Array.isArray(vendorProfile?.business_hours)
+            ? vendorProfile.business_hours.map((h: any) => ({
+                ...h,
+                // Ensure React checkbox gets a real boolean, not "0"/"1"
+                is_closed: h.is_closed === true || h.is_closed === 1 || h.is_closed === '1',
+            }))
+            : [
             { day: 'Sunday', open: '09:00', close: '18:00', is_closed: false },
             { day: 'Monday', open: '09:00', close: '18:00', is_closed: false },
             { day: 'Tuesday', open: '09:00', close: '18:00', is_closed: false },
