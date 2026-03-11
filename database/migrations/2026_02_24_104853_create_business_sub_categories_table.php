@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             
             // Foreign key → belongs to one BusinessType
-            $table->foreignId('business_type_id')
-                  ->constrained('business_types')
+            $table->foreignId('primary_category_id')
+                  ->constrained('primary_categories')
                   ->cascadeOnDelete();
 
             $table->string('name');                     // "Mobile Phones", "Laptops", "Plumbing", "Tuition Classes"
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes
-            $table->index('business_type_id');
+            $table->index('primary_category_id');
             $table->index('slug');
             $table->index('is_active');
         });

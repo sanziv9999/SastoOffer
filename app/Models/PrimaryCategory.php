@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class BusinessType extends Model
+class PrimaryCategory extends Model
 {
-    /** @use HasFactory<\Database\Factories\BusinessTypeFactory> */
+    /** @use HasFactory<\Database\Factories\PrimaryCategoryFactory> */
     use HasFactory;
 
     protected $fillable = [

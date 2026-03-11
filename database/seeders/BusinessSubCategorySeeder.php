@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\BusinessType;
+use App\Models\PrimaryCategory;
 use App\Models\BusinessSubCategory;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +16,7 @@ class BusinessSubCategorySeeder extends Seeder
         // We'll link sub-categories to existing business types
         // Make sure you have run BusinessTypeSeeder first!
 
-        $types = BusinessType::pluck('id', 'name')->toArray();
+        $types = PrimaryCategory::pluck('id', 'name')->toArray();
 
         // If no types exist yet, you can seed some fallback types
         if (empty($types)) {
@@ -27,7 +27,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Electronics
             [
-                'business_type_id' => $types['Electronics'] ?? null,
+                'primary_category_id' => $types['Electronics'] ?? null,
                 'name'             => 'Mobile Phones & Accessories',
                 'slug'             => 'mobile-phones-accessories',
                 'description'      => 'Smartphones, cases, chargers, earphones, power banks',
@@ -35,7 +35,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Electronics'] ?? null,
+                'primary_category_id' => $types['Electronics'] ?? null,
                 'name'             => 'Laptops & Computers',
                 'slug'             => 'laptops-computers',
                 'description'      => 'Gaming laptops, ultrabooks, desktops, monitors, keyboards',
@@ -43,7 +43,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Electronics'] ?? null,
+                'primary_category_id' => $types['Electronics'] ?? null,
                 'name'             => 'Home Appliances',
                 'slug'             => 'home-appliances',
                 'description'      => 'Fans, ACs, refrigerators, washing machines, microwaves',
@@ -53,7 +53,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Fashion & Apparel
             [
-                'business_type_id' => $types['Fashion & Apparel'] ?? null,
+                'primary_category_id' => $types['Fashion & Apparel'] ?? null,
                 'name'             => "Women's Clothing",
                 'slug'             => 'womens-clothing',
                 'description'      => 'Kurtis, sarees, tops, dresses, ethnic wear',
@@ -61,7 +61,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Fashion & Apparel'] ?? null,
+                'primary_category_id' => $types['Fashion & Apparel'] ?? null,
                 'name'             => "Men's Clothing",
                 'slug'             => 'mens-clothing',
                 'description'      => 'Shirts, t-shirts, jeans, jackets, traditional wear',
@@ -71,7 +71,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Beauty & Personal Care
             [
-                'business_type_id' => $types['Beauty & Personal Care'] ?? null,
+                'primary_category_id' => $types['Beauty & Personal Care'] ?? null,
                 'name'             => 'Salons & Spa Services',
                 'slug'             => 'salons-spa',
                 'description'      => 'Haircut, facial, massage, nail art, bridal makeup',
@@ -79,7 +79,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Beauty & Personal Care'] ?? null,
+                'primary_category_id' => $types['Beauty & Personal Care'] ?? null,
                 'name'             => 'Cosmetics & Skincare',
                 'slug'             => 'cosmetics-skincare',
                 'description'      => 'Makeup, creams, face wash, sunscreen, perfumes',
@@ -89,7 +89,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Education & Coaching
             [
-                'business_type_id' => $types['Education & Coaching'] ?? null,
+                'primary_category_id' => $types['Education & Coaching'] ?? null,
                 'name'             => 'Tuition & Coaching Classes',
                 'slug'             => 'tuition-coaching',
                 'description'      => 'SEE, +2, entrance preparation, language classes',
@@ -97,7 +97,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Education & Coaching'] ?? null,
+                'primary_category_id' => $types['Education & Coaching'] ?? null,
                 'name'             => 'Online Courses & Skill Training',
                 'slug'             => 'online-courses',
                 'description'      => 'Digital marketing, coding, graphic design, spoken English',
@@ -107,7 +107,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Home Services
             [
-                'business_type_id' => $types['Home Services'] ?? null,
+                'primary_category_id' => $types['Home Services'] ?? null,
                 'name'             => 'Plumbing Services',
                 'slug'             => 'plumbing',
                 'description'      => 'Pipe repair, water tank cleaning, bathroom fitting',
@@ -115,7 +115,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Home Services'] ?? null,
+                'primary_category_id' => $types['Home Services'] ?? null,
                 'name'             => 'Cleaning Services',
                 'slug'             => 'cleaning-services',
                 'description'      => 'House cleaning, sofa/carpet cleaning, deep cleaning',
@@ -123,7 +123,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Home Services'] ?? null,
+                'primary_category_id' => $types['Home Services'] ?? null,
                 'name'             => 'Electrical & Repair Services',
                 'slug'             => 'electrical-repair',
                 'description'      => 'Wiring, fan/AC repair, inverter service, appliance repair',
@@ -133,7 +133,7 @@ class BusinessSubCategorySeeder extends Seeder
 
             // Food & Restaurant
             [
-                'business_type_id' => $types['Restaurant & Cafe'] ?? null,
+                'primary_category_id' => $types['Restaurant & Cafe'] ?? null,
                 'name'             => 'Nepali & Indian Cuisine',
                 'slug'             => 'nepali-indian-cuisine',
                 'description'      => 'Dal bhat, momo, thakali set, Indian curries',
@@ -141,7 +141,7 @@ class BusinessSubCategorySeeder extends Seeder
                 'is_active'        => true,
             ],
             [
-                'business_type_id' => $types['Restaurant & Cafe'] ?? null,
+                'primary_category_id' => $types['Restaurant & Cafe'] ?? null,
                 'name'             => 'Fast Food & Snacks',
                 'slug'             => 'fast-food-snacks',
                 'description'      => 'Burger, pizza, chowmein, sel roti, chatpate',
@@ -154,13 +154,13 @@ class BusinessSubCategorySeeder extends Seeder
 
         foreach ($subCategories as $sub) {
             // Skip if business_type_id is null (missing parent type)
-            if (!$sub['business_type_id']) {
+            if (!$sub['primary_category_id']) {
                 continue;
             }
 
             BusinessSubCategory::updateOrCreate(
                 [
-                    'business_type_id' => $sub['business_type_id'],
+                    'primary_category_id' => $sub['primary_category_id'],
                     'name'             => $sub['name'],
                 ],
                 $sub
@@ -184,7 +184,7 @@ class BusinessSubCategorySeeder extends Seeder
 
         $ids = [];
         foreach ($fallback as $type) {
-            $record = BusinessType::firstOrCreate(
+            $record = PrimaryCategory::firstOrCreate(
                 ['name' => $type['name']],
                 $type
             );

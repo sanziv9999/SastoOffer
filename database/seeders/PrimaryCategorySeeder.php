@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class BusinessTypeSeeder extends Seeder
+class PrimaryCategorySeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -27,7 +27,7 @@ class BusinessTypeSeeder extends Seeder
     ];
 
     foreach ($types as $type) {
-        \App\Models\BusinessType::firstOrCreate(
+        \App\Models\PrimaryCategory::firstOrCreate(
             ['slug' => $type['slug']],
             $type
         );

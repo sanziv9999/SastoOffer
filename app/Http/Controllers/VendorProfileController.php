@@ -14,9 +14,9 @@ class VendorProfileController extends Controller
     public function index(Request $request)
     {
         $vendors = VendorProfile::query()
-            ->with(['user', 'businessType'])
+            ->with(['user', 'primaryCategory'])
             ->when($request->filled('verified_status'), fn ($q) => $q->where('verified_status', $request->verified_status))
-            ->when($request->filled('business_type_id'), fn ($q) => $q->where('business_type_id', $request->business_type_id))
+            ->when($request->filled('primary_category_id'), fn ($q) => $q->where('primary_category_id', $request->primary_category_id))
             ->latest()
             ->paginate(15);
 
@@ -25,9 +25,9 @@ class VendorProfileController extends Controller
 
     public function create()
     {
-        $businessTypes = BusinessType::orderBy('display_order')->get();
+        $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
 
-        return view('vendor-profiles.create', compact('businessTypes'));
+        return view('vendor-profiles.create', compact('primaryCategories'));
     }
 
     public function store(StoreVendorProfileRequest $request)
@@ -39,7 +39,7 @@ class VendorProfileController extends Controller
 
     public function show(VendorProfile $vendorProfile)
     {
-        $vendorProfile->load(['user', 'businessType', 'defaultLocation', 'images']);
+        $vendorProfile->load(['user', 'primaryCategory', 'defaultLocation', 'images']);
         $addresses = Address::where('user_id', $vendorProfile->user_id)->latest()->get();
 
         return view('vendor-profiles.show', compact('vendorProfile', 'addresses'));
@@ -47,11 +47,11 @@ class VendorProfileController extends Controller
 
     public function edit(VendorProfile $vendorProfile)
     {
-        $businessTypes = BusinessType::orderBy('display_order')->get();
+        $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
         $addresses = Address::where('user_id', $vendorProfile->user_id)->latest()->get();
         $vendorProfile->load('images');
 
-        return view('vendor-profiles.edit', compact('vendorProfile', 'businessTypes', 'addresses'));
+        return view('vendor-profiles.edit', compact('vendorProfile', 'primaryCategories', 'addresses'));
     }
 
     public function update(UpdateVendorProfileRequest $request, VendorProfile $vendorProfile)

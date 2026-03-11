@@ -22,12 +22,11 @@ return new class extends Migration
             $table->string('business_name', 150);
             $table->string('slug', 180)->unique();
             // Business category/type
-            $table->foreignId('business_type_id')
+            $table->foreignId('primary_category_id')
                   ->nullable()
-                  ->constrained('business_types')
+                  ->constrained('primary_categories')
                   ->nullOnDelete();
-        
-            $table->string('pan_number', 50)->unique()->nullable(); // Nepal PAN
+    
             
             // Verification workflow
             $table->enum('verified_status', [
@@ -44,9 +43,11 @@ return new class extends Migration
                   ->nullOnDelete();
 
             // Business details
-            $table->decimal('commission_rate', 5, 2)->default(10.00);
+        
             $table->text('description')->nullable();
             $table->string('website_url')->nullable();
+            $table->string('public_email')->nullable();
+            $table->string('public_phone')->nullable();
 
             // Default location (pickup / main shop location)
             $table->foreignId('default_location_id')
@@ -58,7 +59,7 @@ return new class extends Migration
 
             // Indexes for common queries
             $table->index('verified_status');
-            $table->index('business_type_id');
+            $table->index('primary_category_id');
         });
     }
 
@@ -69,7 +70,7 @@ return new class extends Migration
     {
         Schema::table('vendor_profiles', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
-            $table->dropForeign(['business_type_id']);
+            $table->dropForeign(['primary_category_id']);
             $table->dropForeign(['verified_by_user_id']);
             $table->dropForeign(['default_location_id']);
         });

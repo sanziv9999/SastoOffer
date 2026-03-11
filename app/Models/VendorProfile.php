@@ -15,20 +15,19 @@ class VendorProfile extends Model
         'user_id',
         'business_name',
         'slug',
-        'business_type_id',
-        'pan_number',
+        'primary_category_id',
         'verified_status',
         'verified_at',
         'verified_by_user_id',
-        'commission_rate',
         'description',
+        'public_email',
+        'public_phone',
         'website_url',
         'default_location_id',
     ];
 
     protected $casts = [
         'verified_at' => 'datetime',
-        'commission_rate' => 'decimal:2',
     ];
 
     // ─── Relationships ────────────────────────────────────────
@@ -42,9 +41,9 @@ class VendorProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function businessType()
+    public function primaryCategory()
     {
-        return $this->belongsTo(BusinessType::class);
+        return $this->belongsTo(PrimaryCategory::class);
     }
 
     public function verifiedBy()

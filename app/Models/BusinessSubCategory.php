@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class BusinessSubCategory extends Model
 {
     protected $fillable = [
-        'business_type_id',
+        'primary_category_id',
         'name',
         'slug',
         'description',
@@ -23,11 +23,11 @@ class BusinessSubCategory extends Model
     // ─── Relationships ────────────────────────────────────────
 
     /**
-     * The Business Type this sub-category belongs to
+     * The primary category this sub-category belongs to
      */
-    public function businessType()
+    public function primaryCategory()
     {
-        return $this->belongsTo(BusinessType::class);
+        return $this->belongsTo(PrimaryCategory::class);
     }
 
     // Optional: if later you have products/offers that belong to sub-category
