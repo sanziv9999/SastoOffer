@@ -188,7 +188,8 @@ const CreateDeal = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post('/vendor/deals', {
-      onSuccess: () => toast.success('Deal submitted for review!'),
+      forceFormData: true,
+      onSuccess: () => toast.success('Deal created and published successfully!'),
     });
   };
 

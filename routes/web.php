@@ -23,6 +23,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/vendor/dashboard', [\App\Http\Controllers\DealController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/vendor/deals', [\App\Http\Controllers\DealController::class, 'manageDeals'])->name('vendor.deals.index');
+    Route::get('/vendor/deals/create', [\App\Http\Controllers\DealController::class, 'create'])->name('vendor.deals.create');
     Route::post('/vendor/deals', [\App\Http\Controllers\DealController::class, 'store'])->name('vendor.deals.store');
     
     // Vendor Profile & Settings

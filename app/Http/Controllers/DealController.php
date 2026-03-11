@@ -112,7 +112,11 @@ class DealController extends Controller
         $subCategories = BusinessSubCategory::active()->orderBy('display_order')->get();
         $offerTypes = OfferType::where('is_active', true)->orderBy('display_name')->get();
 
-        return view('deals.create', compact('vendors', 'subCategories', 'offerTypes'));
+        return \Inertia\Inertia::render('vendor/CreateDeal', [
+            'vendors' => $vendors,
+            'categories' => $subCategories,
+            'offerTypes' => $offerTypes,
+        ]);
     }
 
     public function store(Request $request)
@@ -139,18 +143,19 @@ class DealController extends Controller
         // Map React fields to DB fields
         $dealData = [
             'vendor_id' => $vendor->id,
-            'business_sub_category_id' => (int) $data['categoryId'],
-            'title' => $data['title'],
-            'slug' => Str::slug($data['title']) . '-' . rand(1000, 9999),
-            'short_description' => $data['shortDesc'],
-            'long_description' => $data['description'],
+            'business_sub_category_id' => (int) ($data['categoryId'] ?? 0),
+            'title' => $data['title'] ?? 'Untitled Deal',
+            'slug' => Str::slug($data['title'] ?? 'untitled') . '-' . rand(1000, 9999),
+            'short_description' => $data['shortDesc'] ?? null,
+            'long_description' => $data['description'] ?? null,
             'status' => 'active', 
-            'total_inventory' => $data['maxQuantity'] ?: null,
-            'starts_at' => $data['startDate'] ?: now(),
-            'ends_at' => $data['endDate'] ?: now()->addDays(30),
+            'total_inventory' => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
+            'starts_at' => !empty($data['startDate']) ? $data['startDate'] : now(),
+            'ends_at' => !empty($data['endDate']) ? $data['endDate'] : now()->addDays(30),
             'is_featured' => $request->boolean('requestFeatured'),
-            'highlights' => $data['tags'],
+            'highlights' => is_array($data['tags'] ?? []) ? $data['tags'] ?? [] : [$data['tags'] ?? ''],
         ];
+
 
         $deal = Deal::create($dealData);
 
