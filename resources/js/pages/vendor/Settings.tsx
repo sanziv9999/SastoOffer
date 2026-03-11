@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Building2,
     MapPin,
@@ -11,7 +10,8 @@ import {
     Facebook,
     Twitter,
     Save,
-    Plus
+    Plus,
+    Navigation
 } from 'lucide-react';
 import {
     Card,
@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 const VendorSettings = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [mapPosition, setMapPosition] = useState<[number, number]>([27.7172, 85.3240]); // Default to Kathmandu
+    const mapRef = useRef<L.Map | null>(null);
     const [addressDetails, setAddressDetails] = useState({
         province: 'bagmati',
         district: 'Kathmandu',
@@ -144,6 +145,30 @@ const VendorSettings = () => {
 
         return mapPosition ? <Marker position={mapPosition} /> : null;
     }
+
+    const handleLocateMe = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setMapPosition([lat, lng]);
+                    fetchAddressDetails(lat, lng);
+                    if (mapRef.current) {
+                        mapRef.current.flyTo([lat, lng], 16);
+                    }
+                    toast.success("Location found!");
+                },
+                (error) => {
+                    console.error("Error asking for location", error);
+                    toast.error("Please allow location access to use this feature.");
+                }
+            );
+        } else {
+            toast.error("Geolocation is not supported by your browser");
+        }
+    };
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -354,13 +379,20 @@ const VendorSettings = () => {
                                 <Separator />
 
                                 <div className="space-y-2">
-                                    <Label>Pin Location on Map</Label>
+                                    <div className="flex items-center justify-between">
+                                        <Label>Pin Location on Map</Label>
+                                        <Button type="button" variant="outline" size="sm" onClick={handleLocateMe} className="gap-2">
+                                            <Navigation className="h-4 w-4" />
+                                            Use Current Location
+                                        </Button>
+                                    </div>
                                     <div className="h-[350px] w-full rounded-lg overflow-hidden border z-10 relative">
                                         <MapContainer
                                             center={mapPosition}
                                             zoom={13}
                                             scrollWheelZoom={true}
                                             style={{ height: '100%', width: '100%' }}
+                                            ref={mapRef}
                                         >
                                             <TileLayer
                                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
