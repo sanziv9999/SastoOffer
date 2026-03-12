@@ -275,7 +275,7 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 pt-3 border-t border-border">
-                    <Link href={getDashboardLink()} className="flex items-center gap-2 text-foreground hover:text-primary py-2" onClick={toggleMobileMenu}>
+                    <Link href={getDashboardLink()} className="flex items-center gap-2 text-foreground hover:bg-primary hover:text-primary-foreground px-3 py-2 rounded-lg transition-colors" onClick={toggleMobileMenu}>
                       <LayoutDashboard className="h-4 w-4" />
                       <span>Dashboard</span>
                     </Link>

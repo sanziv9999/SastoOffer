@@ -56,7 +56,7 @@ export const MainNavigation = () => {
       <NavigationMenuList className="flex flex-nowrap gap-0.5 whitespace-nowrap">
         {parentCategories.map((category: any) => (
           <NavigationMenuItem key={category.id}>
-            <NavigationMenuTrigger className="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-muted data-[state=open]:bg-muted rounded-full">
+            <NavigationMenuTrigger className="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground data-[state=open]:bg-primary data-[state=open]:text-primary-foreground rounded-full">
               {getIconForCategory(category.slug)}
               <span>{category.name}</span>
             </NavigationMenuTrigger>
@@ -105,7 +105,7 @@ export const MainNavigation = () => {
         <NavigationMenuItem>
           <Link
             to="/search"
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 h-8 text-sm font-medium text-primary hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 h-8 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
           >
             <ShoppingBag className="h-4 w-4" />
             All Deals
