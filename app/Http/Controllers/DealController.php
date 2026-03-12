@@ -46,24 +46,34 @@ class DealController extends Controller
             ->get()
             ->map(function ($deal) {
                 $offer = $deal->offerTypes->first()?->pivot;
+
+                // Placeholder: when you implement real purchases, replace quantitySold
+                $quantitySold = 0;
+
                 return [
-                    'id' => $deal->id,
-                    'title' => $deal->title,
-                    'status' => $deal->status,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : 0,
-                    'originalPrice' => $offer ? (float) $offer->original_price : 0,
-                    'quantitySold' => 0, // Placeholder
-                    'maxQuantity' => $deal->total_inventory,
-                    'endDate' => $deal->ends_at?->toIso8601String(),
-                    'image' => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                    'id'             => $deal->id,
+                    'title'          => $deal->title,
+                    'status'         => $deal->status,
+                    'discountedPrice'=> $offer ? (float) $offer->final_price : 0,
+                    'originalPrice'  => $offer ? (float) $offer->original_price : 0,
+                    'quantitySold'   => $quantitySold,
+                    'maxQuantity'    => $deal->total_inventory,
+                    'endDate'        => $deal->ends_at?->toIso8601String(),
+                    'image'          => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
                 ];
             });
 
+        // Basic dynamic stats derived from current deal data
+        $totalSales   = $deals->sum('quantitySold');
+        $totalRevenue = $deals->sum(function ($d) {
+            return ($d['quantitySold'] ?? 0) * ($d['discountedPrice'] ?? 0);
+        });
+
         $stats = [
-            'totalRevenue' => 0, // Placeholder
-            'totalSales' => 0,   // Placeholder
-            'activeDeals' => $deals->where('status', 'active')->count(),
-            'totalDeals' => $deals->count(),
+            'totalRevenue' => $totalRevenue,
+            'totalSales'   => $totalSales,
+            'activeDeals'  => $deals->where('status', 'active')->count(),
+            'totalDeals'   => $deals->count(),
         ];
 
         return \Inertia\Inertia::render('VendorDashboard', [

@@ -1,7 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { User } from '@/types';
 import { usePage, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoading = false; // Inertia handles loading states via individual components or progress bar
 
   const logout = () => {
-    router.post(route('logout'));
+    router.post('/logout', {}, { preserveState: false });
   };
 
   return (

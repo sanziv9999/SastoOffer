@@ -18,7 +18,8 @@ use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function showLoginForm(): Response
+    /** @return Response|RedirectResponse */
+    public function showLoginForm()
     {
         if (Auth::check()) {
             return $this->redirectByRole();
@@ -26,7 +27,7 @@ class AuthController extends Controller
         return Inertia::render('LoginPage');
     }
 
-    public function login(LoginRequest $request): Response
+    public function login(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
         $request->session()->regenerate();
@@ -39,7 +40,7 @@ class AuthController extends Controller
         return Inertia::render('RegisterPage');
     }
 
-    public function register(RegisterRequest $request): Response
+    public function register(RegisterRequest $request): RedirectResponse
     {
         $user = User::create([
             'name'     => $request->validated('name'),
@@ -73,37 +74,32 @@ class AuthController extends Controller
         return $this->redirectByRole();
     }
 
-    public function logout(Request $request): Response
+    public function logout(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Inertia::render('LoginPage');
+        return redirect()->route('login', [], 303);
     }
 
-    protected function redirectByRole(): Response
+    protected function redirectByRole(): RedirectResponse
     {
         $user = Auth::user();
 
+        if ($user->hasRole('super_admin')) {
+            return redirect()->route('super-admin.dashboard');
+        }
         if ($user->hasRole('admin')) {
-            return Inertia::render('AdminDashboard');
+            return redirect()->route('admin.dashboard');
         }
         if ($user->hasRole('vendor')) {
-            $profile = $user->vendorProfile ?? null;
-            if ($profile) {
-                return Inertia::render('VendorDashboard');
-            }
-            return Inertia::render('VendorDashboard');
+            return redirect()->route('vendor.dashboard');
         }
         if ($user->hasRole('customer')) {
-            $profile = $user->customerProfile ?? null;
-            if ($profile) {
-                return Inertia::render('UserDashboard');
-            }
-            return Inertia::render('UserDashboard');
+            return redirect()->route('dashboard');
         }
 
-        return Inertia::render('HomePage');
+        return redirect()->route('home');
     }
 }

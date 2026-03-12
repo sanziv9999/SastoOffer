@@ -1,6 +1,5 @@
 import { usePage } from '@inertiajs/react';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from 'react-router-dom';
 import Link from '@/components/Link';
 import {
   LayoutDashboard,
@@ -53,7 +52,6 @@ const superAdminLinks = [
 
 const DashboardNav = () => {
   const { user: authUser } = useAuth();
-  const location = useLocation();
 
   // Detect if we are in an Inertia environment
   let isInertia = false;
@@ -64,8 +62,8 @@ const DashboardNav = () => {
     isInertia = false;
   }
 
-  // Always use React Router location for URL to ensure SPA transitions update the UI
-  const url = location.pathname;
+  // Use browser URL; Inertia visits update window.location but not react-router history
+  const url = typeof window !== 'undefined' ? window.location.pathname : '/';
   let user = authUser;
 
   if (isInertia) {
@@ -123,12 +121,15 @@ const DashboardNav = () => {
 
   return (
     <>
-      {/* Vendor section on top */}
-      {['vendor', 'admin', 'super_admin'].includes(user?.role || '') && renderLinks(vendorLinks, 'Vendor')}
-      {/* User section below */}
-      {renderLinks(userLinks, 'User')}
-      {['admin', 'super_admin'].includes(user?.role || '') && renderLinks(adminLinks, 'Admin')}
-      {user?.role === 'super_admin' && renderLinks(superAdminLinks, 'Super Admin')}
+      {user?.role === 'vendor' && renderLinks(vendorLinks, 'Vendor')}
+      {user?.role === 'customer' && renderLinks(userLinks, 'User')}
+      {user?.role === 'admin' && renderLinks(adminLinks, 'Admin')}
+      {user?.role === 'super_admin' && (
+        <>
+          {renderLinks(superAdminLinks, 'Super Admin')}
+          {renderLinks(adminLinks, 'Admin')}
+        </>
+      )}
     </>
   );
 };

@@ -1,6 +1,6 @@
-
 import { useState, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { router } from '@inertiajs/react';
+import Link from '@/components/Link';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Search, 
@@ -41,13 +41,16 @@ interface NavbarProps {
   showFullHeader?: boolean;
 }
 
+function getSearchParamsFromUrl(): URLSearchParams {
+  if (typeof window === 'undefined') return new URLSearchParams();
+  return new URLSearchParams(window.location.search);
+}
+
 const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'All Cities');
+  const [selectedCity, setSelectedCity] = useState(() => getSearchParamsFromUrl().get('city') || 'All Cities');
   
   const menuScrollRef = useRef<HTMLDivElement>(null);
 
@@ -55,9 +58,9 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
     if (e) e.preventDefault();
     const cityParam = selectedCity && selectedCity !== 'All Cities' ? `&city=${encodeURIComponent(selectedCity)}` : '';
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}${cityParam}`);
+      router.visit(`/search?q=${encodeURIComponent(searchQuery)}${cityParam}`);
     } else if (selectedCity && selectedCity !== 'All Cities') {
-      navigate(`/search?city=${encodeURIComponent(selectedCity)}`);
+      router.visit(`/search?city=${encodeURIComponent(selectedCity)}`);
     }
     setMobileMenuOpen(false);
   };
@@ -86,7 +89,7 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
         {/* Compact search-only bar when scrolled down */}
         {compactMode ? (
           <div className="flex items-center gap-3 py-2">
-            <Link to="/" className="flex-shrink-0">
+            <Link href="/" className="flex-shrink-0">
               <Logo />
             </Link>
             <form onSubmit={handleSearch} className="flex flex-1 max-w-2xl bg-muted rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
@@ -106,12 +109,14 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
             </form>
             <div className="flex items-center gap-1">
               {user ? (
-                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(getDashboardLink())}>
-                  <User className="h-5 w-5" />
+<Button variant="ghost" size="icon" className="rounded-full" asChild>
+                  <Link href={getDashboardLink()}>
+                    <User className="h-5 w-5" />
+                  </Link>
                 </Button>
               ) : (
                 <Button asChild size="sm" className="rounded-full px-4">
-                  <Link to="/login">Sign In</Link>
+                  <Link href="/login">Sign In</Link>
                 </Button>
               )}
             </div>
@@ -120,7 +125,7 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
           <>
             {/* Full header */}
             <div className="flex items-center justify-between py-3">
-              <Link to="/" className="flex-shrink-0">
+              <Link href="/" className="flex-shrink-0">
                 <Logo />
               </Link>
 
@@ -176,7 +181,7 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
                       <DropdownMenuLabel>My Account</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to={getDashboardLink()}>
+                        <Link href={getDashboardLink()}>
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           <span>Dashboard</span>
                         </Link>
@@ -190,7 +195,7 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
                   </DropdownMenu>
                 ) : (
                   <Button asChild size="sm" className="rounded-full px-5">
-                    <Link to="/login">Sign In</Link>
+                    <Link href="/login">Sign In</Link>
                   </Button>
                 )}
 
@@ -262,15 +267,15 @@ const Navbar = ({ headerIsScrolled, showFullHeader = true }: NavbarProps) => {
                 {!user ? (
                   <div className="flex flex-col gap-2 pt-3 border-t border-border">
                     <Button asChild className="w-full rounded-full" onClick={toggleMobileMenu}>
-                      <Link to="/login">Sign In</Link>
+                      <Link href="/login">Sign In</Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full rounded-full" onClick={toggleMobileMenu}>
-                      <Link to="/register">Sign Up</Link>
+                      <Link href="/register">Sign Up</Link>
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 pt-3 border-t border-border">
-                    <Link to={getDashboardLink()} className="flex items-center gap-2 text-foreground hover:text-primary py-2" onClick={toggleMobileMenu}>
+                    <Link href={getDashboardLink()} className="flex items-center gap-2 text-foreground hover:text-primary py-2" onClick={toggleMobileMenu}>
                       <LayoutDashboard className="h-4 w-4" />
                       <span>Dashboard</span>
                     </Link>

@@ -32,7 +32,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const handleLogout = () => {
     logout();
-    window.location.href = '/login';
   };
 
   return (

@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Deal;
+use Illuminate\Http\Request;
+
+class VendorAnalyticsController extends Controller
+{
+    protected function getVendorDeals()
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            return collect();
+        }
+
+        return Deal::where('vendor_id', $vendor->id)
+            ->with(['offerTypes', 'images'])
+            ->latest()
+            ->get()
+            ->map(function ($deal) {
+                $offer = $deal->offerTypes->first()?->pivot;
+
+                // Placeholder until real purchases table exists
+                $quantitySold = 0;
+
+                return [
+                    'id'             => $deal->id,
+                    'title'          => $deal->title,
+                    'status'         => $deal->status,
+                    'discountedPrice'=> $offer ? (float) $offer->final_price : 0,
+                    'originalPrice'  => $offer ? (float) $offer->original_price : 0,
+                    'quantitySold'   => $quantitySold,
+                    'endDate'        => $deal->ends_at?->toIso8601String(),
+                    'image'          => $deal->images->first()?->image_url,
+                ];
+            });
+    }
+
+    public function index(Request $request)
+    {
+        $deals = $this->getVendorDeals();
+
+        $totalSales   = $deals->sum('quantitySold');
+        $totalRevenue = $deals->sum(fn ($d) => ($d['quantitySold'] ?? 0) * ($d['discountedPrice'] ?? 0));
+
+        $stats = [
+            'totalRevenue'     => $totalRevenue,
+            'totalSales'       => $totalSales,
+            'avgOrderValue'    => $totalSales > 0 ? $totalRevenue / $totalSales : 0,
+            'pageViews'        => 0,
+            'conversionRate'   => 0,
+            'activeDealsCount' => $deals->where('status', 'active')->count(),
+        ];
+
+        $topDeals = $deals->sortByDesc('quantitySold')->values();
+
+        return \Inertia\Inertia::render('vendor/Analytics', [
+            'stats'    => $stats,
+            'topDeals' => $topDeals,
+        ]);
+    }
+
+    public function orders(Request $request)
+    {
+        // Placeholder: derive simple orders from deals until real orders exist
+        $deals = $this->getVendorDeals();
+
+        $orders = $deals->flatMap(function ($deal) {
+            if (($deal['quantitySold'] ?? 0) <= 0) {
+                return [];
+            }
+
+            return [[
+                'id'       => 'DEAL-' . $deal['id'],
+                'customer' => 'Customer',
+                'deal'     => $deal['title'],
+                'quantity' => $deal['quantitySold'],
+                'total'    => ($deal['quantitySold'] ?? 0) * ($deal['discountedPrice'] ?? 0),
+                'status'   => 'completed',
+            ]];
+        })->values();
+
+        return \Inertia\Inertia::render('vendor/Orders', [
+            'orders' => $orders,
+        ]);
+    }
+
+    public function customers(Request $request)
+    {
+        // Placeholder: no real customer table yet, return empty list
+        return \Inertia\Inertia::render('vendor/Customers', [
+            'customers' => [],
+        ]);
+    }
+
+    public function customerHistory(Request $request)
+    {
+        // Placeholder history based on derived orders
+        $deals = $this->getVendorDeals();
+
+        $history = $deals->flatMap(function ($deal) {
+            if (($deal['quantitySold'] ?? 0) <= 0) {
+                return [];
+            }
+
+            return [[
+                'id'       => 'HIST-' . $deal['id'],
+                'customer' => 'Customer',
+                'deal'     => $deal['title'],
+                'quantity' => $deal['quantitySold'],
+                'total'    => ($deal['quantitySold'] ?? 0) * ($deal['discountedPrice'] ?? 0),
+                'status'   => 'completed',
+                'date'     => $deal['endDate'] ?? now()->toIso8601String(),
+            ]];
+        })->values();
+
+        return \Inertia\Inertia::render('vendor/CustomerHistory', [
+            'history' => $history,
+        ]);
+    }
+
+    public function salesHistory(Request $request)
+    {
+        return \Inertia\Inertia::render('vendor/SalesHistory', [
+            'sales' => [],
+        ]);
+    }
+
+    public function reviews(Request $request)
+    {
+        return \Inertia\Inertia::render('vendor/Reviews', [
+            'reviews' => [],
+            'deals' => [],
+        ]);
+    }
+}
+
