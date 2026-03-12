@@ -9,7 +9,6 @@ import {
   Star,
   Search,
   Heart,
-  Gift,
   Wallet,
   MapPin
 } from 'lucide-react';
@@ -141,7 +140,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
           <CardDescription>Jump to your most used features</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-20 flex-col">
               <Link href="/search">
                 <Search className="h-6 w-6 mb-2" />
@@ -154,12 +153,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                 <span>My Favorites</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-20 flex-col">
-              <Link href="/dashboard/notifications">
-                <Gift className="h-6 w-6 mb-2" />
-                <span>Notifications</span>
-              </Link>
-            </Button>
+
             <Button asChild variant="outline" className="h-20 flex-col">
               <Link href="/dashboard/settings">
                 <MapPin className="h-6 w-6 mb-2" />

@@ -18,7 +18,6 @@ import RootLayout from "@/layouts/RootLayout";
 
 // Dashboard Sub-pages (Customer)
 import MyPurchases from "./dashboard/MyPurchases";
-import Notifications from "./dashboard/Notifications";
 import Reviews from "./dashboard/Reviews";
 import SavedDeals from "./dashboard/SavedDeals";
 import Settings from "./dashboard/Settings";
@@ -46,7 +45,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminVendors from "./admin/AdminVendors";
 
 // Mock Data
-import { deals, purchases, reviews, users, vendors, notifications, vendorOrders, vendorCustomers } from "@/data/mockData";
+import { deals, purchases, reviews, users, vendors, vendorOrders, vendorCustomers } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 
 // Dummy stats for Dashboards
@@ -152,7 +151,6 @@ const AppShell = () => {
                     <Route path="purchases/:id" element={<VoucherDetail purchases={purchases} deals={deals} vendors={vendors} />} />
                     <Route path="reviews" element={<Reviews reviews={reviews} deals={deals} />} />
                     <Route path="reviews/edit/:id" element={<EditReview reviews={reviews} deals={deals} />} />
-                    <Route path="notifications" element={<Notifications notifications={notifications} />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>
 

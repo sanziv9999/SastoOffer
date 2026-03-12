@@ -7,7 +7,6 @@ import {
   Heart,
   ShoppingBag,
   Star,
-  Bell,
   Settings,
   Store,
   BarChart3,
@@ -25,7 +24,6 @@ const userLinks = [
   { icon: Heart, label: 'Saved Deals', path: '/dashboard/favorites' },
   { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/purchases' },
   { icon: Star, label: 'Reviews', path: '/dashboard/reviews' },
-  { icon: Bell, label: 'Notifications', path: '/dashboard/notifications' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ];
 
