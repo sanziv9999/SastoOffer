@@ -14,14 +14,25 @@ class VendorProfileController extends Controller
 {
     public function index(Request $request)
     {
+        $search = trim((string) $request->query('search', ''));
         $vendors = VendorProfile::query()
             ->with(['user', 'primaryCategory'])
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($qq) use ($search) {
+                    $qq->where('business_name', 'like', "%{$search}%")
+                        ->orWhere('public_email', 'like', "%{$search}%");
+                });
+            })
             ->when($request->filled('verified_status'), fn ($q) => $q->where('verified_status', $request->verified_status))
             ->when($request->filled('primary_category_id'), fn ($q) => $q->where('primary_category_id', $request->primary_category_id))
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
-        return Inertia::render('admin/AdminVendors', compact('vendors'));
+        return Inertia::render('admin/AdminVendors', [
+            'vendors' => $vendors,
+            'filters' => ['search' => $search],
+        ]);
     }
 
     public function create()

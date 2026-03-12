@@ -38,16 +38,14 @@ const vendorLinks = [
 
 const adminLinks = [
   { icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin' },
+  { icon: Tags, label: 'Primary Categories', path: '/admin/primary-categories' },
+  { icon: Tags, label: 'Sub Categories', path: '/admin/sub-categories' },
+  { icon: Tags, label: 'Offer Types', path: '/admin/offer-types' },
+  { icon: ClipboardList, label: 'Banners', path: '/admin/banners' },
   { icon: Users, label: 'Users', path: '/admin/users' },
   { icon: Store, label: 'Vendors', path: '/admin/vendors' },
   { icon: Tags, label: 'Manage Deals', path: '/admin/deals' },
   { icon: BarChart3, label: 'Reports', path: '/admin/reports' },
-];
-
-const superAdminLinks = [
-  { icon: Shield, label: 'Super Admin', path: '/super-admin' },
-  { icon: Users, label: 'Admins', path: '/super-admin/admins' },
-  { icon: BarChart3, label: 'System Analytics', path: '/super-admin/analytics' },
 ];
 
 const DashboardNav = () => {
@@ -124,12 +122,6 @@ const DashboardNav = () => {
       {user?.role === 'vendor' && renderLinks(vendorLinks, 'Vendor')}
       {user?.role === 'customer' && renderLinks(userLinks, 'User')}
       {user?.role === 'admin' && renderLinks(adminLinks, 'Admin')}
-      {user?.role === 'super_admin' && (
-        <>
-          {renderLinks(superAdminLinks, 'Super Admin')}
-          {renderLinks(adminLinks, 'Admin')}
-        </>
-      )}
     </>
   );
 };

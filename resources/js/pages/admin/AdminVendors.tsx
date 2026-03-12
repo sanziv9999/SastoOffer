@@ -6,18 +6,22 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Star } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { router } from '@inertiajs/react';
+import AdminPagination from '@/components/AdminPagination';
 
 interface AdminVendorsProps {
-  vendors: any[];
+  vendors: any;
+  filters?: { search?: string };
 }
 
-const AdminVendors = ({ vendors }: AdminVendorsProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
+const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
+  const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+  const items = vendors?.data || [];
 
-  const filteredVendors = vendors?.filter(v =>
-    v.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.public_email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.get('/admin/vendors', { search: searchTerm || undefined }, { preserveState: true, replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -31,12 +35,12 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Vendors</CardTitle>
-              <CardDescription>{vendors?.length || 0} registered vendors</CardDescription>
+              <CardDescription>{vendors?.total || items.length || 0} registered vendors</CardDescription>
             </div>
-            <div className="flex w-full md:w-auto">
+            <form onSubmit={onSearch} className="flex w-full md:w-auto">
               <Input placeholder="Search vendors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
-              <Button size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
-            </div>
+              <Button type="submit" size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
+            </form>
           </div>
         </CardHeader>
         <CardContent>
@@ -54,7 +58,7 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredVendors.length > 0 ? filteredVendors.map(v => (
+                  {items.length > 0 ? items.map((v: any) => (
                     <tr key={v.id} className="border-b transition-colors hover:bg-muted/50">
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
@@ -97,6 +101,9 @@ const AdminVendors = ({ vendors }: AdminVendorsProps) => {
                 </tbody>
               </table>
             </div>
+          </div>
+          <div className="pt-4">
+            <AdminPagination links={vendors?.links} />
           </div>
         </CardContent>
       </Card>

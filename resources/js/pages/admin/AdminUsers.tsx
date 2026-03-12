@@ -9,14 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { toast } from 'sonner';
+import { router } from '@inertiajs/react';
+import AdminPagination from '@/components/AdminPagination';
 
 interface AdminUsersProps {
-  users: any[];
+  users: any;
+  filters?: { search?: string };
 }
 
-const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState(initialUsers || []);
+const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
+  const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+  const [users, setUsers] = useState<any[]>(initialUsers?.data || initialUsers || []);
 
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
@@ -28,6 +31,11 @@ const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const handleServerSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.get('/admin/users', { search: searchTerm || undefined }, { preserveState: true, replace: true });
+  };
 
   const handleAddUser = () => {
     if (!formData.name || !formData.email) return;
@@ -146,12 +154,12 @@ const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Users</CardTitle>
-              <CardDescription>{users?.length || 0} total users</CardDescription>
+              <CardDescription>{initialUsers?.total || users?.length || 0} total users</CardDescription>
             </div>
-            <div className="flex w-full md:w-auto">
+            <form onSubmit={handleServerSearch} className="flex w-full md:w-auto">
               <Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
-              <Button size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
-            </div>
+              <Button type="submit" size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
+            </form>
           </div>
         </CardHeader>
         <CardContent>
@@ -186,7 +194,7 @@ const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
                           {u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'User'}
                         </Badge>
                       </td>
-                      <td className="p-4 align-middle">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                      <td className="p-4 align-middle">{(u.created_at || u.createdAt) ? new Date(u.created_at || u.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
                         <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
                         <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleSuspend(u.id)}>Suspend</Button>
@@ -202,6 +210,9 @@ const AdminUsers = ({ users: initialUsers }: AdminUsersProps) => {
                 </tbody>
               </table>
             </div>
+          </div>
+          <div className="pt-4">
+            <AdminPagination links={initialUsers?.links} />
           </div>
         </CardContent>
       </Card>

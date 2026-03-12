@@ -87,10 +87,11 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasRole('super_admin')) {
-            return redirect()->route('super-admin.dashboard');
-        }
         if ($user->hasRole('admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+        // Treat any legacy "super_admin" role as admin.
+        if ($user->hasRole('super_admin')) {
             return redirect()->route('admin.dashboard');
         }
         if ($user->hasRole('vendor')) {

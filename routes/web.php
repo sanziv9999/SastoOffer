@@ -5,10 +5,12 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\VendorProfileController;
 use App\Http\Controllers\VendorAnalyticsController;
+use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
+use App\Http\Controllers\Admin\BusinessSubCategoryCrudController;
+use App\Http\Controllers\Admin\OfferTypeCrudController;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -69,6 +71,15 @@ Route::middleware(['auth'])->group(function () {
 // ——— Admin (auth) ———
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::resource('/admin/primary-categories', PrimaryCategoryCrudController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('admin.primary-categories');
+    Route::resource('/admin/sub-categories', BusinessSubCategoryCrudController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('admin.sub-categories');
+    Route::resource('/admin/offer-types', OfferTypeCrudController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('admin.offer-types');
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/admin/vendors', [VendorProfileController::class, 'index'])->name('admin.vendors.index');
     Route::get('/admin/deals', [AdminController::class, 'deals'])->name('admin.deals');
@@ -76,13 +87,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/reports', [AdminController::class, 'reports'])->name('admin.reports');
     Route::get('/admin/reports/revenue', [AdminController::class, 'revenueReports'])->name('admin.reports.revenue');
     Route::get('/admin/reports/users', [AdminController::class, 'userAnalytics'])->name('admin.reports.users');
-});
-
-// ——— Super Admin (auth) ———
-Route::middleware(['auth'])->group(function () {
-    Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super-admin.dashboard');
-    Route::get('/super-admin/admins', [SuperAdminController::class, 'admins'])->name('super-admin.admins');
-    Route::get('/super-admin/analytics', [SuperAdminController::class, 'analytics'])->name('super-admin.analytics');
 });
 
 // ——— 404 fallback (Inertia) ———

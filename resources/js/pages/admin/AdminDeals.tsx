@@ -9,19 +9,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, CheckCircle, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { router } from '@inertiajs/react';
+import AdminPagination from '@/components/AdminPagination';
 
 interface AdminDealsProps {
-  deals: any[];
+  deals: any;
+  filters?: { search?: string; status?: string };
 }
 
-const AdminDeals = ({ deals }: AdminDealsProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
+const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
+  const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+  const status = filters?.status || 'all';
+  const items = deals?.data || [];
 
-  const filterDeals = (status?: string) => {
-    let filtered = deals || [];
-    if (status && status !== 'all') filtered = filtered.filter(d => d.status === status);
-    if (searchTerm) filtered = filtered.filter(d => d.title?.toLowerCase().includes(searchTerm.toLowerCase()));
-    return filtered;
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.get('/admin/deals', { search: searchTerm || undefined, status: status !== 'all' ? status : undefined }, { preserveState: true, replace: true });
+  };
+
+  const goStatus = (s: string) => {
+    router.get('/admin/deals', { status: s !== 'all' ? s : undefined, search: searchTerm || undefined }, { preserveState: true, replace: true });
   };
 
   const renderTable = (dealsList: any[]) => (
@@ -99,27 +106,27 @@ const AdminDeals = ({ deals }: AdminDealsProps) => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Deals</CardTitle>
-              <CardDescription>{deals?.length || 0} total deals</CardDescription>
+              <CardDescription>{deals?.total || items.length || 0} total deals</CardDescription>
             </div>
-            <div className="flex w-full md:w-auto">
+            <form onSubmit={onSearch} className="flex w-full md:w-auto">
               <Input placeholder="Search deals..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
-              <Button size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
-            </div>
+              <Button type="submit" size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
+            </form>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" className="space-y-4">
+          <Tabs value={status} className="space-y-4" onValueChange={goStatus}>
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
               <TabsTrigger value="expired">Expired</TabsTrigger>
             </TabsList>
-            <TabsContent value="all">{renderTable(filterDeals())}</TabsContent>
-            <TabsContent value="pending">{renderTable(filterDeals('pending'))}</TabsContent>
-            <TabsContent value="active">{renderTable(filterDeals('active'))}</TabsContent>
-            <TabsContent value="expired">{renderTable(filterDeals('expired'))}</TabsContent>
+            <TabsContent value={status}>{renderTable(items)}</TabsContent>
           </Tabs>
+          <div className="pt-4">
+            <AdminPagination links={deals?.links} />
+          </div>
         </CardContent>
       </Card>
     </div>

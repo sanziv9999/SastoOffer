@@ -7,18 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Search, CheckCircle, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { router } from '@inertiajs/react';
+import AdminPagination from '@/components/AdminPagination';
 
 interface AdminPendingDealsProps {
-    pendingDeals: any[];
+    pendingDeals: any;
+    filters?: { search?: string };
 }
 
-const AdminPendingDeals = ({ pendingDeals }: AdminPendingDealsProps) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) => {
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const items = pendingDeals?.data || [];
 
-    const filteredDeals = pendingDeals?.filter(d =>
-        d.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.vendorName?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    const onSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get('/admin/deals/pending', { search: searchTerm || undefined }, { preserveState: true, replace: true });
+    };
 
     return (
         <div className="space-y-6">
@@ -32,12 +36,12 @@ const AdminPendingDeals = ({ pendingDeals }: AdminPendingDealsProps) => {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <CardTitle>Deals Awaiting Approval</CardTitle>
-                            <CardDescription>{pendingDeals?.length || 0} deals require your attention</CardDescription>
+                            <CardDescription>{pendingDeals?.total || items.length || 0} deals require your attention</CardDescription>
                         </div>
-                        <div className="flex w-full md:w-auto">
+                        <form onSubmit={onSearch} className="flex w-full md:w-auto">
                             <Input placeholder="Search pending deals..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
-                            <Button size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
-                        </div>
+                            <Button type="submit" size="icon" className="rounded-l-none"><Search className="h-4 w-4" /></Button>
+                        </form>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -55,7 +59,7 @@ const AdminPendingDeals = ({ pendingDeals }: AdminPendingDealsProps) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredDeals.length > 0 ? filteredDeals.map(deal => (
+                                    {items.length > 0 ? items.map((deal: any) => (
                                         <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-3">
@@ -102,6 +106,9 @@ const AdminPendingDeals = ({ pendingDeals }: AdminPendingDealsProps) => {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                    <div className="pt-4">
+                        <AdminPagination links={pendingDeals?.links} />
                     </div>
                 </CardContent>
             </Card>
