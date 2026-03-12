@@ -115,11 +115,6 @@ class Deal extends Model
         return (bool) ($this->feature?->is_new_arrival ?? false);
     }
 
-    public function getRankAttribute(): int
-    {
-        return (int) ($this->feature?->rank ?? 0);
-    }
-
     // ─── Accessors ───────────────────────────────────────────
 
     /**

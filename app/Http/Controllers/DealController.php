@@ -251,7 +251,6 @@ class DealController extends Controller
                 'is_deal_of_day'   => (bool) $deal->is_deal_of_day,
                 'is_best_seller'   => (bool) $deal->is_best_seller,
                 'is_new_arrival'   => (bool) $deal->is_new_arrival,
-                'rank'             => (int) $deal->rank,
                 'discountedPrice'  => $offer ? (float) $offer->final_price : null,
                 'originalPrice'    => $offer ? (float) $offer->original_price : null,
                 'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,

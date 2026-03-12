@@ -86,6 +86,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/deals/pending', [AdminController::class, 'pendingDeals'])->name('admin.deals.pending');
     Route::post('/admin/deals/{deal}/toggle-featured', [AdminController::class, 'toggleDealFeatured'])->name('admin.deals.toggle-featured');
     Route::patch('/admin/deals/{deal}/flags', [AdminController::class, 'updateDealFlags'])->name('admin.deals.flags');
+    Route::get('/admin/featured-ranking', [AdminController::class, 'featuredRanking'])->name('admin.featured-ranking');
+    Route::post('/admin/featured-ranking/{deal}/move', [AdminController::class, 'moveFeaturedRank'])->name('admin.featured-ranking.move');
     Route::get('/admin/reports', [AdminController::class, 'reports'])->name('admin.reports');
     Route::get('/admin/reports/revenue', [AdminController::class, 'revenueReports'])->name('admin.reports.revenue');
     Route::get('/admin/reports/users', [AdminController::class, 'userAnalytics'])->name('admin.reports.users');

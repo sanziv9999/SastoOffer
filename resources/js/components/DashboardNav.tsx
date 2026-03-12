@@ -38,6 +38,7 @@ const vendorLinks = [
 
 const adminLinks = [
   { icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin' },
+  { icon: LayoutDashboard, label: 'Featured Deal Ranking', path: '/admin/featured-ranking' },
   { icon: Tags, label: 'Primary Categories', path: '/admin/primary-categories' },
   { icon: Tags, label: 'Sub Categories', path: '/admin/sub-categories' },
   { icon: Tags, label: 'Offer Types', path: '/admin/offer-types' },

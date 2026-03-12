@@ -117,15 +117,6 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                       {deal.is_new_arrival ? 'New' : 'New'}
                     </Button>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Rank</span>
-                      <Input
-                        className="h-8 w-24"
-                        type="number"
-                        defaultValue={deal.rank ?? 0}
-                        onBlur={(e) => patchFlags(deal.id, { rank: Number(e.target.value || 0) })}
-                      />
-                    </div>
                     {deal.status === 'pending' && (
                       <>
                         <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>

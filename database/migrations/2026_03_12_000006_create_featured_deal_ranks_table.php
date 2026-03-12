@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('featured_deal_ranks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('deal_id')->constrained('deals')->cascadeOnDelete();
+            $table->unsignedInteger('rank');
+            $table->timestamps();
+
+            $table->unique('deal_id');
+            $table->unique('rank');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('featured_deal_ranks');
+    }
+};
+
