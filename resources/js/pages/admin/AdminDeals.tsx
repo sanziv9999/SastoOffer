@@ -11,6 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { router } from '@inertiajs/react';
 import AdminPagination from '@/components/AdminPagination';
+import { Star } from 'lucide-react';
+import { Flame, Trophy, Sparkles } from 'lucide-react';
 
 interface AdminDealsProps {
   deals: any;
@@ -29,6 +31,10 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
 
   const goStatus = (s: string) => {
     router.get('/admin/deals', { status: s !== 'all' ? s : undefined, search: searchTerm || undefined }, { preserveState: true, replace: true });
+  };
+
+  const patchFlags = (dealId: number, payload: Record<string, any>) => {
+    router.patch(`/admin/deals/${dealId}/flags`, payload, { preserveScroll: true });
   };
 
   const renderTable = (dealsList: any[]) => (
@@ -71,6 +77,55 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                 <td className="p-4 align-middle">{deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'N/A'}</td>
                 <td className="p-4 align-middle text-right">
                   <div className="flex justify-end gap-2">
+                    <Button
+                      variant={deal.is_featured ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => router.post(`/admin/deals/${deal.id}/toggle-featured`, {}, { preserveScroll: true })}
+                      title="Toggle featured"
+                    >
+                      <Star className="h-4 w-4 mr-1" />
+                      {deal.is_featured ? 'Featured' : 'Feature'}
+                    </Button>
+
+                    <Button
+                      variant={deal.is_deal_of_day ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => patchFlags(deal.id, { is_deal_of_day: !deal.is_deal_of_day })}
+                      title="Deal of the day"
+                    >
+                      <Flame className="h-4 w-4 mr-1" />
+                      {deal.is_deal_of_day ? 'Day' : 'Day'}
+                    </Button>
+
+                    <Button
+                      variant={deal.is_best_seller ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => patchFlags(deal.id, { is_best_seller: !deal.is_best_seller })}
+                      title="Best seller"
+                    >
+                      <Trophy className="h-4 w-4 mr-1" />
+                      {deal.is_best_seller ? 'Best' : 'Best'}
+                    </Button>
+
+                    <Button
+                      variant={deal.is_new_arrival ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => patchFlags(deal.id, { is_new_arrival: !deal.is_new_arrival })}
+                      title="New arrival"
+                    >
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      {deal.is_new_arrival ? 'New' : 'New'}
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Rank</span>
+                      <Input
+                        className="h-8 w-24"
+                        type="number"
+                        defaultValue={deal.rank ?? 0}
+                        onBlur={(e) => patchFlags(deal.id, { rank: Number(e.target.value || 0) })}
+                      />
+                    </div>
                     {deal.status === 'pending' && (
                       <>
                         <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>

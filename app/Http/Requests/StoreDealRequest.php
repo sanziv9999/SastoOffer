@@ -29,7 +29,6 @@ class StoreDealRequest extends FormRequest
             'starts_at'                 => ['nullable', 'date'],
             'ends_at'                   => ['nullable', 'date', 'after_or_equal:starts_at'],
             'voucher_valid_days'        => ['nullable', 'integer', 'min:0'],
-            'is_featured'               => ['nullable', 'boolean'],
             'offer_validation_rules'    => ['nullable', 'array'],
             'offer_types'               => ['nullable', 'array'],
             'offer_types.*.original_price' => ['nullable', 'numeric', 'min:0'],

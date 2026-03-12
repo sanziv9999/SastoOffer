@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\BusinessSubCategory;
 use App\Models\Deal;
 use App\Models\OfferType;
+use App\Models\DealFeature;
 use App\Services\DealOfferService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -148,6 +149,7 @@ class DealSeeder extends Seeder
             $subCategory = $subCategories->random();
 
             // Create or update deal (core fields only)
+            $isFeatured = (bool) ($data['is_featured'] ?? false);
             $deal = Deal::updateOrCreate(
                 ['slug' => Str::slug($data['title'])],
                 [
@@ -164,10 +166,14 @@ class DealSeeder extends Seeder
                     'starts_at' => $data['starts_at'],
                     'ends_at' => $data['ends_at'],
                     'voucher_valid_days' => $data['voucher_valid_days'] ?? 7,
-                    'is_featured' => $data['is_featured'] ?? false,
                     'offer_validation_rules' => $data['offer_validation_rules'] ?? [],
                     'status' => 'active',
                 ]
+            );
+
+            DealFeature::updateOrCreate(
+                ['deal_id' => $deal->id],
+                ['is_featured' => $isFeatured]
             );
 
             // Attach offer via service (calculates prices automatically)

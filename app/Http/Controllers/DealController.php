@@ -162,7 +162,6 @@ class DealController extends Controller
             'total_inventory' => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
             'starts_at' => !empty($data['startDate']) ? $data['startDate'] : now(),
             'ends_at' => !empty($data['endDate']) ? $data['endDate'] : now()->addDays(30),
-            'is_featured' => $request->boolean('requestFeatured'),
             'highlights' => is_array($data['tags'] ?? []) ? $data['tags'] ?? [] : [$data['tags'] ?? ''],
         ];
 
@@ -248,7 +247,11 @@ class DealController extends Controller
                 'status'           => $deal->status,
                 'highlights'       => $deal->highlights,
                 'ends_at'          => $deal->ends_at?->toIso8601String(),
-                'is_featured'      => $deal->is_featured,
+                'is_featured'      => (bool) $deal->is_featured,
+                'is_deal_of_day'   => (bool) $deal->is_deal_of_day,
+                'is_best_seller'   => (bool) $deal->is_best_seller,
+                'is_new_arrival'   => (bool) $deal->is_new_arrival,
+                'rank'             => (int) $deal->rank,
                 'discountedPrice'  => $offer ? (float) $offer->final_price : null,
                 'originalPrice'    => $offer ? (float) $offer->original_price : null,
                 'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
@@ -303,7 +306,7 @@ class DealController extends Controller
                 'maxQuantity'      => $deal->total_inventory ? (string) $deal->total_inventory : '',
                 'startDate'        => $deal->starts_at?->format('Y-m-d'),
                 'endDate'          => $deal->ends_at?->format('Y-m-d'),
-                'requestFeatured'  => $deal->is_featured,
+                'requestFeatured'  => (bool) $deal->is_featured,
                 'status'           => $deal->status,
                 'images'           => $deal->images->map(fn($img) => [
                     'id'             => $img->id,
@@ -339,7 +342,6 @@ class DealController extends Controller
             'total_inventory'          => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
             'starts_at'                => !empty($data['startDate']) ? $data['startDate'] : $deal->starts_at,
             'ends_at'                  => !empty($data['endDate']) ? $data['endDate'] : $deal->ends_at,
-            'is_featured'              => $request->boolean('requestFeatured'),
             'highlights'               => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
             'status'                   => $data['status'] ?? $deal->status,
         ]);
@@ -466,9 +468,6 @@ class DealController extends Controller
         $data = $request->validated();
         if (array_key_exists('title', $data) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['title']);
-        }
-        if ($request->has('is_featured')) {
-            $data['is_featured'] = $request->boolean('is_featured');
         }
 
         $offerTypesInput = $request->input('offer_types', []);

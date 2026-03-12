@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Deal extends Model
@@ -28,7 +29,6 @@ class Deal extends Model
         'starts_at',
         'ends_at',
         'voucher_valid_days',
-        'is_featured',
         'view_count',
         'offer_validation_rules',
     ];
@@ -38,7 +38,6 @@ class Deal extends Model
         'offer_validation_rules' => 'array',
         'starts_at'              => 'datetime',
         'ends_at'                => 'datetime',
-        'is_featured'            => 'boolean',
         'view_count'             => 'integer',
     ];
 
@@ -89,6 +88,36 @@ class Deal extends Model
     public function images(): MorphMany
     {
         return $this->morphMany(Image::class, 'imageable');
+    }
+
+    public function feature(): HasOne
+    {
+        return $this->hasOne(DealFeature::class);
+    }
+
+    public function getIsFeaturedAttribute(): bool
+    {
+        return (bool) ($this->feature?->is_featured ?? false);
+    }
+
+    public function getIsDealOfDayAttribute(): bool
+    {
+        return (bool) ($this->feature?->is_deal_of_day ?? false);
+    }
+
+    public function getIsBestSellerAttribute(): bool
+    {
+        return (bool) ($this->feature?->is_best_seller ?? false);
+    }
+
+    public function getIsNewArrivalAttribute(): bool
+    {
+        return (bool) ($this->feature?->is_new_arrival ?? false);
+    }
+
+    public function getRankAttribute(): int
+    {
+        return (int) ($this->feature?->rank ?? 0);
     }
 
     // ─── Accessors ───────────────────────────────────────────
