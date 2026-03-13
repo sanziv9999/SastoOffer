@@ -16,7 +16,6 @@ class CustomerProfile extends Model
     protected $fillable = [
         'user_id',
         'full_name',
-        'profile_pic',
         'date_of_birth',
         'gender',
         'phone',
@@ -31,6 +30,19 @@ class CustomerProfile extends Model
     protected $casts = [
         'date_of_birth'     => 'date:Y-m-d',     // or 'date' if you want Carbon instance
         'default_address_id' => 'integer',
+    ];
+
+    /**
+     * Extra attributes that should be appended when serializing.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'username',
+        'email',
+        'age',
+        'gender_display',
+        'profile_pic_url',
     ];
 
     /**
@@ -75,9 +87,15 @@ class CustomerProfile extends Model
      */
     public function getProfilePicUrlAttribute(): ?string
     {
-        return $this->profile_pic
-            ? asset('storage/' . $this->profile_pic)  // assuming stored in public disk
-            : 'https://ui-avatars.com/api/?name=' . urlencode($this->full_name ?? 'User') . '&size=128';
+        $image = $this->relationLoaded('images')
+            ? $this->images->firstWhere('attribute_name', 'profile_pic')
+            : $this->images()->where('attribute_name', 'profile_pic')->first();
+
+        if ($image && $image->image_url) {
+            return $image->image_url;
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->full_name ?? 'User') . '&size=128';
     }
 
     /**
@@ -94,6 +112,22 @@ class CustomerProfile extends Model
     public function getAgeAttribute(): ?int
     {
         return $this->date_of_birth?->age;
+    }
+
+    /**
+     * Expose username from related user model.
+     */
+    public function getUsernameAttribute(): ?string
+    {
+        return $this->user?->name;
+    }
+
+    /**
+     * Expose email from related user model.
+     */
+    public function getEmailAttribute(): ?string
+    {
+        return $this->user?->email;
     }
 
     /**

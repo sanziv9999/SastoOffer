@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CustomerProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\VendorProfileController;
@@ -44,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/reviews/edit/{id}', [DashboardController::class, 'editReview'])->name('dashboard.reviews.edit');
     Route::get('/dashboard/settings', [DashboardController::class, 'settings'])->name('dashboard.settings');
     Route::post('/dashboard/settings/address', [DashboardController::class, 'saveAddress'])->name('dashboard.settings.address');
+    Route::post('/dashboard/profile', [CustomerProfileController::class, 'update'])->name('dashboard.profile.update');
+    Route::post('/dashboard/profile/avatar', [CustomerProfileController::class, 'updateAvatar'])->name('dashboard.profile.avatar');
 });
 
 // ——— Vendor (auth) ———

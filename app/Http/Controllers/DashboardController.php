@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAddressRequest;
 use App\Models\Address;
+use App\Models\CustomerProfile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -63,8 +64,15 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
+        /** @var CustomerProfile|null $profile */
+        $profile = $user?->customerProfile;
+        if ($profile) {
+            $profile->load('images', 'defaultAddress');
+        }
+
         return Inertia::render('dashboard/Settings', [
             'defaultAddress' => $user?->defaultAddress,
+            'profile'        => $profile,
         ]);
     }
 

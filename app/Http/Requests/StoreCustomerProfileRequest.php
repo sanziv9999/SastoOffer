@@ -16,7 +16,6 @@ class StoreCustomerProfileRequest extends FormRequest
         return [
             'user_id'             => ['required', 'exists:users,id', 'unique:customer_profiles,user_id'],
             'full_name'           => ['nullable', 'string', 'max:255'],
-            'profile_pic'         => ['nullable', 'string', 'max:255'],
             'date_of_birth'       => ['nullable', 'date'],
             'gender'              => ['nullable', 'string', 'in:male,female,other'],
             'phone'               => ['nullable', 'string', 'max:20'],

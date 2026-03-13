@@ -28,19 +28,18 @@ L.Icon.Default.mergeOptions({
 
 const Settings = () => {
   const { user } = useAuth();
-  // Try to read default address from Inertia props when available
-  let defaultAddress: any = null;
-  try {
-    const page = usePage<any>();
-    defaultAddress = page.props.defaultAddress || null;
-  } catch (e) {
-    defaultAddress = null;
-  }
+  const page = usePage<any>();
+  const defaultAddress = page.props.defaultAddress || null;
+  const profile = page.props.profile || null;
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [city, setCity] = useState(user?.city || '');
+  const [fullName, setFullName] = useState<string>(profile?.full_name || user?.name || '');
+  const [email] = useState<string>(user?.email || '');
+  const [phone, setPhone] = useState<string>(profile?.phone || '');
+  const [dateOfBirth, setDateOfBirth] = useState<string>(profile?.date_of_birth || '');
+  const [gender, setGender] = useState<string>(profile?.gender || '');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.profile_pic_url || null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const [province, setProvince] = useState(defaultAddress?.province || 'bagmati');
   const [district, setDistrict] = useState(defaultAddress?.district || '');
@@ -56,8 +55,45 @@ const Settings = () => {
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    // router.post('/dashboard/settings/profile', { name, email, phone, city });
-    toast.success('Profile updated successfully!');
+    setSavingProfile(true);
+    router.post(
+      '/dashboard/profile',
+      {
+        full_name: fullName,
+        phone,
+        date_of_birth: dateOfBirth || null,
+        gender: gender || null,
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => toast.success('Profile updated successfully!'),
+        onError: (errors: any) => {
+          const first = errors ? Object.values(errors)[0] : null;
+          toast.error((first as string) || 'Failed to update profile.');
+        },
+        onFinish: () => setSavingProfile(false),
+      }
+    );
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarPreview(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append('profile_pic', file);
+
+    router.post('/dashboard/profile/avatar', formData, {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => toast.success('Profile picture updated successfully!'),
+      onError: (errors: any) => {
+        const first = errors ? Object.values(errors)[0] : null;
+        toast.error((first as string) || 'Failed to update profile picture.');
+      },
+    });
   };
 
   const handleSaveAddress = async (e: React.FormEvent) => {
@@ -221,36 +257,85 @@ const Settings = () => {
           <TabsTrigger value="address"><MapPin className="h-4 w-4 mr-2" />Address</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
           <TabsTrigger value="security"><Shield className="h-4 w-4 mr-2" />Security</TabsTrigger>
-      
         </TabsList>
 
         <TabsContent value="profile">
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your personal details</CardDescription>
+              <CardDescription>Update your personal details and profile picture</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div className="flex items-center gap-6">
+                  <div className="h-20 w-20 rounded-full overflow-hidden border bg-muted flex items-center justify-center">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No Photo</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      Change Photo
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG up to 5MB.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+                    <Input id="name" value={fullName} onChange={e => setFullName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+                    <Input id="email" type="email" value={email} disabled />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
                     <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input id="city" value={city} onChange={e => setCity(e.target.value)} placeholder="Your city" />
+                    <Label htmlFor="dob">Date of Birth</Label>
+                    <Input
+                      id="dob"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={e => setDateOfBirth(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Select value={gender} onValueChange={setGender}>
+                      <SelectTrigger id="gender">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit" disabled={savingProfile}>
+                  {savingProfile ? 'Saving...' : 'Save Changes'}
+                </Button>
               </form>
             </CardContent>
           </Card>
