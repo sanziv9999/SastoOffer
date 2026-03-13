@@ -22,7 +22,7 @@ const userLinks = [
   { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
   { icon: Heart, label: 'Saved Deals', path: '/dashboard/favorites' },
   { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/purchases' },
-  { icon: Star, label: 'Reviews', path: '/dashboard/reviews' },
+  { icon: Star, label: 'My Reviews', path: '/dashboard/reviews' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ];
 
@@ -121,7 +121,7 @@ const DashboardNav = () => {
   return (
     <>
       {user?.role === 'vendor' && renderLinks(vendorLinks, 'Vendor')}
-      {user?.role === 'customer' && renderLinks(userLinks, 'User')}
+      {user?.role === 'customer' && renderLinks(userLinks, 'Customer')}
       {user?.role === 'admin' && renderLinks(adminLinks, 'Admin')}
     </>
   );

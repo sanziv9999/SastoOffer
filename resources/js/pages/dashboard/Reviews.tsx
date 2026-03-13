@@ -3,6 +3,7 @@ import { Star, MessageSquare } from 'lucide-react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface ReviewsProps {
   reviews: any[];
@@ -88,5 +89,7 @@ const Reviews = ({ reviews = [], deals = [] }: ReviewsProps) => {
     </div>
   );
 };
+
+Reviews.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default Reviews;

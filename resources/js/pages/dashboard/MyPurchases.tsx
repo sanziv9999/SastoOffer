@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
+import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface MyPurchasesProps {
   purchases: any[];
@@ -153,5 +154,7 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
     </div>
   );
 };
+
+MyPurchases.layout = (page: React.ReactNode) => <DashboardLayout children={page} />;
 
 export default MyPurchases;
