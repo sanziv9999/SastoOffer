@@ -57,39 +57,7 @@
                 @endphp
 
                 @foreach($recentDeals as $deal)
-                    <div class="bg-card text-card-foreground rounded-lg border border-border overflow-hidden flex-shrink-0 w-[280px] hover:shadow-md transition-shadow group">
-                        <div class="relative">
-                            <img 
-                                src="{{ $deal['image'] }}" 
-                                alt="{{ $deal['title'] }}" 
-                                class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                            />
-                            <div class="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                {{ $deal['discountPercentage'] }}% OFF
-                            </div>
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-2">
-                                <div class="flex items-center text-xs">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                    <span>Added {{ $deal['timeAgo'] }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <a href="{{ route('deals.show', ['deal' => $deal['id']]) }}">
-                                <h3 class="font-semibold text-slate-800 mb-2 line-clamp-2 hover:text-primary transition-colors">
-                                    {{ $deal['title'] }}
-                                </h3>
-                            </a>
-                            <div class="flex items-baseline">
-                                <span class="text-lg font-bold text-primary mr-2">
-                                    ${{ $deal['discountedPrice'] }}
-                                </span>
-                                <span class="text-sm line-through text-gray-400">
-                                    ${{ $deal['originalPrice'] }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                    <x-deal-card :deal="$deal" class="flex-shrink-0 w-[280px]" />
                 @endforeach
             </div>
             
