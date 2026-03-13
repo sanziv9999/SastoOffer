@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])->name('dashboard.reviews');
     Route::get('/dashboard/reviews/edit/{id}', [DashboardController::class, 'editReview'])->name('dashboard.reviews.edit');
     Route::get('/dashboard/settings', [DashboardController::class, 'settings'])->name('dashboard.settings');
+    Route::post('/dashboard/settings/address', [DashboardController::class, 'saveAddress'])->name('dashboard.settings.address');
 });
 
 // ——— Vendor (auth) ———
