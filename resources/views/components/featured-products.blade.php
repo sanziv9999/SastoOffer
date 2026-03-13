@@ -79,7 +79,7 @@
             @endphp
 
             @foreach($featuredDeals as $deal)
-                <x-deal-card :deal="$deal" />
+                <x-deal-card :deal="$deal" compact />
             @endforeach
         </div>
     </div>

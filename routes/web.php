@@ -19,9 +19,9 @@ Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name(
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 
 // Deal detail (public): support both /deals/{id} and /deal/{id}
-Route::get('/deals/{deal}', [DealController::class, 'showDeal'])->name('deals.show');
+Route::get('/deals/{id}', [DealController::class, 'showDeal'])->name('deals.show');
 Route::get('/deal/{id}', function ($id) {
-    return redirect()->route('deals.show', ['deal' => $id]);
+    return redirect()->route('deals.show', ['id' => $id]);
 })->name('deal.show.redirect');
 
 // Vendor profile (public)
