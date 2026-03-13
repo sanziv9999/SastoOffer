@@ -178,30 +178,47 @@
                 </form>
             </div>
             
-            {{-- Category navigation - scrollable with hover arrows, matching original --}}
             <div 
-                class="relative group overflow-hidden transition-all duration-300"
-                x-data="{ 
-                    scrollLeft() { this.$refs.menuScroll.scrollLeft -= 200; },
-                    scrollRight() { this.$refs.menuScroll.scrollLeft += 200; }
-                }"
+                class="relative group transition-all duration-300"
             >
                 <div 
-                    x-ref="menuScroll"
-                    class="overflow-x-auto scrollbar-hide py-2 scroll-smooth"
-                    style="scrollbar-width: none; ms-overflow-style: none;"
+                    class="py-2"
                 >
-                    <nav class="flex flex-nowrap items-center gap-0.5 whitespace-nowrap" x-data="{ openCategory: null }">
+                    <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
                         @php
                             $parentCategories = [
-                                ['id' => '1', 'name' => 'Restaurants',      'slug' => 'food-dining',        'icon' => 'utensils'],
-                                ['id' => '2', 'name' => 'Beauty & Spa',     'slug' => 'beauty-spa',         'icon' => 'scissors'],
-                                ['id' => '3', 'name' => 'Activities',       'slug' => 'activities-events',  'icon' => 'coffee'],
-                                ['id' => '4', 'name' => 'Travel',           'slug' => 'travel',             'icon' => 'plane'],
-                                ['id' => '5', 'name' => 'Electronics',      'slug' => 'electronics',        'icon' => 'smartphone'],
-                                ['id' => '6', 'name' => 'Services',         'slug' => 'services',           'icon' => 'gift'],
-                                ['id' => '7', 'name' => 'Health & Fitness', 'slug' => 'health-fitness',     'icon' => 'heart'],
-                                ['id' => '8', 'name' => 'Education',        'slug' => 'education',          'icon' => 'book'],
+                                [
+                                    'id' => '1', 'name' => 'Restaurants', 'slug' => 'food-dining', 'icon' => 'utensils',
+                                    'subcategories' => ['Italian', 'Chinese', 'Indian', 'Fast Food', 'Pizza', 'Sushi', 'Bakeries', 'Cafes']
+                                ],
+                                [
+                                    'id' => '2', 'name' => 'Beauty & Spa', 'slug' => 'beauty-spa', 'icon' => 'scissors',
+                                    'subcategories' => ['Massage', 'Hair Salon', 'Nails', 'Facials', 'Skin Care', 'Waxing', 'Day Spas']
+                                ],
+                                [
+                                    'id' => '3', 'name' => 'Activities', 'slug' => 'activities-events', 'icon' => 'coffee',
+                                    'subcategories' => ['Sports', 'Movies', 'Museums', 'Theme Parks', 'Concerts', 'Nightlife', 'Workshops']
+                                ],
+                                [
+                                    'id' => '4', 'name' => 'Travel', 'slug' => 'travel', 'icon' => 'plane',
+                                    'subcategories' => ['Hotels', 'Flights', 'Car Rentals', 'Package Tours', 'Cruises', 'Resorts']
+                                ],
+                                [
+                                    'id' => '5', 'name' => 'Electronics', 'slug' => 'electronics', 'icon' => 'smartphone',
+                                    'subcategories' => ['Smartphones', 'Laptops', 'Headphones', 'Cameras', 'Accessories', 'TVs', 'Gaming']
+                                ],
+                                [
+                                    'id' => '6', 'name' => 'Services', 'slug' => 'services', 'icon' => 'gift',
+                                    'subcategories' => ['Cleaning', 'Home Maintenance', 'Plumbing', 'Moving', 'Car Wash', 'Pet Care']
+                                ],
+                                [
+                                    'id' => '7', 'name' => 'Health & Fitness', 'slug' => 'health-fitness', 'icon' => 'heart',
+                                    'subcategories' => ['Gym Memberships', 'Yoga Classes', 'Personal Training', 'Crossfit', 'Pilates', 'Medical']
+                                ],
+                                [
+                                    'id' => '8', 'name' => 'Education', 'slug' => 'education', 'icon' => 'book',
+                                    'subcategories' => ['Languages', 'Music', 'Coding', 'Arts & Crafts', 'Academic', 'Business']
+                                ],
                             ];
                         @endphp
 
@@ -211,7 +228,10 @@
                                 @mouseenter="openCategory = '{{ $category['id'] }}'"
                                 @mouseleave="openCategory = null"
                             >
-                                <button class="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground rounded-full transition-colors font-medium">
+                                <button 
+                                    @click="openCategory = (openCategory === '{{ $category['id'] }}' ? null : '{{ $category['id'] }}')"
+                                    class="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground rounded-full transition-colors font-medium"
+                                >
                                     @switch($category['icon'])
                                         @case('utensils')
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 flex-shrink-0"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
@@ -259,14 +279,17 @@
                                                 All {{ $category['name'] }} Deals
                                             </a>
                                         </div>
-                                        {{-- Placeholder subcategory columns --}}
-                                        @foreach(['Local Favorites', 'Top Rated', 'New Arrivals', 'Best Value', 'Near You', 'Trending'] as $sub)
-                                            <div class="p-1.5 font-sans">
-                                                <a href="{{ route('search', ['category' => $category['slug']]) }}" class="block font-medium text-sm hover:text-primary mb-1.5 text-foreground whitespace-normal">{{ $sub }}</a>
-                                                <div class="space-y-1">
-                                                    <a href="#" class="block text-xs text-muted-foreground hover:text-primary py-0.5 whitespace-normal">Popular picks</a>
-                                                    <a href="#" class="block text-xs text-muted-foreground hover:text-primary py-0.5 whitespace-normal">Special offers</a>
-                                                </div>
+                                        {{-- Dynamic subcategories with random count (2-7) --}}
+                                        @php
+                                            $subCount = rand(2, min(count($category['subcategories']), 7));
+                                            $selectedSubcategories = collect($category['subcategories'])->random($subCount);
+                                        @endphp
+                                        @foreach($selectedSubcategories as $sub)
+                                            <div class="p-1.5 font-sans hover:bg-muted/50 rounded-md transition-colors">
+                                                <a href="{{ route('search', ['category' => $category['slug'], 'subcategory' => Str::slug($sub)]) }}" class="block font-medium text-sm hover:text-primary tooltip-trigger text-foreground whitespace-normal group/sub">
+                                                    {{ $sub }}
+                                                    <span class="inline-block transform translate-x-0 group-hover/sub:translate-x-1 transition-transform duration-200 ml-1 opacity-0 group-hover/sub:opacity-100 text-primary">→</span>
+                                                </a>
                                             </div>
                                         @endforeach
                                     </div>
@@ -284,31 +307,18 @@
                         </a>
                     </nav>
                 </div>
-                {{-- Left scroll arrow --}}
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 z-10">
-                    <button 
-                        @click="scrollLeft()"
-                        class="rounded-full shadow-md bg-background/90 border border-border h-7 w-7 flex items-center justify-center hover:bg-background transition-colors"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
-                    </button>
-                </div>
-                {{-- Right scroll arrow --}}
-                <div class="absolute right-0 top-1/2 -translate-y-1/2 z-10">
-                    <button 
-                        @click="scrollRight()"
-                        class="rounded-full shadow-md bg-background/90 border border-border h-7 w-7 flex items-center justify-center hover:bg-background transition-colors"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
-                    </button>
-                </div>
             </div>
 
             {{-- Mobile menu --}}
             <div 
                 x-show="mobileMenuOpen" 
                 x-cloak 
-                x-collapse
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 -translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 -translate-y-2"
                 class="md:hidden py-4 border-t border-border"
             >
                 <div class="flex items-center gap-2 mb-4">
