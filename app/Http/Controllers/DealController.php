@@ -234,39 +234,41 @@ class DealController extends Controller
      */
     public function showDeal($id)
     {
-        $deal = Deal::with(['vendor', 'subCategory', 'offerTypes', 'images'])->find($id);
-
-        if (!$deal) {
-            // Mock data fallback for migration/demo purposes
+        try {
             $mockDeals = [
                 '1' => [
                     'id' => '1',
                     'title' => '50% Off Luxury 5-Course Dinner for Two',
-                    'short_description' => '<p>Enjoy a premium dining experience at one of the city\'s finest restaurants.</p>',
-                    'long_description' => '<p>This exclusive 5-course dinner includes appetizers, main course, and dessert, prepared by award-winning chefs. Perfect for anniversaries or special occasions.</p>',
+                    'short_description' => 'Luxury dinner for two with wine pairing',
+                    'long_description' => 'Experience an exquisite 5-course dinner for two at Gourmet Delights. Includes wine pairing and special dessert.',
                     'status' => 'active',
-                    'highlights' => ['Fine dining atmosphere', '5-course set menu', 'Welcome drinks included', 'Live music on weekends'],
-                    'ends_at' => now()->addDays(2)->toIso8601String(),
+                    'highlights' => ['dinner', 'luxury', 'date night'],
+                    'ends_at' => '2023-12-31T23:59:59Z',
                     'is_featured' => true,
                     'discountedPrice' => 100,
                     'originalPrice' => 200,
                     'discountPercent' => 50,
                     'images' => [
                         ['id' => 1, 'image_url' => 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&auto=format', 'attribute_name' => 'feature_photo'],
-                        ['id' => 2, 'image_url' => 'https://images.unsplash.com/photo-1550966842-30c29a0d20d8?w=800&auto=format', 'attribute_name' => 'gallery'],
-                        ['id' => 3, 'image_url' => 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&auto=format', 'attribute_name' => 'gallery'],
+                        ['id' => 2, 'image_url' => 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&auto=format', 'attribute_name' => 'gallery'],
+                        ['id' => 3, 'image_url' => 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&auto=format', 'attribute_name' => 'gallery'],
                     ],
-                    'vendor' => ['id' => 1, 'business_name' => 'The Royal Grill'],
+                    'vendor' => [
+                        'id' => 1, 
+                        'business_name' => 'Gourmet Delights',
+                        'rating' => 4.8,
+                        'reviewCount' => 42
+                    ],
                     'subCategory' => ['id' => 1, 'name' => 'Restaurants']
                 ],
                 '2' => [
                     'id' => '2',
                     'title' => 'Luxury Spa Day Package - 30% Off',
-                    'short_description' => '<p>Relax and rejuvenate with our signature spa treatment package.</p>',
-                    'long_description' => '<p>Package includes 60 min full body massage, steam bath, and access to the pool. We use only organic essential oils and premium skincare products.</p>',
+                    'short_description' => 'Full day spa package with all treatments',
+                    'long_description' => 'Full day spa retreat including massage, facial, and body treatment. Access to all spa facilities included.',
                     'status' => 'active',
-                    'highlights' => ['Professional therapists', 'Relaxing ambiance', 'Organic products', 'Free herbal tea'],
-                    'ends_at' => now()->addHours(5)->toIso8601String(),
+                    'highlights' => ['spa', 'relaxation', 'massage', 'facial'],
+                    'ends_at' => '2023-11-30T23:59:59Z',
                     'is_featured' => true,
                     'discountedPrice' => 210,
                     'originalPrice' => 300,
@@ -275,25 +277,37 @@ class DealController extends Controller
                         ['id' => 4, 'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&auto=format', 'attribute_name' => 'feature_photo'],
                         ['id' => 5, 'image_url' => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format', 'attribute_name' => 'gallery'],
                     ],
-                    'vendor' => ['id' => 2, 'business_name' => 'Zen Wellness Spa'],
+                    'vendor' => [
+                        'id' => 2, 
+                        'business_name' => 'Zen Spa Retreat',
+                        'rating' => 4.9,
+                        'reviewCount' => 28
+                    ],
                     'subCategory' => ['id' => 2, 'name' => 'Beauty & Spa']
                 ],
                 '3' => [
                     'id' => '3',
-                    'title' => 'Guided Mountain Hiking Tour - BOGO',
-                    'short_description' => '<p>Explore the stunning trails of the Himalayas with our expert guides.</p>',
-                    'long_description' => '<p>This full-day hiking tour takes you through lush forests and provides breathtaking views of the mountain range. Buy one ticket and get one free!</p>',
+                    'title' => 'Guided Mountain Hiking Tour - Buy 1 Get 1 Free',
+                    'short_description' => 'BOGO Hiking adventure with professional guides',
+                    'long_description' => 'Full day guided hiking tour in the mountains with professional guides. Equipment and lunch included.',
                     'status' => 'active',
-                    'highlights' => ['Experienced local guides', 'Safety gear provided', 'Packed lunch included', 'Transportation from hotel'],
-                    'ends_at' => now()->addDays(1)->toIso8601String(),
+                    'highlights' => ['outdoors', 'hiking', 'tour', 'adventure'],
+                    'ends_at' => '2023-10-31T23:59:59Z',
                     'is_featured' => false,
                     'discountedPrice' => 75,
                     'originalPrice' => 150,
                     'discountPercent' => 50,
                     'images' => [
                         ['id' => 6, 'image_url' => 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format', 'attribute_name' => 'feature_photo'],
+                        ['id' => 7, 'image_url' => 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format', 'attribute_name' => 'gallery'],
+                        ['id' => 8, 'image_url' => 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format', 'attribute_name' => 'gallery'],
                     ],
-                    'vendor' => ['id' => 3, 'business_name' => 'Peak Adventures'],
+                    'vendor' => [
+                        'id' => 3, 
+                        'business_name' => 'Adventure Tours',
+                        'rating' => 4.7,
+                        'reviewCount' => 85
+                    ],
                     'subCategory' => ['id' => 3, 'name' => 'Activities']
                 ]
             ];
@@ -302,40 +316,48 @@ class DealController extends Controller
                 return view('deals.show', ['deal' => $mockDeals[$id]]);
             }
 
-            // If still not found, then 404
-            abort(404);
+            $deal = Deal::with(['vendor', 'subCategory', 'images', 'offerTypes'])->find($id);
+            if (!$deal) {
+                return view('deals.show', ['deal' => null]);
+            }
+
+            $offer = $deal->offerTypes->first()?->pivot;
+            return view('deals.show', [
+                'deal' => [
+                    'id'               => $deal->id,
+                    'title'            => $deal->title,
+                    'short_description' => $deal->short_description,
+                    'long_description' => $deal->long_description,
+                    'status'           => $deal->status,
+                    'highlights'       => is_array($deal->highlights) ? $deal->highlights : [],
+                    'ends_at'          => $deal->ends_at?->toIso8601String(),
+                    'is_featured'      => (bool) $deal->is_featured,
+                    'discountedPrice'  => $offer ? (float) $offer->final_price : null,
+                    'originalPrice'    => $offer ? (float) $offer->original_price : null,
+                    'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
+                    'images'           => $deal->images->map(fn($img) => [
+                        'id'             => $img->id,
+                        'image_url'      => $img->image_url,
+                        'attribute_name' => $img->attribute_name,
+                    ])->toArray(),
+                    'vendor'           => $deal->vendor ? [
+                        'id'            => $deal->vendor->id,
+                        'business_name' => $deal->vendor->business_name,
+                        'rating'        => 4.8, 
+                        'reviewCount'   => 42
+                    ] : null,
+                    'subCategory'      => $deal->subCategory ? [
+                        'id'   => $deal->subCategory->id,
+                        'name' => $deal->subCategory->name,
+                    ] : null,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            // Log the exception for debugging
+            \Illuminate\Support\Facades\Log::error("Error in showDeal: " . $e->getMessage());
+            // Redirect to a safe page or show an error
+            return redirect()->route('home')->with('error', 'Could not load deal details.');
         }
-
-        $offer = $deal->offerTypes->first()?->pivot;
-
-        return view('deals.show', [
-            'deal' => [
-                'id'               => $deal->id,
-                'title'            => $deal->title,
-                'short_description' => $deal->short_description,
-                'long_description' => $deal->long_description,
-                'status'           => $deal->status,
-                'highlights'       => is_array($deal->highlights) ? $deal->highlights : [],
-                'ends_at'          => $deal->ends_at?->toIso8601String(),
-                'is_featured'      => (bool) $deal->is_featured,
-                'discountedPrice'  => $offer ? (float) $offer->final_price : null,
-                'originalPrice'    => $offer ? (float) $offer->original_price : null,
-                'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
-                'images'           => $deal->images->map(fn($img) => [
-                    'id'             => $img->id,
-                    'image_url'      => $img->image_url,
-                    'attribute_name' => $img->attribute_name,
-                ])->toArray(),
-                'vendor'           => $deal->vendor ? [
-                    'id'            => $deal->vendor->id,
-                    'business_name' => $deal->vendor->business_name,
-                ] : null,
-                'subCategory'      => $deal->subCategory ? [
-                    'id'   => $deal->subCategory->id,
-                    'name' => $deal->subCategory->name,
-                ] : null,
-            ],
-        ]);
     }
 
     /**

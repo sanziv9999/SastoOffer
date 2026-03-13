@@ -1,31 +1,42 @@
 @php
-    $discountedPrice = $deal['discountedPrice'] ?? 0;
-    $originalPrice = $deal['originalPrice'] ?? 0;
-    $savingsAmount = $originalPrice > 0 ? $originalPrice - $discountedPrice : 0;
-    $discountPct = $deal['discountPercent'] ?? ($originalPrice > 0 ? round(($savingsAmount / $originalPrice) * 100) : 0);
+    if ($deal) {
+        $discountedPrice = $deal['discountedPrice'] ?? 0;
+        $originalPrice = $deal['originalPrice'] ?? 0;
+        $savingsAmount = $originalPrice > 0 ? $originalPrice - $discountedPrice : 0;
+        $discountPct = $deal['discountPercent'] ?? ($originalPrice > 0 ? round(($savingsAmount / $originalPrice) * 100) : 0);
 
-    $featureImage = collect($deal['images'])->firstWhere('attribute_name', 'feature_photo');
-    $galleryImages = collect($deal['images'])->filter(fn($img) => $img['attribute_name'] === 'gallery');
+        $featureImage = collect($deal['images'])->firstWhere('attribute_name', 'feature_photo');
+        $galleryImages = collect($deal['images'])->filter(fn($img) => $img['attribute_name'] === 'gallery');
 
-    $endsAt = isset($deal['ends_at']) ? new \DateTime($deal['ends_at']) : null;
-    $isExpired = $endsAt && new \DateTime() > $endsAt;
-    
-    // Simple rough implementation of time remaining
-    $timeLeft = null;
-    if ($endsAt) {
-        $now = new \DateTime();
-        if ($now < $endsAt) {
-            $diff = $now->diff($endsAt);
-            if ($diff->days > 0) $timeLeft = $diff->days . ($diff->days > 1 ? " days" : " day") . " ago";
-            elseif ($diff->h > 0) $timeLeft = $diff->h . ($diff->h > 1 ? " hours" : " hour") . " ago";
-            else $timeLeft = "just now";
+        $endsAt = isset($deal['ends_at']) ? new \DateTime($deal['ends_at']) : null;
+        $isExpired = $endsAt && new \DateTime() > $endsAt;
+        
+        $timeLeft = null;
+        if ($endsAt) {
+            $now = new \DateTime();
+            if ($now < $endsAt) {
+                $diff = $now->diff($endsAt);
+                if ($diff->days > 0) $timeLeft = $diff->days . ($diff->days > 1 ? " days" : " day");
+                elseif ($diff->h > 0) $timeLeft = $diff->h . ($diff->h > 1 ? " hours" : " hour");
+                elseif ($diff->i > 0) $timeLeft = $diff->i . ($diff->i > 1 ? " minutes" : " minute");
+                else $timeLeft = "just now";
+            }
         }
     }
 @endphp
 
 <x-layout>
-    @section('title', $deal['title'] . ' - SastoOffer')
+    @section('title', ($deal['title'] ?? 'Deal Not Found') . ' - SastoOffer')
 
+    @if(!$deal)
+        <div class="container py-20 text-center">
+            <h1 class="text-4xl font-bold mb-4">Deal Not Found</h1>
+            <p class="text-muted-foreground mb-8 text-lg">The deal you're looking for doesn't exist or may have expired.</p>
+            <a href="/" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-8">
+                Back to Homepage
+            </a>
+        </div>
+    @else
     <div class="container py-8 max-w-7xl mx-auto px-4"
         x-data="{ 
             quantity: 1,
@@ -48,9 +59,9 @@
         {{-- Breadcrumb --}}
         <div class="text-sm mb-6 flex items-center gap-1 text-muted-foreground">
             <a href="/" class="hover:text-foreground transition-colors">Home</a>
-            <span>/</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
             <a href="/" class="hover:text-foreground transition-colors">Deals</a>
-            <span>/</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
             <span class="font-medium text-foreground truncate">{{ $deal['title'] }}</span>
         </div>
 
@@ -91,12 +102,12 @@
                 {{-- Badges --}}
                 <div class="flex flex-wrap gap-2 mb-3">
                     @if($discountPct > 0)
-                        <span class="inline-flex items-center rounded-md border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary border-none px-2.5 py-0.5">
+                        <span class="inline-flex items-center rounded-md border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-100 text-green-700 border-none px-2.5 py-0.5">
                             {{ $discountPct }}% Off
                         </span>
                     @endif
-                    @if($deal['is_featured'])
-                        <span class="inline-flex items-center rounded-md border border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80 text-xs font-semibold px-2.5 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                    @if(isset($deal['is_featured']) && $deal['is_featured'])
+                        <span class="inline-flex items-center rounded-md border border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80 text-xs font-semibold px-2.5 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                             Featured
                         </span>
                     @endif
@@ -129,25 +140,25 @@
                 <div class="bg-muted/50 p-5 rounded-xl mb-6">
                     <div class="flex items-end gap-3 mb-2">
                         <span class="text-3xl font-bold text-primary">
-                            NPR {{ number_format($discountedPrice, 2, '.', '') }}
+                            ${{ number_format($discountedPrice, 2, '.', '') }}
                         </span>
                         @if($originalPrice > 0)
                             <span class="text-lg text-muted-foreground line-through">
-                                NPR {{ number_format($originalPrice, 2, '.', '') }}
+                                ${{ number_format($originalPrice, 2, '.', '') }}
                             </span>
                         @endif
                         @if($savingsAmount > 0)
                             <span class="text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                Save NPR {{ number_format($savingsAmount, 2, '.', '') }}
+                                Save ${{ number_format($savingsAmount, 2, '.', '') }}
                             </span>
                         @endif
                     </div>
 
                     @if($timeLeft)
-                        <div class="flex items-center text-sm text-muted-foreground mt-2">
+                        <div class="flex items-center text-sm text-amber-600 mt-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 mr-1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             <span>
-                                {{ $isExpired ? 'Offer expired' : 'Offer ends ' . $timeLeft }}
+                                {{ $isExpired ? 'Offer expired' : 'Offer ends in ' . $timeLeft }}
                             </span>
                         </div>
                     @endif
@@ -162,24 +173,24 @@
                                 type="button"
                                 @click="quantity = Math.max(1, quantity - 1)"
                                 :disabled="quantity <= 1"
-                                class="inline-flex items-center justify-center border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-r-none disabled:pointer-events-none disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >–</button>
-                            <div class="h-8 px-4 flex items-center justify-center border-y border-input text-sm font-medium" x-text="quantity">
+                                class="inline-flex items-center justify-center border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9 rounded-md rounded-r-none disabled:pointer-events-none disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            ><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M5 12h14"/></svg></button>
+                            <div class="h-9 px-4 flex items-center justify-center border-y border-input text-sm font-medium min-w-[3rem]" x-text="quantity">
                             </div>
                             <button
                                 type="button"
                                 @click="quantity++"
-                                class="inline-flex items-center justify-center border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-l-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >+</button>
+                                class="inline-flex items-center justify-center border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9 rounded-md rounded-l-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            ><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
                         </div>
                     </div>
 
                     <div class="flex flex-wrap gap-3">
                         <button 
                             @click="handleAddToCart"
-                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 flex-1 min-w-[140px]"
+                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 flex-1 min-w-[140px]"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                             Add to Cart
                         </button>
                         <button 
@@ -190,13 +201,13 @@
                         </button>
                     </div>
 
-                    <div class="flex gap-3">
-                        <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 h-4 w-4"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                    <div class="flex gap-1">
+                        <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 text-muted-foreground hover:text-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 h-4 w-4"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                             Save
                         </button>
-                        <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 h-4 w-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                        <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 text-muted-foreground hover:text-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 h-4 w-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                             Share
                         </button>
                     </div>
@@ -204,12 +215,12 @@
 
                 {{-- Highlights --}}
                 @if(isset($deal['highlights']) && is_array($deal['highlights']) && count($deal['highlights']) > 0)
-                    <div>
+                    <div class="border-t pt-6">
                         <h3 class="font-semibold mb-3">Highlights</h3>
                         <ul class="space-y-2">
                             @foreach($deal['highlights'] as $item)
-                                <li class="flex items-start text-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-primary mr-2 mt-0.5 shrink-0"><path d="M20 6 9 17l-5-5"></path></svg>
+                                <li class="flex items-start text-sm text-muted-foreground">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-primary mr-2 mt-0.5 shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
                                     <span>{{ $item }}</span>
                                 </li>
                             @endforeach
@@ -220,12 +231,12 @@
         </div>
 
         {{-- Description Section --}}
-        <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div class="lg:col-span-2 space-y-8">
                 @if(isset($deal['short_description']))
                     <div>
                         <h2 class="text-xl font-bold mb-4">Summary</h2>
-                        <div class="prose max-w-none text-sm text-muted-foreground">
+                        <div class="prose max-w-none text-muted-foreground">
                             {!! $deal['short_description'] !!}
                         </div>
                     </div>
@@ -235,7 +246,7 @@
                     <div class="shrink-0 bg-border h-[1px] w-full my-8"></div>
                     <div>
                         <h2 class="text-xl font-bold mb-4">Full Description</h2>
-                        <div class="prose max-w-none text-sm">
+                        <div class="prose max-w-none text-muted-foreground">
                             {!! $deal['long_description'] !!}
                         </div>
                     </div>
@@ -245,38 +256,68 @@
             {{-- Vendor Sidebar --}}
             <div>
                 @if(isset($deal['vendor']))
-                    <div class="bg-card border rounded-xl p-6 shadow-sm">
-                        <h3 class="text-lg font-semibold mb-3">About the Vendor</h3>
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                    <div class="bg-card border rounded-xl p-6 shadow-sm sticky top-24">
+                        <h3 class="text-lg font-semibold mb-4 text-teal-800">About the Vendor</h3>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xl">
                                 {{ strtoupper(substr($deal['vendor']['business_name'], 0, 1)) }}
                             </div>
                             <div>
-                                <h4 class="font-medium text-foreground">{{ $deal['vendor']['business_name'] }}</h4>
-                                <div class="flex items-center text-sm text-muted-foreground">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 text-yellow-500 mr-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                <h4 class="font-semibold text-foreground">{{ $deal['vendor']['business_name'] }}</h4>
+                                <div class="flex items-center text-xs text-muted-foreground mt-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 text-blue-500 fill-blue-500 mr-1"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                     <span>Verified Vendor</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-muted-foreground">Rating</span>
+                                <div class="flex items-center gap-1 font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-yellow-500 fill-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <span>{{ $deal['vendor']['rating'] ?? '4.8' }}</span>
+                                    <span class="text-muted-foreground font-normal">({{ $deal['vendor']['reviewCount'] ?? '42' }} reviews)</span>
                                 </div>
                             </div>
                         </div>
 
                         <a 
                             href="{{ route('vendor-profile.show', $deal['vendor']['id']) }}" 
-                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"
+                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                            View Profile
+                            View Vendor Profile
                         </a>
                     </div>
                 @endif
+            </div>
+        </div>
 
-                <div class="mt-4">
-                    <a href="/" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="m15 18-6-6 6-6"></path></svg>
-                        Back to Deals
-                    </a>
-                </div>
+        {{-- Similar Deals --}}
+        <div class="mt-20">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold">Similar Deals</h2>
+                <a href="/" class="text-primary hover:underline text-sm font-medium flex items-center">
+                    View all
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {{-- This would normally be dynamic, using a component for consistency --}}
+                @foreach(range(1, 4) as $index)
+                    @php
+                        // Just using mock data from elsewhere for demo if needed, 
+                        // but normally we'd pass $similarDeals
+                        $mockItem = [
+                            'id' => '1', 'title' => 'Related Product title goes here', 'image' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+                            'originalPrice' => 200, 'discountedPrice' => 100, 'categoryName' => 'Dining', 'timeLeft' => '2 days'
+                        ];
+                    @endphp
+                    <x-deal-card :deal="$mockItem" :compact="true" />
+                @endforeach
             </div>
         </div>
     </div>
+    @endif
 </x-layout>
