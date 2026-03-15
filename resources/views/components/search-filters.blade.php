@@ -70,27 +70,49 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
-            <div class="space-y-4">
-                <div class="relative w-full h-1.5 bg-secondary rounded-full mt-6">
+            <div class="space-y-3 w-full">
+                <div class="mt-4 w-full">
+                    {{-- Track background --}}
+                    <div class="relative w-full h-1.5 bg-secondary rounded-full">
+                        {{-- Filled portion (clamped so it never exceeds track width) --}}
+                        <div 
+                            class="absolute inset-y-0 left-0 bg-primary rounded-full pointer-events-none"
+                            :style="`width: ${(Math.min(maxPrice, 100000) / 100000) * 100}%`"
+                        ></div>
+                    </div>
+                    {{-- Range input sits BELOW the visual track, full width --}}
                     <input 
                         type="range" 
                         min="0" 
-                        max="1000" 
-                        step="10" 
+                        max="100000" 
+                        step="100" 
                         x-model="maxPrice"
-                        class="absolute inset-0 w-full h-1.5 appearance-none bg-transparent pointer-events-none z-10 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-background [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-background [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:cursor-pointer"
+                        class="block w-full mt-[-0.45rem] appearance-none bg-transparent cursor-pointer
+                            [&::-webkit-slider-runnable-track]:h-1.5
+                            [&::-webkit-slider-runnable-track]:bg-transparent
+                            [&::-webkit-slider-thumb]:appearance-none 
+                            [&::-webkit-slider-thumb]:w-4 
+                            [&::-webkit-slider-thumb]:h-4 
+                            [&::-webkit-slider-thumb]:rounded-full 
+                            [&::-webkit-slider-thumb]:bg-background 
+                            [&::-webkit-slider-thumb]:border-2
+                            [&::-webkit-slider-thumb]:border-primary 
+                            [&::-webkit-slider-thumb]:shadow-sm
+                            [&::-moz-range-track]:bg-transparent
+                            [&::-moz-range-thumb]:w-4 
+                            [&::-moz-range-thumb]:h-4 
+                            [&::-moz-range-thumb]:rounded-full 
+                            [&::-moz-range-thumb]:bg-background 
+                            [&::-moz-range-thumb]:border-2
+                            [&::-moz-range-thumb]:border-primary
+                            [&::-moz-range-thumb]:cursor-pointer
+                            focus:outline-none"
                     />
-                    <div 
-                        class="absolute inset-y-0 bg-primary rounded-full"
-                        :style="`left: 0%; right: ${100 - (maxPrice / 10)}%`"
-                    ></div>
                 </div>
-                <div class="flex items-center justify-between mt-2">
+                <div class="flex items-center justify-between">
+                    <div class="bg-muted px-2 py-1 rounded text-xs font-medium">$0</div>
                     <div class="bg-muted px-2 py-1 rounded text-xs font-medium">
-                        $0
-                    </div>
-                    <div class="bg-muted px-2 py-1 rounded text-xs font-medium">
-                        $<span x-text="maxPrice"></span>
+                        $<span x-text="Number(maxPrice).toLocaleString()"></span>
                     </div>
                 </div>
             </div>

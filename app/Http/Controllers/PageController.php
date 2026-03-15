@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use App\Models\Deal;
+use App\Models\PrimaryCategory;
+use App\Models\DealOfferType;
 
 class PageController extends Controller
 {
@@ -11,167 +15,103 @@ class PageController extends Controller
         return view('home');
     }
 
-    public function search(\Illuminate\Http\Request $request)
+    public function search(Request $request)
     {
-        $query = $request->query('q', '');
-        $category = $request->query('category', 'all');
-        $sort = $request->query('sort', 'relevance');
-        $featured = $request->query('featured') === 'true';
-        $type = $request->query('type', 'all');
-        $minPrice = (int)$request->query('minPrice', 0);
-        $maxPrice = (int)$request->query('maxPrice', 1000);
+        $query      = $request->query('q', '');
+        $category   = $request->query('category', 'all');      // primary category slug or 'all'
+        $subSlug    = $request->query('subcategory');          // optional business subcategory slug
+        $sort       = $request->query('sort', 'relevance');
+        $featured   = $request->query('featured') === 'true';
+        $type       = $request->query('type', 'all');
+        $minPrice   = (int) $request->query('minPrice', 0);
 
-        // Mock data for deals - matching the structure used in home components
-        $deals = [
-            [
-                'id' => '1',
-                'title' => '50% Off Luxury 5-Course Dinner for Two',
-                'categorySlug' => 'food-dining',
-                'categoryName' => 'Restaurants',
-                'originalPrice' => 200,
-                'discountedPrice' => 100,
-                'discountPercentage' => 50,
-                'image' => 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format',
-                'featured' => true,
-                'type' => 'percentage',
-                'location' => 'Kathmandu',
-                'timeLeft' => '2 days'
-            ],
-            [
-                'id' => '2',
-                'title' => 'Luxury Spa Day Package - 30% Off',
-                'categorySlug' => 'beauty-spa',
-                'categoryName' => 'Beauty & Spa',
-                'originalPrice' => 300,
-                'discountedPrice' => 210,
-                'discountPercentage' => 30,
-                'image' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&auto=format',
-                'featured' => true,
-                'type' => 'percentage',
-                'location' => 'Lalitpur',
-                'timeLeft' => '5 hours'
-            ],
-            [
-                'id' => '3',
-                'title' => 'Guided Mountain Hiking Tour - BOGO',
-                'categorySlug' => 'activities-events',
-                'categoryName' => 'Activities',
-                'originalPrice' => 150,
-                'discountedPrice' => 75,
-                'discountPercentage' => 50,
-                'image' => 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&auto=format',
-                'featured' => false,
-                'type' => 'bogo',
-                'location' => 'Pokhara',
-                'timeLeft' => '1 day'
-            ],
-            [
-                'id' => '4',
-                'title' => 'iPhone 15 Pro Max Deal',
-                'categorySlug' => 'electronics',
-                'categoryName' => 'Electronics',
-                'originalPrice' => 1200,
-                'discountedPrice' => 1050,
-                'discountPercentage' => 12,
-                'image' => 'https://images.unsplash.com/photo-1695048133142-1a20484d256e?w=600&auto=format',
-                'featured' => true,
-                'type' => 'fixed',
-                'location' => 'Kathmandu',
-                'timeLeft' => '3 days'
-            ],
-            [
-                'id' => '5',
-                'title' => 'Advanced React Course',
-                'categorySlug' => 'education',
-                'categoryName' => 'Online Courses',
-                'originalPrice' => 99,
-                'discountedPrice' => 29,
-                'discountPercentage' => 70,
-                'image' => 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&auto=format',
-                'featured' => false,
-                'type' => 'percentage',
-                'location' => 'Online',
-                'timeLeft' => '10 hours'
-            ],
-            [
-                'id' => '6',
-                'title' => 'Luxury Hotel Stay Pokhara',
-                'categorySlug' => 'travel',
-                'categoryName' => 'Travel',
-                'originalPrice' => 500,
-                'discountedPrice' => 350,
-                'discountPercentage' => 30,
-                'image' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format',
-                'featured' => true,
-                'type' => 'percentage',
-                'location' => 'Pokhara',
-                'timeLeft' => '4 days'
-            ]
-        ];
+        // Default max based on current deals in DB (fallback 100000)
+        $dbMaxPrice = (int) (DealOfferType::max('final_price') ?? 100000);
+        $maxPrice   = (int) $request->query('maxPrice', $dbMaxPrice);
 
-        // Simple mock filtering
-        $filteredDeals = array_filter($deals, function($deal) use ($query, $category, $featured, $type, $minPrice, $maxPrice) {
-            $match = true;
-            
-            if ($query && !str_contains(strtolower($deal['title']), strtolower($query))) {
-                $match = false;
-            }
-            
-            if ($category !== 'all' && $deal['categorySlug'] !== $category) {
-                $match = false;
-            }
-            
-            if ($featured && !$deal['featured']) {
-                $match = false;
-            }
-            
-            if ($type !== 'all' && $deal['type'] !== $type) {
-                $match = false;
-            }
-            
-            if ($deal['discountedPrice'] < $minPrice || $deal['discountedPrice'] > $maxPrice) {
-                $match = false;
-            }
-            
-            return $match;
-        });
+        $dealsQuery = Deal::query()
+            ->with(['subCategory.primaryCategory', 'offerTypes', 'images', 'vendor'])
+            ->when($query !== '', function ($q) use ($query) {
+                $q->where('title', 'like', '%' . $query . '%');
+            })
+            // Filter by subcategory slug if provided
+            ->when($subSlug, function ($q) use ($subSlug) {
+                $q->whereHas('subCategory', fn ($qq) => $qq->where('slug', $subSlug));
+            })
+            // Otherwise filter by primary category slug (if not 'all')
+            ->when(!$subSlug && $category !== 'all', function ($q) use ($category) {
+                $q->whereHas('subCategory.primaryCategory', fn ($qq) => $qq->where('slug', $category));
+            })
+            ->when($featured, function ($q) {
+                $q->where('is_featured', true);
+            });
 
-        // Simple mock sorting
-        usort($filteredDeals, function($a, $b) use ($sort) {
-            switch ($sort) {
-                case 'priceAsc':
-                    return $a['discountedPrice'] <=> $b['discountedPrice'];
-                case 'priceDesc':
-                    return $b['discountedPrice'] <=> $a['discountedPrice'];
-                case 'discountDesc':
-                    return $b['discountPercentage'] <=> $a['discountPercentage'];
-                // For simplicity, others are relevance (default order)
-                default:
-                    return 0;
-            }
-        });
+        // Sorting
+        $dealsQuery->when($sort === 'priceAsc', function ($q) {
+                $q->orderBy('base_price', 'asc');
+            })
+            ->when($sort === 'priceDesc', function ($q) {
+                $q->orderBy('base_price', 'desc');
+            })
+            ->when($sort === 'discountDesc', function ($q) {
+                $q->orderBy('discount_percent', 'desc');
+            }, function ($q) use ($sort) {
+                if ($sort === 'relevance') {
+                    $q->latest();
+                }
+            });
 
-        $categories = [
-            ['id' => '1', 'name' => 'Restaurants', 'slug' => 'food-dining'],
-            ['id' => '2', 'name' => 'Beauty & Spa', 'slug' => 'beauty-spa'],
-            ['id' => '3', 'name' => 'Activities', 'slug' => 'activities-events'],
-            ['id' => '4', 'name' => 'Travel', 'slug' => 'travel'],
-            ['id' => '5', 'name' => 'Electronics', 'slug' => 'electronics'],
-            ['id' => '6', 'name' => 'Services', 'slug' => 'services'],
-            ['id' => '7', 'name' => 'Health & Fitness', 'slug' => 'health-fitness'],
-            ['id' => '8', 'name' => 'Education', 'slug' => 'education'],
-        ];
+        $rawDeals = $dealsQuery->take(60)->get();
+
+        $deals = $rawDeals
+            ->map(function ($deal) {
+                $offer = $deal->offerTypes->first()?->pivot;
+
+                return [
+                    'id'                => $deal->id,
+                    'title'             => $deal->title,
+                    'categorySlug'      => optional($deal->subCategory->primaryCategory)->slug ?? 'uncategorized',
+                    'categoryName'      => optional($deal->subCategory->primaryCategory)->name ?? 'Uncategorized',
+                    'originalPrice'     => $offer ? (float) $offer->original_price : 0,
+                    'discountedPrice'   => $offer ? (float) $offer->final_price : 0,
+                    'discountPercentage'=> null,
+                    'image'             => $deal->images->first()?->image_url
+                                           ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+                    'featured'          => (bool) ($deal->is_featured ?? false),
+                    'type'              => $deal->offerTypes->first()->code ?? 'percentage',
+                    'location'          => [
+                        'city' => $deal->vendor?->defaultAddress?->municipality ?? 'City',
+                    ],
+                    'timeLeft'          => optional($deal->ends_at)?->diffForHumans() ?? 'soon',
+                ];
+            })
+            ->filter(function ($deal) use ($minPrice, $maxPrice) {
+                $price = $deal['discountedPrice'] ?? 0;
+                return $price >= $minPrice && $price <= $maxPrice;
+            })
+            ->values()
+            ->all();
+
+        $categories = PrimaryCategory::where('is_active', true)
+            ->orderBy('display_order')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn ($cat) => [
+                'id'   => $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+            ])
+            ->all();
 
         return view('search', [
-            'deals' => $filteredDeals,
-            'categories' => $categories,
-            'query' => $query,
+            'deals'           => $deals,
+            'categories'      => $categories,
+            'query'           => $query,
             'currentCategory' => $category,
-            'sortBy' => $sort,
-            'isFeatured' => $featured,
-            'dealType' => $type,
-            'minPrice' => $minPrice,
-            'maxPrice' => $maxPrice,
+            'sortBy'          => $sort,
+            'isFeatured'      => $featured,
+            'dealType'        => $type,
+            'minPrice'        => $minPrice,
+            'maxPrice'        => $maxPrice,
         ]);
     }
 

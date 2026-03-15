@@ -185,43 +185,6 @@
                     class="py-2"
                 >
                     <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
-                        @php
-                            $parentCategories = [
-                                [
-                                    'id' => '1', 'name' => 'Restaurants', 'slug' => 'food-dining', 'icon' => 'utensils',
-                                    'subcategories' => ['Italian', 'Chinese', 'Indian', 'Fast Food', 'Pizza', 'Sushi', 'Bakeries', 'Cafes']
-                                ],
-                                [
-                                    'id' => '2', 'name' => 'Beauty & Spa', 'slug' => 'beauty-spa', 'icon' => 'scissors',
-                                    'subcategories' => ['Massage', 'Hair Salon', 'Nails', 'Facials', 'Skin Care', 'Waxing', 'Day Spas']
-                                ],
-                                [
-                                    'id' => '3', 'name' => 'Activities', 'slug' => 'activities-events', 'icon' => 'coffee',
-                                    'subcategories' => ['Sports', 'Movies', 'Museums', 'Theme Parks', 'Concerts', 'Nightlife', 'Workshops']
-                                ],
-                                [
-                                    'id' => '4', 'name' => 'Travel', 'slug' => 'travel', 'icon' => 'plane',
-                                    'subcategories' => ['Hotels', 'Flights', 'Car Rentals', 'Package Tours', 'Cruises', 'Resorts']
-                                ],
-                                [
-                                    'id' => '5', 'name' => 'Electronics', 'slug' => 'electronics', 'icon' => 'smartphone',
-                                    'subcategories' => ['Smartphones', 'Laptops', 'Headphones', 'Cameras', 'Accessories', 'TVs', 'Gaming']
-                                ],
-                                [
-                                    'id' => '6', 'name' => 'Services', 'slug' => 'services', 'icon' => 'gift',
-                                    'subcategories' => ['Cleaning', 'Home Maintenance', 'Plumbing', 'Moving', 'Car Wash', 'Pet Care']
-                                ],
-                                [
-                                    'id' => '7', 'name' => 'Health & Fitness', 'slug' => 'health-fitness', 'icon' => 'heart',
-                                    'subcategories' => ['Gym Memberships', 'Yoga Classes', 'Personal Training', 'Crossfit', 'Pilates', 'Medical']
-                                ],
-                                [
-                                    'id' => '8', 'name' => 'Education', 'slug' => 'education', 'icon' => 'book',
-                                    'subcategories' => ['Languages', 'Music', 'Coding', 'Arts & Crafts', 'Academic', 'Business']
-                                ],
-                            ];
-                        @endphp
-
                         @foreach($parentCategories as $category)
                             <div
                                 class="relative"
@@ -275,19 +238,15 @@
                                 >
                                     <div class="grid grid-cols-3 gap-3">
                                         <div class="col-span-full pb-3 border-b border-border">
-                                            <a href="{{ route('search', ['category' => $category['slug']]) }}" class="font-medium text-primary hover:underline flex items-center gap-1.5 text-sm">
-                                                All {{ $category['name'] }} Deals
+                                            <a href="{{ route('search', ['category' => $category->slug]) }}" class="font-medium text-primary hover:underline flex items-center gap-1.5 text-sm">
+                                                All {{ $category->name }} Deals
                                             </a>
                                         </div>
-                                        {{-- Dynamic subcategories with random count (2-7) --}}
-                                        @php
-                                            $subCount = rand(2, min(count($category['subcategories']), 7));
-                                            $selectedSubcategories = collect($category['subcategories'])->random($subCount);
-                                        @endphp
-                                        @foreach($selectedSubcategories as $sub)
+
+                                        @foreach($category->subCategories as $sub)
                                             <div class="p-1.5 font-sans hover:bg-muted/50 rounded-md transition-colors">
-                                                <a href="{{ route('search', ['category' => $category['slug'], 'subcategory' => Str::slug($sub)]) }}" class="block font-medium text-sm hover:text-primary tooltip-trigger text-foreground whitespace-normal group/sub">
-                                                    {{ $sub }}
+                                                <a href="{{ route('search', ['category' => $category->slug, 'subcategory' => $sub->slug]) }}" class="block font-medium text-sm hover:text-primary tooltip-trigger text-foreground whitespace-normal group/sub">
+                                                    {{ $sub->name }}
                                                     <span class="inline-block transform translate-x-0 group-hover/sub:translate-x-1 transition-transform duration-200 ml-1 opacity-0 group-hover/sub:opacity-100 text-primary">→</span>
                                                 </a>
                                             </div>
