@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   ArrowLeft, Upload, X, ImagePlus, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Megaphone, Clock, Tag, Info, Percent, Banknote, ShoppingCart
+  Clock, Tag, Info, Percent, Banknote, ShoppingCart
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -456,6 +455,21 @@ const CreateDeal = () => {
           </CardContent>
         </Card>
 
+        {/* Schedule */}
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Schedule</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Start Date *</Label>
+              <Input type="date" value={data.startDate} onChange={e => setData('startDate', e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label>End Date *</Label>
+              <Input type="date" value={data.endDate} onChange={e => setData('endDate', e.target.value)} required />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tags */}
         <Card>
           <CardHeader>
@@ -481,21 +495,6 @@ const CreateDeal = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Schedule</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Start Date *</Label>
-              <Input type="date" value={data.startDate} onChange={e => setData('startDate', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>End Date *</Label>
-              <Input type="date" value={data.endDate} onChange={e => setData('endDate', e.target.value)} required />
-            </div>
           </CardContent>
         </Card>
 
