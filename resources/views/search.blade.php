@@ -18,6 +18,8 @@
             sortBy: '{{ addslashes($sortBy) }}',
             minPrice: {{ (int)$minPrice }},
             maxPrice: {{ (int)$maxPrice }},
+            availableMinPrice: {{ (int)$availableMinPrice }},
+            availableMaxPrice: {{ (int)$availableMaxPrice }},
             dealType: '{{ addslashes($dealType) }}',
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
@@ -29,9 +31,8 @@
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
                 if (this.isFeatured) params.set('featured', 'true');
                 if (this.dealType !== 'all') params.set('type', this.dealType);
-                if (this.minPrice > 0) params.set('minPrice', this.minPrice);
-                // Always send maxPrice so backend can cap correctly
-                if (this.maxPrice > 0) params.set('maxPrice', this.maxPrice);
+                if (this.minPrice > this.availableMinPrice) params.set('minPrice', this.minPrice);
+                if (this.maxPrice < this.availableMaxPrice) params.set('maxPrice', this.maxPrice);
                 
                 window.location.search = params.toString();
             },
@@ -46,7 +47,7 @@
                 {{ $query ? "Search results for \"$query\"" : "All Deals" }}
             </h1>
             
-            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > 0 || maxPrice < 100000">
+            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                 <button 
                     @click="resetFilters" 
                     class="hidden md:flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
@@ -123,7 +124,7 @@
                         </div>
                     </div>
                     
-                    <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > 0 || maxPrice < 1000">
+                    <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                         <button @click="resetFilters" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
                             Clear All Filters

@@ -23,11 +23,8 @@ class PageController extends Controller
         $sort       = $request->query('sort', 'relevance');
         $featured   = $request->query('featured') === 'true';
         $type       = $request->query('type', 'all');
-        $minPrice   = (int) $request->query('minPrice', 0);
-
-        // Default max based on current deals in DB (fallback 100000)
-        $dbMaxPrice = (int) (DealOfferType::max('final_price') ?? 100000);
-        $maxPrice   = (int) $request->query('maxPrice', $dbMaxPrice);
+        $reqMinPrice = $request->query('minPrice');
+        $reqMaxPrice = $request->query('maxPrice');
 
         $dealsQuery = Deal::query()
             ->with(['subCategory.primaryCategory', 'offerTypes', 'images', 'vendor'])
@@ -63,7 +60,7 @@ class PageController extends Controller
 
         $rawDeals = $dealsQuery->take(60)->get();
 
-        $deals = $rawDeals
+        $mappedDeals = $rawDeals
             ->map(function ($deal) {
                 $offer = $deal->offerTypes->first()?->pivot;
 
@@ -84,7 +81,19 @@ class PageController extends Controller
                     ],
                     'timeLeft'          => optional($deal->ends_at)?->diffForHumans() ?? 'soon',
                 ];
-            })
+            });
+
+        $availableMinPrice = (int) floor($mappedDeals->min('discountedPrice') ?? 0);
+        $availableMaxPrice = (int) ceil($mappedDeals->max('discountedPrice') ?? 100000);
+        
+        if ($availableMaxPrice <= $availableMinPrice) {
+            $availableMaxPrice = $availableMinPrice + 100;
+        }
+
+        $minPrice = $reqMinPrice !== null ? (int) $reqMinPrice : $availableMinPrice;
+        $maxPrice = $reqMaxPrice !== null ? (int) $reqMaxPrice : $availableMaxPrice;
+
+        $deals = $mappedDeals
             ->filter(function ($deal) use ($minPrice, $maxPrice) {
                 $price = $deal['discountedPrice'] ?? 0;
                 return $price >= $minPrice && $price <= $maxPrice;
@@ -110,8 +119,10 @@ class PageController extends Controller
             'sortBy'          => $sort,
             'isFeatured'      => $featured,
             'dealType'        => $type,
-            'minPrice'        => $minPrice,
-            'maxPrice'        => $maxPrice,
+            'minPrice'          => $minPrice,
+            'maxPrice'          => $maxPrice,
+            'availableMinPrice' => $availableMinPrice,
+            'availableMaxPrice' => $availableMaxPrice,
         ]);
     }
 

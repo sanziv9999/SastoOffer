@@ -70,50 +70,79 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
-            <div class="space-y-3 w-full">
-                <div class="mt-4 w-full">
+            <div class="space-y-4 w-full">
+                {{-- Dynamic Min/Max Extent Display --}}
+                <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                    <span>Min: $<span x-text="availableMinPrice"></span></span>
+                    <span>Max: $<span x-text="availableMaxPrice"></span></span>
+                </div>
+
+
+                {{-- Dual Slider --}}
+                <div class="relative w-full h-5 mt-2 flex items-center">
                     {{-- Track background --}}
-                    <div class="relative w-full h-1.5 bg-secondary rounded-full">
-                        {{-- Filled portion (clamped so it never exceeds track width) --}}
-                        <div 
-                            class="absolute inset-y-0 left-0 bg-primary rounded-full pointer-events-none"
-                            :style="`width: ${(Math.min(maxPrice, 100000) / 100000) * 100}%`"
-                        ></div>
-                    </div>
-                    {{-- Range input sits BELOW the visual track, full width --}}
+                    <div class="absolute w-full h-1.5 bg-secondary rounded-full"></div>
+                    {{-- Filled portion --}}
+                    <div 
+                        class="absolute h-1.5 bg-primary rounded-full pointer-events-none"
+                        :style="`left: ${Math.max(0, Math.min(100, ((Math.min(minPrice, maxPrice) - availableMinPrice) / Math.max(1, (availableMaxPrice - availableMinPrice))) * 100))}%; right: ${Math.max(0, Math.min(100, 100 - ((Math.max(minPrice, maxPrice) - availableMinPrice) / Math.max(1, (availableMaxPrice - availableMinPrice))) * 100))}%`"
+                    ></div>
+                    
+                    {{-- Min Range Input --}}
                     <input 
                         type="range" 
-                        min="0" 
-                        max="100000" 
-                        step="100" 
-                        x-model="maxPrice"
-                        class="block w-full mt-[-0.45rem] appearance-none bg-transparent cursor-pointer
-                            [&::-webkit-slider-runnable-track]:h-1.5
-                            [&::-webkit-slider-runnable-track]:bg-transparent
+                        :min="availableMinPrice" 
+                        :max="availableMaxPrice" 
+                        step="1" 
+                        x-model.number="minPrice"
+                        @input="if(minPrice > maxPrice) minPrice = maxPrice"
+                        class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none 
+                            [&::-webkit-slider-thumb]:pointer-events-auto
                             [&::-webkit-slider-thumb]:appearance-none 
                             [&::-webkit-slider-thumb]:w-4 
                             [&::-webkit-slider-thumb]:h-4 
                             [&::-webkit-slider-thumb]:rounded-full 
-                            [&::-webkit-slider-thumb]:bg-background 
+                            [&::-webkit-slider-thumb]:bg-primary 
                             [&::-webkit-slider-thumb]:border-2
-                            [&::-webkit-slider-thumb]:border-primary 
-                            [&::-webkit-slider-thumb]:shadow-sm
-                            [&::-moz-range-track]:bg-transparent
+                            [&::-webkit-slider-thumb]:border-primary-foreground 
+                            [&::-webkit-slider-thumb]:shadow-md
+                            [&::-moz-range-thumb]:pointer-events-auto
                             [&::-moz-range-thumb]:w-4 
                             [&::-moz-range-thumb]:h-4 
                             [&::-moz-range-thumb]:rounded-full 
-                            [&::-moz-range-thumb]:bg-background 
+                            [&::-moz-range-thumb]:bg-primary 
                             [&::-moz-range-thumb]:border-2
-                            [&::-moz-range-thumb]:border-primary
-                            [&::-moz-range-thumb]:cursor-pointer
-                            focus:outline-none"
+                            [&::-moz-range-thumb]:border-primary-foreground
+                            focus:outline-none z-10"
                     />
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="bg-muted px-2 py-1 rounded text-xs font-medium">$0</div>
-                    <div class="bg-muted px-2 py-1 rounded text-xs font-medium">
-                        $<span x-text="Number(maxPrice).toLocaleString()"></span>
-                    </div>
+                    
+                    {{-- Max Range Input --}}
+                    <input 
+                        type="range" 
+                        :min="availableMinPrice" 
+                        :max="availableMaxPrice" 
+                        step="1" 
+                        x-model.number="maxPrice"
+                        @input="if(maxPrice < minPrice) maxPrice = minPrice"
+                        class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none 
+                            [&::-webkit-slider-thumb]:pointer-events-auto
+                            [&::-webkit-slider-thumb]:appearance-none 
+                            [&::-webkit-slider-thumb]:w-4 
+                            [&::-webkit-slider-thumb]:h-4 
+                            [&::-webkit-slider-thumb]:rounded-full 
+                            [&::-webkit-slider-thumb]:bg-primary 
+                            [&::-webkit-slider-thumb]:border-2
+                            [&::-webkit-slider-thumb]:border-primary-foreground 
+                            [&::-webkit-slider-thumb]:shadow-md
+                            [&::-moz-range-thumb]:pointer-events-auto
+                            [&::-moz-range-thumb]:w-4 
+                            [&::-moz-range-thumb]:h-4 
+                            [&::-moz-range-thumb]:rounded-full 
+                            [&::-moz-range-thumb]:bg-primary 
+                            [&::-moz-range-thumb]:border-2
+                            [&::-moz-range-thumb]:border-primary-foreground
+                            focus:outline-none z-20"
+                    />
                 </div>
             </div>
         </div>
