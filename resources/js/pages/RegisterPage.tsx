@@ -2,8 +2,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Apple } from 'lucide-react';
+import { Facebook, Apple, ArrowLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import Logo from '@/components/Logo';
 import { Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 
@@ -30,10 +31,20 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="container mx-auto flex justify-center items-center px-4 py-12">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-muted/30">
+      {/* Back to home */}
+      <div className="w-full max-w-md mb-6">
+        <a href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </a>
+      </div>
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+        <CardHeader className="space-y-1 text-center">
+          <a href="/" className="flex justify-center mb-2">
+            <Logo />
+          </a>
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription className="text-center">
             Enter your details to create your account
           </CardDescription>

@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+
 import { Outlet } from 'react-router-dom';
 import { LogOut, Home } from 'lucide-react';
 import {
@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import DashboardNav from '@/components/DashboardNav';
 import { useAuth } from '@/context/AuthContext';
-import Link from '@/components/Link';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -20,15 +19,6 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAuth();
-
-  // Detect environment
-  let isInertia = false;
-  try {
-    usePage();
-    isInertia = true;
-  } catch (e) {
-    isInertia = false;
-  }
 
   const handleLogout = () => {
     logout();
@@ -40,10 +30,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <Sidebar>
           <SidebarHeader>
             <div className="p-4">
-              <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2">
+              <a href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2">
                 <Home className="h-4 w-4" />
                 <span>Back to Site</span>
-              </Link>
+              </a>
               <h2 className="font-semibold text-xl">Dashboard</h2>
               <p className="text-sm text-muted-foreground">{user?.name || 'Guest'}</p>
             </div>

@@ -41,9 +41,9 @@ const ForgotPasswordPage = () => {
 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
-          <Link to="/" className="flex justify-center mb-2">
+          <a href="/" className="flex justify-center mb-2">
             <Logo />
-          </Link>
+          </a>
           <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
           <CardDescription>
             {isSubmitted 

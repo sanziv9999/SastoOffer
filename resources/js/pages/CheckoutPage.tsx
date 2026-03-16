@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { deals, vendors } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/lib/toast';
-import { ArrowLeft, CreditCard, Wallet, ShieldCheck, MapPin } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, ShieldCheck } from 'lucide-react';
 
 const CheckoutPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +28,7 @@ const CheckoutPage = () => {
     return (
       <div className="container py-12 text-center min-h-[60vh] flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bold mb-4">Deal not found</h1>
-        <Button asChild><Link to="/">Back to Home</Link></Button>
+        <Button asChild><a href="/">Back to Home</a></Button>
       </div>
     );
   }

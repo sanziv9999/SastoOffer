@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import Link from '@/components/Link';
 import { useAuth } from '@/context/AuthContext';
 import {
   Clock,
@@ -34,7 +33,7 @@ const DealDetails = () => {
           The deal you're looking for doesn't exist or may have expired.
         </p>
         <Button asChild>
-          <Link href="/">Back to Homepage</Link>
+          <a href="/">Back to Homepage</a>
         </Button>
       </div>
     );
@@ -77,9 +76,9 @@ const DealDetails = () => {
     <div className="container py-8 max-w-7xl mx-auto px-4">
       {/* Breadcrumb */}
       <div className="text-sm mb-6 flex items-center gap-1 text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+        <a href="/" className="hover:text-foreground transition-colors">Home</a>
         <span>/</span>
-        <Link href="/" className="hover:text-foreground transition-colors">Deals</Link>
+        <a href="/" className="hover:text-foreground transition-colors">Deals</a>
         <span>/</span>
         <span className="font-medium text-foreground truncate">{deal.title}</span>
       </div>
@@ -144,12 +143,12 @@ const DealDetails = () => {
           {deal.vendor && (
             <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
               <span>By</span>
-              <Link
+              <a
                 href={`/vendor-profile/${deal.vendor.id}`}
                 className="text-primary font-medium hover:underline"
               >
                 {deal.vendor.business_name}
-              </Link>
+              </a>
             </div>
           )}
 
@@ -288,20 +287,20 @@ const DealDetails = () => {
               </div>
 
               <Button asChild variant="outline" className="w-full">
-                <Link href={`/vendor-profile/${deal.vendor.id}`}>
+                <a href={`/vendor-profile/${deal.vendor.id}`}>
                   <MapPin className="mr-2 h-4 w-4" />
                   View Profile
-                </Link>
+                </a>
               </Button>
             </div>
           )}
 
           <div className="mt-4">
             <Button asChild variant="ghost" className="w-full">
-              <Link href="/">
+              <a href="/">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Back to Deals
-              </Link>
+              </a>
             </Button>
           </div>
         </div>

@@ -31,17 +31,17 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-8 bg-muted/30">
       {/* Back to home */}
       <div className="w-full max-w-md mb-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+        <a href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="h-4 w-4" />
           Back to Home
-        </Link>
+        </a>
       </div>
 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
-          <Link href="/" className="flex justify-center mb-2">
+          <a href="/" className="flex justify-center mb-2">
             <Logo />
-          </Link>
+          </a>
           <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
           <CardDescription>
             Enter your email and password to access your account
