@@ -145,7 +145,7 @@ const RecentOffers = () => {
                     </div>
                   </div>
                   <CardContent className="p-4">
-                    <Link to={`/deals/${deal.id}`}>
+                    <Link to={`/deals/deal/${deal.id}`}>
                       <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2 hover:text-primary transition-colors">
                         {deal.title}
                       </h3>

@@ -10,7 +10,7 @@
 @endphp
 
 @if($compact)
-    <a href="{{ route('deals.show', ['id' => $deal['id']]) }}" class="block h-full group">
+    <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}" class="block h-full group">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden h-full hover:shadow-md transition-all duration-200">
             <div class="relative">
                 <img 
@@ -63,7 +63,7 @@
         </div>
         
         {{-- Image --}}
-        <a href="{{ route('deals.show', ['id' => $deal['id']]) }}" class="block relative overflow-hidden h-48">
+        <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}" class="block relative overflow-hidden h-48">
             <img 
                 src="{{ $deal['image'] }}" 
                 alt="{{ $deal['title'] }}" 
@@ -99,7 +99,7 @@
             {{-- Search page can render one card per offer, so we don't list multiple offers here. --}}
             
             {{-- Title --}}
-            <a href="{{ route('deals.show', ['id' => $deal['id']]) }}">
+            <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}">
                 <h3 class="font-semibold text-teal-800 mb-2 line-clamp-2 min-h-[3rem] transition-colors group-hover:text-teal-600">
                     {{ $deal['title'] }}
                 </h3>
@@ -124,7 +124,7 @@
             {{-- Action Button --}}
             <div class="flex justify-between items-center">
                 <a 
-                    href="{{ route('deals.show', ['id' => $deal['id']]) }}" 
+                    href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}"
                     class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full"
                 >
                     View Deal

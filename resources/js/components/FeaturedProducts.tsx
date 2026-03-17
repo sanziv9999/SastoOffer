@@ -45,7 +45,7 @@ const FeaturedProducts = () => {
                 );
                 
                 return (
-                  <Link key={deal.id} to={`/deals/${deal.id}`} className="block">
+                  <Link key={deal.id} to={`/deals/deal/${deal.id}`} className="block">
                     <Card className="overflow-hidden h-full hover:shadow-md transition-all duration-200 group border-border">
                       <div className="relative">
                         <img 

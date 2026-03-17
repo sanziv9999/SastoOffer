@@ -42,7 +42,7 @@ const SavedDeals = ({ favoriteDeals }: SavedDealsProps) => {
                 </div>
                 <div className="flex gap-2">
                   <Button asChild className="flex-1" size="sm">
-                    <Link href={`/deals/${deal.id}`}>View Deal</Link>
+                    <Link href={`/deals/deal/${deal.id}`}>View Deal</Link>
                   </Button>
                   <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4" />

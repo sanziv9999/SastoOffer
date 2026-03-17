@@ -40,19 +40,20 @@ class PageController extends Controller
                 $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
                     ->when($featured, fn ($qq) => $qq->where('is_featured', true))
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
-                    ->when(!$subSlug && $category !== 'all', fn ($qq) => $qq->whereHas('category.parent', fn ($c) => $c->where('slug', $category)));
+                    ->when(!$subSlug && $category !== 'all', function ($qq) use ($category) {
+                        // Top-level category filter should match:
+                        // - leaf category's parent slug, OR
+                        // - category slug itself (if deal uses a top-level category directly)
+                        $qq->where(function ($w) use ($category) {
+                            $w->whereHas('category.parent', fn ($c) => $c->where('slug', $category))
+                                ->orWhereHas('category', fn ($c) => $c->where('slug', $category)->whereNull('parent_id'));
+                        });
+                    });
             });
 
-        // If filtering by offer type, find deals that have that type,
-        // but still fetch/show all offers attached to those deals.
+        // Deal type filter should filter offer rows directly (one card per offer).
         if ($type !== 'all') {
-            $dealIds = (clone $offerQuery)
-                ->whereHas('offerType', fn ($q) => $q->where('slug', $type)->orWhere('name', $type))
-                ->pluck('deal_id')
-                ->unique()
-                ->values();
-
-            $offerQuery->whereIn('deal_id', $dealIds);
+            $offerQuery->whereHas('offerType', fn ($q) => $q->where('slug', $type)->orWhere('name', $type));
         }
 
         // Pull a reasonable working set and group in memory (pivot-driven).

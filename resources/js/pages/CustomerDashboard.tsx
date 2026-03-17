@@ -199,7 +199,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                     </div>
                   </div>
                   <Button asChild className="w-full" size="sm">
-                    <Link href={`/deals/${deal.id}`}>
+                    <Link href={`/deals/deal/${deal.id}`}>
                       View Deal
                     </Link>
                   </Button>

@@ -19,9 +19,13 @@ Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name(
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 
 // Deal detail (public): support both /deals/{id} and /deal/{id}
-Route::get('/deals/{id}', [DealController::class, 'showDeal'])->name('deals.show');
+// Deal detail (public): now fetched by deal_offer_type (pivot) id.
+Route::get('/deals/{dealOfferType}', [DealController::class, 'showDeal'])->name('deals.show');
+
+// Legacy: deal-id based URLs redirect to the first active offer (if any).
+Route::get('/deals/deal/{deal}', [DealController::class, 'showDealByDealId'])->name('deals.show.by-deal');
 Route::get('/deal/{id}', function ($id) {
-    return redirect()->route('deals.show', ['id' => $id]);
+    return redirect()->route('deals.show.by-deal', ['deal' => $id]);
 })->name('deal.show.redirect');
 
 // Vendor profile (public)
@@ -56,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vendor/deals', [DealController::class, 'manageDeals'])->name('vendor.deals.index');
     Route::get('/vendor/deals/create', [DealController::class, 'create'])->name('vendor.deals.create');
     Route::post('/vendor/deals', [DealController::class, 'store'])->name('vendor.deals.store');
+    Route::get('/vendor/deals/{deal}', [DealController::class, 'viewDeal'])->name('vendor.deals.view');
     Route::get('/vendor/deals/{deal}/edit', [DealController::class, 'editDeal'])->name('vendor.deals.edit');
     Route::put('/vendor/deals/{deal}', [DealController::class, 'updateDeal'])->name('vendor.deals.update');
     Route::get('/vendor/deals/{deal}/offers', [DealController::class, 'offers'])->name('vendor.deals.offers');

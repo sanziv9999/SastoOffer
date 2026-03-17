@@ -7,6 +7,7 @@ use App\Models\DealOfferType;
 use App\Models\OfferType;
 use App\Models\VendorProfile;
 use App\Models\Category;
+use App\Models\DealOfferType as DealOfferTypePivot;
 use App\Services\DealOfferService;
 use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
@@ -207,37 +208,46 @@ class DealController extends Controller
     /**
      * Public deal view (Inertia)
      */
-    public function showDeal($id)
+    public function showDeal(DealOfferTypePivot $dealOfferType)
     {
         try {
+            $dealOfferType->load([
+                'deal.vendor',
+                'deal.category',
+                'deal.images',
+                'deal.offerTypes',
+                'offerType',
+            ]);
 
-            $deal = Deal::with(['vendor', 'category', 'images', 'offerTypes'])->find($id);
+            $deal = $dealOfferType->deal;
             if (!$deal) {
                 return view('deals.show', ['deal' => null]);
             }
 
-            $offerType = $deal->offerTypes->first();
-            $offer = $offerType?->pivot;
+            $selectedPivot = $dealOfferType;
             $base = $deal->base_price !== null ? (float) $deal->base_price : null;
             return view('deals.show', [
                 'deal' => [
                     'id'               => $deal->id,
+                    'offerPivotId'     => $selectedPivot->id,
                     'title'            => $deal->title,
                     'short_description' => $deal->short_description,
                     'long_description' => $deal->long_description,
                     'status'           => $deal->status,
                     'highlights'       => is_array($deal->highlights) ? $deal->highlights : [],
-                    'ends_at'          => $offer?->ends_at?->toIso8601String(),
+                    'ends_at'          => $selectedPivot->ends_at?->toIso8601String(),
                     'is_featured'      => (bool) $deal->is_featured,
-                    'discountedPrice'  => $offer ? (float) $offer->final_price : $base,
-                    'originalPrice'    => $offer ? (float) $offer->original_price : $base,
-                    'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
+                    'discountedPrice'  => $selectedPivot->final_price !== null ? (float) $selectedPivot->final_price : $base,
+                    'originalPrice'    => $selectedPivot->original_price !== null ? (float) $selectedPivot->original_price : $base,
+                    'discountPercent'  => $selectedPivot->discount_percent !== null ? (float) $selectedPivot->discount_percent : null,
+                    'offerTypeTitle'   => $selectedPivot->offerType?->display_name,
                     'offers'           => $deal->offerTypes->map(function ($ot) {
                         return [
                             'id' => $ot->id,
                             'name' => $ot->name,
                             'display_name' => $ot->display_name,
                             'pivot' => [
+                                'pivot_id' => $ot->pivot?->id,
                                 'original_price' => $ot->pivot?->original_price,
                                 'final_price' => $ot->pivot?->final_price,
                                 'currency_code' => $ot->pivot?->currency_code,
@@ -271,6 +281,61 @@ class DealController extends Controller
             // Redirect to a safe page or show an error
             return redirect()->route('home')->with('error', 'Could not load deal details.');
         }
+    }
+
+    /**
+     * Public deal view by deal id (legacy): redirects to first active offer pivot.
+     */
+    public function showDealByDealId($deal)
+    {
+        $dealModel = Deal::find($deal);
+        if (!$dealModel) {
+            return view('deals.show', ['deal' => null]);
+        }
+
+        $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+            ->where('status', 'active')
+            ->orderBy('final_price')
+            ->first();
+
+        if ($pivot) {
+            return redirect()->route('deals.show', ['dealOfferType' => $pivot->id]);
+        }
+
+        // No offers: show deal with base price fallback (no pivot context)
+        return view('deals.show', [
+            'deal' => [
+                'id' => $dealModel->id,
+                'offerPivotId' => null,
+                'title' => $dealModel->title,
+                'short_description' => $dealModel->short_description,
+                'long_description' => $dealModel->long_description,
+                'status' => $dealModel->status,
+                'highlights' => is_array($dealModel->highlights) ? $dealModel->highlights : [],
+                'ends_at' => null,
+                'is_featured' => (bool) $dealModel->is_featured,
+                'discountedPrice' => $dealModel->base_price !== null ? (float) $dealModel->base_price : 0,
+                'originalPrice' => $dealModel->base_price !== null ? (float) $dealModel->base_price : 0,
+                'discountPercent' => null,
+                'offerTypeTitle' => null,
+                'offers' => [],
+                'images' => $dealModel->images()->get()->map(fn($img) => [
+                    'id' => $img->id,
+                    'image_url' => $img->image_url,
+                    'attribute_name' => $img->attribute_name,
+                ])->toArray(),
+                'vendor' => $dealModel->vendor ? [
+                    'id' => $dealModel->vendor->id,
+                    'business_name' => $dealModel->vendor->business_name,
+                    'rating' => 4.8,
+                    'reviewCount' => 42,
+                ] : null,
+                'category' => $dealModel->category ? [
+                    'id' => $dealModel->category->id,
+                    'name' => $dealModel->category->name,
+                ] : null,
+            ],
+        ]);
     }
 
     /**
@@ -310,6 +375,64 @@ class DealController extends Controller
                 ]),
             ],
             'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Vendor: view deal (Inertia) - vendor-only preview page.
+     */
+    public function viewDeal(Deal $deal)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $deal->load(['category.parent', 'images', 'offerTypes', 'vendor.defaultAddress']);
+
+        return \Inertia\Inertia::render('vendor/DealView', [
+            'deal' => [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'status' => $deal->status,
+                'basePrice' => $deal->base_price,
+                'shortDesc' => $deal->short_description,
+                'description' => $deal->long_description,
+                'category' => $deal->category ? [
+                    'id' => $deal->category->id,
+                    'name' => $deal->category->name,
+                    'parent' => $deal->category->parent ? [
+                        'id' => $deal->category->parent->id,
+                        'name' => $deal->category->parent->name,
+                    ] : null,
+                ] : null,
+                'images' => $deal->images->map(fn($img) => [
+                    'id' => $img->id,
+                    'image_url' => $img->image_url,
+                    'attribute_name' => $img->attribute_name,
+                ])->values()->toArray(),
+                'offers' => $deal->offerTypes->map(function ($ot) {
+                    $pct = (float) ($ot->pivot?->savings_percent ?? $ot->pivot?->discount_percent ?? 0);
+                    return [
+                        'id' => $ot->id,
+                        'name' => $ot->name,
+                        'display_name' => $ot->display_name,
+                        'pivot' => [
+                            'pivot_id' => $ot->pivot?->id,
+                            'original_price' => $ot->pivot?->original_price,
+                            'final_price' => $ot->pivot?->final_price,
+                            'discount_percent' => $ot->pivot?->discount_percent,
+                            'savings_percent' => $ot->pivot?->savings_percent,
+                            'discountPercentage' => $pct > 0 ? $pct : null,
+                            'status' => $ot->pivot?->status,
+                            'starts_at' => $ot->pivot?->starts_at?->toDateString(),
+                            'ends_at' => $ot->pivot?->ends_at?->toDateString(),
+                        ],
+                    ];
+                })->values()->toArray(),
+            ],
         ]);
     }
 

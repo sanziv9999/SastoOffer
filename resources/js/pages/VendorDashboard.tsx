@@ -396,10 +396,10 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                             <td className="p-4 align-middle text-right">
                               <div className="flex justify-end gap-2">
                                 <Button variant="outline" size="sm" asChild>
-                                  <a href={`/vendor/deals/${deal.id}/edit`}>Edit</a>
+                                  <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
                                 </Button>
                                 <Button variant="ghost" size="sm" asChild>
-                                  <a href={`/deals/${deal.id}`}>View</a>
+                                  <Link href={`/vendor/deals/${deal.id}`}>View</Link>
                                 </Button>
                               </div>
                             </td>

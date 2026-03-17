@@ -51,7 +51,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
       </div>
       
       {/* Image */}
-      <Link to={`/deals/${deal.id}`} className="block relative overflow-hidden h-48">
+      <Link to={`/deals/deal/${deal.id}`} className="block relative overflow-hidden h-48">
         <img 
           src={deal.image} 
           alt={deal.title} 
@@ -76,7 +76,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
         </div>
         
         {/* Title */}
-        <Link to={`/deals/${deal.id}`}>
+        <Link to={`/deals/deal/${deal.id}`}>
           <h3 className="font-semibold text-teal-800 mb-2 line-clamp-2 min-h-[3rem] transition-colors group-hover:text-teal-600">
             {deal.title}
           </h3>
@@ -101,7 +101,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
         {/* Action Button */}
         <div className="flex justify-between items-center">
           <Button asChild variant="outline" size="sm" className="w-full">
-            <Link to={`/deals/${deal.id}`} className="flex items-center justify-center">
+            <Link to={`/deals/deal/${deal.id}`} className="flex items-center justify-center">
               View Deal
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
