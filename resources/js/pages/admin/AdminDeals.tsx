@@ -60,6 +60,9 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                     <div>
                       <div className="font-medium">{deal.title?.length > 25 ? `${deal.title.substring(0, 25)}...` : deal.title}</div>
                       <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
+                      {deal.offerTypeTitle && (
+                        <div className="text-xs text-muted-foreground">Offer: {deal.offerTypeTitle}</div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -124,7 +127,7 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                       </>
                     )}
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/deal/${deal.id}`}>View</Link>
+                      <Link href={deal.offerPivotId ? `/deals/${deal.offerPivotId}` : `/deals/deal/${deal.id}`}>View</Link>
                     </Button>
                   </div>
                 </td>

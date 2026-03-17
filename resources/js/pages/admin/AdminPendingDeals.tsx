@@ -67,6 +67,9 @@ const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) =>
                                                     <div>
                                                         <div className="font-medium">{deal.title?.length > 25 ? `${deal.title.substring(0, 25)}...` : deal.title}</div>
                                                         <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
+                                                        {deal.offerTypeTitle && (
+                                                            <div className="text-xs text-muted-foreground">Offer: {deal.offerTypeTitle}</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -76,12 +79,7 @@ const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) =>
                                                 <div className="text-xs text-muted-foreground line-through">${deal.originalPrice?.toFixed(2)}</div>
                                             </td>
                                             <td className="p-4 align-middle">
-                                                <Badge variant="outline">
-                                                    {deal.type === 'percentage' ? 'Discount' :
-                                                        deal.type === 'fixed' ? 'Fixed Price' :
-                                                            deal.type === 'bogo' ? 'BOGO' :
-                                                                deal.type}
-                                                </Badge>
+                                                <Badge variant="outline">{deal.offerTypeTitle || deal.type || '-'}</Badge>
                                             </td>
                                             <td className="p-4 align-middle">
                                                 {deal.createdAt ? formatDistanceToNow(new Date(deal.createdAt), { addSuffix: true }) : 'N/A'}
@@ -91,7 +89,7 @@ const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) =>
                                                     <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>
                                                     <Button variant="destructive" size="sm"><XCircle className="h-4 w-4 mr-1" />Reject</Button>
                                                     <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={`/deal/${deal.id}`}>View</Link>
+                                                        <Link href={deal.offerPivotId ? `/deals/${deal.offerPivotId}` : `/deals/deal/${deal.id}`}>View</Link>
                                                     </Button>
                                                 </div>
                                             </td>

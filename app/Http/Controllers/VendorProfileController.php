@@ -16,7 +16,7 @@ class VendorProfileController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
         $vendors = VendorProfile::query()
-            ->with(['user', 'primaryCategory'])
+            ->with(['user', 'primaryCategory.parent', 'images'])
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('business_name', 'like', "%{$search}%")
@@ -27,11 +27,119 @@ class VendorProfileController extends Controller
             ->when($request->filled('primary_category_id'), fn ($q) => $q->where('category_id', $request->primary_category_id))
             ->latest()
             ->paginate(15)
+            ->through(function (VendorProfile $v) {
+                $logo = $v->images?->firstWhere('attribute_name', 'logo')?->image_url;
+                $category = $v->primaryCategory;
+                return [
+                    'id' => $v->id,
+                    'business_name' => $v->business_name,
+                    'description' => $v->description,
+                    'public_email' => $v->public_email,
+                    'verified_status' => $v->verified_status,
+                    'created_at' => $v->created_at?->toIso8601String(),
+                    'logo' => $logo,
+                    'category' => $category ? [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'parent' => $category->parent ? [
+                            'id' => $category->parent->id,
+                            'name' => $category->parent->name,
+                        ] : null,
+                    ] : null,
+                ];
+            })
             ->withQueryString();
 
         return Inertia::render('admin/AdminVendors', [
             'vendors' => $vendors,
-            'filters' => ['search' => $search],
+            'filters' => [
+                'search' => $search,
+                'verified_status' => $request->query('verified_status'),
+            ],
+        ]);
+    }
+
+    public function updateVerifiedStatus(Request $request, VendorProfile $vendorProfile)
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'verified_status' => ['required', 'in:pending,verified,rejected,suspended'],
+        ]);
+
+        $vendorProfile->verified_status = $data['verified_status'];
+
+        if ($data['verified_status'] === 'verified') {
+            $vendorProfile->verified_at = now();
+            $vendorProfile->verified_by_user_id = $user->id;
+        } else {
+            $vendorProfile->verified_at = null;
+            $vendorProfile->verified_by_user_id = null;
+        }
+
+        $vendorProfile->save();
+
+        return back()->with('success', 'Vendor status updated.');
+    }
+
+    public function adminShow(VendorProfile $vendorProfile)
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images', 'verifiedBy']);
+
+        $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
+        $cover = $vendorProfile->images?->firstWhere('attribute_name', 'cover')?->image_url;
+
+        return Inertia::render('admin/AdminVendorView', [
+            'vendor' => [
+                'id' => $vendorProfile->id,
+                'user' => [
+                    'id' => $vendorProfile->user?->id,
+                    'name' => $vendorProfile->user?->name,
+                    'email' => $vendorProfile->user?->email,
+                ],
+                'business_name' => $vendorProfile->business_name,
+                'slug' => $vendorProfile->slug,
+                'business_type' => $vendorProfile->business_type,
+                'description' => $vendorProfile->description,
+                'public_email' => $vendorProfile->public_email,
+                'public_phone' => $vendorProfile->public_phone,
+                'website_url' => $vendorProfile->website_url,
+                'verified_status' => $vendorProfile->verified_status,
+                'verified_at' => $vendorProfile->verified_at?->toIso8601String(),
+                'verified_by' => $vendorProfile->verifiedBy ? [
+                    'id' => $vendorProfile->verifiedBy->id,
+                    'name' => $vendorProfile->verifiedBy->name,
+                    'email' => $vendorProfile->verifiedBy->email,
+                ] : null,
+                'created_at' => $vendorProfile->created_at?->toIso8601String(),
+                'logo' => $logo,
+                'cover' => $cover,
+                'category' => $vendorProfile->primaryCategory ? [
+                    'id' => $vendorProfile->primaryCategory->id,
+                    'name' => $vendorProfile->primaryCategory->name,
+                    'parent' => $vendorProfile->primaryCategory->parent ? [
+                        'id' => $vendorProfile->primaryCategory->parent->id,
+                        'name' => $vendorProfile->primaryCategory->parent->name,
+                    ] : null,
+                ] : null,
+                'default_address' => $vendorProfile->defaultAddress ? [
+                    'province' => $vendorProfile->defaultAddress->province,
+                    'district' => $vendorProfile->defaultAddress->district,
+                    'municipality' => $vendorProfile->defaultAddress->municipality,
+                    'ward_no' => $vendorProfile->defaultAddress->ward_no,
+                    'tole' => $vendorProfile->defaultAddress->tole,
+                    'latitude' => $vendorProfile->defaultAddress->latitude,
+                    'longitude' => $vendorProfile->defaultAddress->longitude,
+                ] : null,
+            ],
         ]);
     }
 

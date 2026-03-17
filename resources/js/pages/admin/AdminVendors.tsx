@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Star } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import AdminPagination from '@/components/AdminPagination';
 
 interface AdminVendorsProps {
   vendors: any;
-  filters?: { search?: string };
+  filters?: { search?: string; verified_status?: string | null };
 }
 
 const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
@@ -21,6 +22,21 @@ const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.get('/admin/vendors', { search: searchTerm || undefined }, { preserveState: true, replace: true });
+  };
+
+  const updateVerifiedStatus = (vendorId: number, verified_status: string) => {
+    router.patch(
+      `/admin/vendors/${vendorId}/verified-status`,
+      { verified_status },
+      { preserveScroll: true, preserveState: true, replace: true },
+    );
+  };
+
+  const getCategoryLabel = (v: any) => {
+    const parent = v?.category?.parent?.name;
+    const name = v?.category?.name;
+    if (parent && name) return `${parent} / ${name}`;
+    return name || parent || 'Uncategorized';
   };
 
   return (
@@ -52,6 +68,7 @@ const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
                     <th className="h-12 px-4 text-left align-middle font-medium">Business</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Contact</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Rating</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Joined</th>
                     <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
@@ -76,8 +93,21 @@ const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
                       <td className="p-4 align-middle">{v.public_email}</td>
                       <td className="p-4 align-middle">
                         <Badge variant="outline" className="capitalize">
-                          {v.primary_category?.name || 'Uncategorized'}
+                          {getCategoryLabel(v)}
                         </Badge>
+                      </td>
+                      <td className="p-4 align-middle">
+                        <Select value={v.verified_status || 'pending'} onValueChange={(value) => updateVerifiedStatus(v.id, value)}>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="verified">Verified</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="suspended">Suspended</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-1">
@@ -87,13 +117,32 @@ const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
                       </td>
                       <td className="p-4 align-middle">{v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
-                        <Button variant="ghost" size="sm">View</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">Suspend</Button>
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/admin/vendors/${v.id}`}>View</Link>
+                        </Button>
+                        {v.verified_status === 'suspended' ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => updateVerifiedStatus(v.id, 'pending')}
+                          >
+                            Unsuspend
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => updateVerifiedStatus(v.id, 'suspended')}
+                          >
+                            Suspend
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
                         No vendors found matching your search.
                       </td>
                     </tr>

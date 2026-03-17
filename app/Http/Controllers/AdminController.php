@@ -73,7 +73,9 @@ class AdminController extends Controller
             ->latest()
             ->paginate(15)
             ->through(function (Deal $deal) {
-                $offer = $deal->offerTypes->first()?->pivot;
+                $offerType = $deal->offerTypes->first();
+                $offer = $offerType?->pivot;
+                $base = $deal->base_price !== null ? (float) $deal->base_price : null;
                 return [
                     'id' => $deal->id,
                     'title' => $deal->title,
@@ -83,8 +85,10 @@ class AdminController extends Controller
                     'is_deal_of_day' => (bool) $deal->is_deal_of_day,
                     'is_best_seller' => (bool) $deal->is_best_seller,
                     'is_new_arrival' => (bool) $deal->is_new_arrival,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : null,
-                    'originalPrice' => $offer ? (float) $offer->original_price : null,
+                    'offerPivotId' => $offer?->id,
+                    'offerTypeTitle' => $offerType?->display_name,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
                     'endDate' => $offer?->ends_at?->toIso8601String(),
                     'image' => $deal->images->first()?->image_url,
                 ];
@@ -113,7 +117,9 @@ class AdminController extends Controller
             ->latest()
             ->paginate(15)
             ->through(function (Deal $deal) {
-                $offer = $deal->offerTypes->first()?->pivot;
+                $offerType = $deal->offerTypes->first();
+                $offer = $offerType?->pivot;
+                $base = $deal->base_price !== null ? (float) $deal->base_price : null;
                 return [
                     'id' => $deal->id,
                     'title' => $deal->title,
@@ -123,10 +129,12 @@ class AdminController extends Controller
                     'is_deal_of_day' => (bool) $deal->is_deal_of_day,
                     'is_best_seller' => (bool) $deal->is_best_seller,
                     'is_new_arrival' => (bool) $deal->is_new_arrival,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : null,
-                    'originalPrice' => $offer ? (float) $offer->original_price : null,
+                    'offerPivotId' => $offer?->id,
+                    'offerTypeTitle' => $offerType?->display_name,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
                     'createdAt' => $deal->created_at?->toIso8601String(),
-                    'type' => $deal->offerTypes->first()?->slug,
+                    'type' => $offerType?->name ?? $offerType?->slug,
                     'image' => $deal->images->first()?->image_url,
                 ];
             })
@@ -148,15 +156,19 @@ class AdminController extends Controller
             ->when($search !== '', fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->get()
             ->map(function (Deal $deal) {
-                $offer = $deal->offerTypes->first()?->pivot;
+                $offerType = $deal->offerTypes->first();
+                $offer = $offerType?->pivot;
+                $base = $deal->base_price !== null ? (float) $deal->base_price : null;
                 $rank = FeaturedDealRank::where('deal_id', $deal->id)->value('rank');
                 return [
                     'id' => $deal->id,
                     'title' => $deal->title,
                     'vendorName' => $deal->vendor?->business_name,
                     'rank' => $rank,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : null,
-                    'originalPrice' => $offer ? (float) $offer->original_price : null,
+                    'offerPivotId' => $offer?->id,
+                    'offerTypeTitle' => $offerType?->display_name,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
                     'image' => $deal->images->first()?->image_url,
                 ];
             })
