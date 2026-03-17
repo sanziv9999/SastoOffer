@@ -24,38 +24,14 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="font-sans antialiased bg-muted/30" 
-    x-data="{ 
-        isScrolled: false, 
-        showFullHeader: true, 
-        lastScrollY: 0 
-    }" 
-    @scroll.window="
-        let currentScrollY = window.scrollY;
-        isScrolled = currentScrollY > 40;
-        
-        if (currentScrollY > 80) {
-            if (currentScrollY - lastScrollY > 8) {
-                showFullHeader = false;
-            } else if (lastScrollY - currentScrollY > 5) {
-                showFullHeader = true;
-            }
-        } else {
-            showFullHeader = true;
-        }
-        lastScrollY = currentScrollY;
-    "
->
+<body class="font-sans antialiased bg-muted/30">
     <div class="min-h-screen flex flex-col">
         <div class="fixed top-0 left-0 right-0 z-50">
             <x-navbar />
         </div>
 
-        {{-- Dynamic spacer mirroring RootLayout.tsx --}}
-        <div 
-            class="transition-all duration-300" 
-            :class="isScrolled && !showFullHeader ? 'h-14 md:h-14' : 'h-28 md:h-32'"
-        ></div>
+        {{-- Fixed spacer for navbar height --}}
+        <div class="h-28 md:h-32"></div>
 
         <main class="flex-grow">
             {{ $slot }}

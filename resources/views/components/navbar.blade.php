@@ -1,55 +1,14 @@
-<header 
-    class="bg-background shadow-sm transition-all duration-300"
-    x-data="{ 
-        mobileMenuOpen: false, 
-        searchQuery: '', 
-        selectedCity: 'All Cities',
-        get compactMode() { return isScrolled && !showFullHeader }
+<header
+    class="bg-background shadow-sm"
+    x-data="{
+        mobileMenuOpen: false,
+        searchQuery: '',
+        selectedCity: 'All Cities'
     }"
 >
     <div class="container mx-auto px-4">
-        {{-- Compact search-only bar when scrolled down --}}
-        <template x-if="compactMode">
-            <div class="flex items-center gap-3 py-2 animate-in fade-in duration-300">
-                <a href="{{ route('home') }}" class="flex-shrink-0">
-                    <div class="flex items-center gap-1">
-                        <div class="relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M7 7l3.5 3.5c.3.3.4.7.4 1.1V19c0 .6-.4 1-1 1s-1-.4-1-1v-6.6c0-.4-.1-.8-.4-1.1L5 7.8c-.5-.5-.5-1.4 0-1.9.5-.5 1.4-.5 2 0l.1.1c.5.5.5 1.4 0 1.9L7 7z"></path><path d="M12.5 2h3s2.5 0 2.5 2.5V7c0 2.5-2.5 2.5-2.5 2.5h-3c-2.5 0-2.5-2.5-2.5-2.5V4.5C10 2 12.5 2 12.5 2z"></path><path d="M15 12a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"></path><circle cx="15" cy="15" r="3"></circle></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute bottom-0 right-0 text-secondary"><line x1="19" x2="5" y1="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-                        </div>
-                        <span class="text-2xl font-bold text-primary">Offer Oasis</span>
-                    </div>
-                </a>
-                <form class="flex flex-1 max-w-2xl bg-muted rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                    <div class="relative flex-grow">
-                        <input
-                            type="search"
-                            placeholder="Search deals..."
-                            class="w-full pl-10 border-0 shadow-none bg-transparent rounded-lg h-9 md:h-10 text-sm outline-none"
-                            x-model="searchQuery"
-                        >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-                    </div>
-                    <button type="submit" class="inline-flex items-center justify-center rounded-lg h-9 w-9 md:h-10 md:w-10 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-                    </button>
-                </form>
-                <div class="flex items-center gap-1">
-                    @auth
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center h-9 w-9 rounded-full hover:bg-muted transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-foreground"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="inline-flex items-center justify-center h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-                            Sign In
-                        </a>
-                    @endauth
-                </div>
-            </div>
-        </template>
-
-        {{-- Full header --}}
-        <div x-show="!compactMode" class="flex flex-col">
+        {{-- Full header with categories always visible --}}
+        <div class="flex flex-col">
             <div class="flex items-center justify-between py-3">
                 <a href="{{ route('home') }}" class="flex-shrink-0">
                     <div class="flex items-center gap-1">
