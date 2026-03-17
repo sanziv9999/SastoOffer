@@ -330,7 +330,7 @@ const EditDeal = () => {
                   <Input
                     type="number"
                     placeholder="0.00"
-                    className="pl-7"
+                    className="pl-12"
                     value={data.basePrice}
                     onChange={(e) => setData('basePrice', e.target.value)}
                     required

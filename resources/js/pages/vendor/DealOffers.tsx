@@ -208,8 +208,8 @@ const DealOffers = () => {
                   <div className="min-w-0">
                     <div className="font-medium truncate">{o.display_name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {o.pivot?.original_price ? `Original: ${o.pivot.original_price}` : 'Original: -'}{' '}
-                      {o.pivot?.final_price ? `• Final: ${o.pivot.final_price}` : ''}
+                      {o.pivot?.original_price ? `Original: Rs. ${o.pivot.original_price}` : 'Original: -'}{' '}
+                      {o.pivot?.final_price ? `• Final: Rs. ${o.pivot.final_price}` : ''}
                       {(o.pivot?.starts_at || o.pivot?.ends_at) ? (
                         <>
                           {' '}•{' '}
@@ -260,8 +260,11 @@ const DealOffers = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Base price (from deal)</Label>
-                        <Input value={editData.original_price} disabled />
+                        <Label>Base price (Rs.) (from deal)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-muted-foreground">Rs.</span>
+                          <Input className="pl-12" value={editData.original_price} disabled />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label>Status</Label>
@@ -306,12 +309,16 @@ const DealOffers = () => {
 
                     {(editingUiType === 'fixed' || editingUiType === 'flash' || editingUiType === 'bundle') && (
                       <div className="space-y-2">
-                        <Label>Offer price</Label>
-                        <Input
-                          type="number"
-                          value={editData.offer_price}
-                          onChange={(e) => setEditData('offer_price', e.target.value)}
-                        />
+                        <Label>Offer price (Rs.)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-muted-foreground">Rs.</span>
+                          <Input
+                            type="number"
+                            className="pl-12"
+                            value={editData.offer_price}
+                            onChange={(e) => setEditData('offer_price', e.target.value)}
+                          />
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           Discount will be computed as (base price − offer price).
                         </p>
@@ -368,8 +375,11 @@ const DealOffers = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Base price (from deal)</Label>
-                <Input value={data.original_price} disabled />
+                <Label>Base price (Rs.) (from deal)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">Rs.</span>
+                  <Input className="pl-12" value={data.original_price} disabled />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Set this in the deal details. Offers are calculated from it.
                 </p>
@@ -404,12 +414,16 @@ const DealOffers = () => {
 
             {(uiType === 'fixed' || uiType === 'flash' || uiType === 'bundle') && (
               <div className="space-y-2">
-                <Label>Offer price</Label>
-                <Input
-                  type="number"
-                  value={data.offer_price}
-                  onChange={(e) => setData('offer_price', e.target.value)}
-                />
+                <Label>Offer price (Rs.)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">Rs.</span>
+                  <Input
+                    type="number"
+                    className="pl-12"
+                    value={data.offer_price}
+                    onChange={(e) => setData('offer_price', e.target.value)}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Discount will be computed as (base price − offer price).
                 </p>

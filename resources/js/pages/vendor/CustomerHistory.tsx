@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Package, DollarSign, ArrowRight } from 'lucide-react';
+import { Calendar, Package, Banknote, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface CustomerHistoryProps {
@@ -26,7 +26,7 @@ const CustomerHistory = ({ history }: CustomerHistoryProps) => {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">Rs. {totalRevenue.toFixed(2)}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-primary">Rs. {totalRevenue.toFixed(2)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Completed</CardTitle></CardHeader>
@@ -56,7 +56,7 @@ const CustomerHistory = ({ history }: CustomerHistoryProps) => {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                   <div className="text-right">
-                    <div className="font-medium">${item.total?.toFixed(2)}</div>
+                    <div className="font-medium">Rs. {item.total?.toFixed(2)}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />{item.date}
                     </div>

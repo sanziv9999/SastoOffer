@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Star, ShoppingBag, DollarSign } from 'lucide-react';
+import { TrendingUp, Star, ShoppingBag, Banknote } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const mockBestDeals = [
@@ -29,7 +29,7 @@ const BestDeals = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold text-primary">Rs. {totalRevenue.toLocaleString()}</div></CardContent>
         </Card>
         <Card className="col-span-2 md:col-span-1">
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Avg. Rating</CardTitle></CardHeader>
@@ -58,8 +58,8 @@ const BestDeals = () => {
               </div>
               <Progress value={(deal.sold / deal.maxQty) * 100} className="h-2" />
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> Revenue</span>
-                <span className="font-medium">${deal.revenue.toLocaleString()}</span>
+                <span className="text-muted-foreground flex items-center gap-1"><Banknote className="h-3.5 w-3.5" /> Revenue</span>
+                <span className="font-medium">Rs. {deal.revenue.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1"><Star className="h-3.5 w-3.5" /> Rating</span>

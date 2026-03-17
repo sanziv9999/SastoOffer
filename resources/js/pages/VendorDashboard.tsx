@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from '@/components/Link';
 import {
-  DollarSign,
+  Banknote,
   Users,
   ShoppingBag,
   Tag,
@@ -152,7 +152,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
             <CardTitle className="text-sm font-medium">
               Total Revenue
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>

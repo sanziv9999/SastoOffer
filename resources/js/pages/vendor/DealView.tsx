@@ -54,7 +54,7 @@ const DealView = () => {
 
           <div className="text-sm">
             <span className="text-muted-foreground">Base price:</span>{' '}
-            <span className="font-medium">{deal?.basePrice ?? '-'}</span>
+            <span className="font-medium">Rs. {deal?.basePrice ?? '-'}</span>
           </div>
 
           {deal?.shortDesc && (
@@ -89,7 +89,7 @@ const DealView = () => {
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Original: {o.pivot?.original_price ?? '-'} • Final: {o.pivot?.final_price ?? '-'}
+                  Original: Rs. {o.pivot?.original_price ?? '-'} • Final: Rs. {o.pivot?.final_price ?? '-'}
                   {o.pivot?.discountPercentage ? ` • ${o.pivot.discountPercentage}% off` : ''}
                 </div>
                 <div className="text-xs text-muted-foreground">
