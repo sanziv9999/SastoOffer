@@ -39,7 +39,7 @@ const Customers = ({ customers }: CustomersProps) => {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Avg. Spend</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${customers?.length > 0 ? (customers.reduce((s: number, c: any) => s + (c.totalSpent || 0), 0) / customers.length).toFixed(0) : '0'}
+              Rs. {customers?.length > 0 ? (customers.reduce((s: number, c: any) => s + (c.totalSpent || 0), 0) / customers.length).toFixed(0) : '0'}
             </div>
           </CardContent>
         </Card>
@@ -85,7 +85,7 @@ const Customers = ({ customers }: CustomersProps) => {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{customer.city}</div>
                     </td>
                     <td className="p-4 font-medium">{customer.totalOrders || 0}</td>
-                    <td className="p-4 font-medium">${customer.totalSpent?.toFixed(2) || '0.00'}</td>
+                    <td className="p-4 font-medium">Rs. {customer.totalSpent?.toFixed(2) || '0.00'}</td>
                     <td className="p-4 hidden sm:table-cell">
                       <div className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />{customer.rating || 'N/A'}</div>
                     </td>

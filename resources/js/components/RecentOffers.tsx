@@ -150,13 +150,9 @@ const RecentOffers = () => {
                         {deal.title}
                       </h3>
                     </Link>
-                    <div className="flex items-baseline">
-                      <span className="text-lg font-bold text-primary mr-2">
-                        ${deal.discountedPrice}
-                      </span>
-                      <span className="text-sm line-through text-gray-400">
-                        ${deal.originalPrice}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-primary">Rs. {deal.discountedPrice}</span>
+                      <span className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice}</span>
                     </div>
                   </CardContent>
                 </Card>

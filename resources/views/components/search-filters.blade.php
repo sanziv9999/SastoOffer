@@ -86,8 +86,8 @@
             <div class="space-y-4 w-full">
                 {{-- Dynamic Min/Max Extent Display --}}
                 <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                    <span>Min: $<span x-text="availableMinPrice"></span></span>
-                    <span>Max: $<span x-text="availableMaxPrice"></span></span>
+                    <span>Min: Rs. <span x-text="availableMinPrice"></span></span>
+                    <span>Max: Rs. <span x-text="availableMaxPrice"></span></span>
                 </div>
 
 

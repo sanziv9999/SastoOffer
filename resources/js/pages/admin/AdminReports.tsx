@@ -42,7 +42,7 @@ const AdminReports = ({ statsData }: AdminReportsProps) => {
   const maxUsers = Math.max(...userGrowth.map(d => d.users));
 
   const stats = [
-    { label: 'Total Revenue', value: `$${statsData?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: statsData?.revenueChange || '0%' },
+    { label: 'Total Revenue', value: `Rs. ${statsData?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: statsData?.revenueChange || '0%' },
     { label: 'Total Sales', value: statsData?.totalSales?.toString() || '0', icon: ShoppingBag, change: statsData?.salesChange || '0%' },
     { label: 'Total Users', value: statsData?.totalUsers?.toString() || '0', icon: Users, change: statsData?.usersChange || '0%' },
     { label: 'Total Vendors', value: statsData?.totalVendors?.toString() || '0', icon: Store, change: statsData?.vendorsChange || '0%' },
@@ -90,7 +90,7 @@ const AdminReports = ({ statsData }: AdminReportsProps) => {
                       style={{ height: `${Math.max((data.amount / maxRev) * 100, 5)}%` }}
                     />
                     <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-black text-white text-xs p-1.5 rounded pointer-events-none transition-opacity whitespace-nowrap z-10">
-                      ${data.amount.toLocaleString()}
+                      Rs. {data.amount.toLocaleString()}
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground font-medium">{data.month}</span>

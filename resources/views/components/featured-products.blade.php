@@ -56,7 +56,7 @@
                     // Repeating some to fill the 8 slots like in React
                     [
                         'id' => '5',
-                        'title' => 'Premium Facial Treatment Bundle - Save $75',
+                        'title' => 'Premium Facial Treatment Bundle - Save Rs. 75',
                         'categoryId' => '2',
                         'categoryName' => 'Beauty & Spa',
                         'originalPrice' => 225,

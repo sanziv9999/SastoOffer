@@ -35,10 +35,10 @@
                 </h3>
                 <div class="flex items-baseline gap-1.5">
                     <span class="text-sm sm:text-base font-bold text-primary">
-                        ${{ $deal['discountedPrice'] }}
+                        Rs. {{ $deal['discountedPrice'] }}
                     </span>
                     <span class="text-[10px] sm:text-xs line-through text-gray-400">
-                        ${{ $deal['originalPrice'] }}
+                        Rs. {{ $deal['originalPrice'] }}
                     </span>
                 </div>
             </div>
@@ -108,10 +108,10 @@
             {{-- Pricing --}}
             <div class="flex items-baseline mb-2">
                 <span class="text-lg font-bold text-primary mr-2">
-                    ${{ $deal['discountedPrice'] }}
+                    Rs. {{ $deal['discountedPrice'] }}
                 </span>
                 <span class="text-sm line-through text-gray-400">
-                    ${{ $deal['originalPrice'] }}
+                    Rs. {{ $deal['originalPrice'] }}
                 </span>
             </div>
             

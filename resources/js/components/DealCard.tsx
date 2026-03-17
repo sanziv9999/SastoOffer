@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { formatDistance } from 'date-fns';
-import { Heart, MapPin, Clock, Tag, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, Tag, ChevronRight } from 'lucide-react';
 import { Deal } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -83,14 +83,14 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
         </Link>
         
         {/* Pricing */}
-        <div className="flex items-baseline mb-2">
-          <span className="text-lg font-bold text-primary mr-2">
-            ${deal.discountedPrice}
-          </span>
-          <span className="text-sm line-through text-gray-400">
-            ${deal.originalPrice}
-          </span>
-        </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-primary">
+              Rs. {deal.discountedPrice}
+            </span>
+            <span className="text-sm text-muted-foreground line-through">
+              Rs. {deal.originalPrice}
+            </span>
+          </div>
         
         {/* Time Left */}
         <div className="flex items-center text-xs text-amber-600 mb-3">

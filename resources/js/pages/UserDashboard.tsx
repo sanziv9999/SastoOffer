@@ -114,10 +114,10 @@ const UserDashboard = () => {
             <CardTitle className="text-sm font-medium">
               Savings
             </CardTitle>
-            <div className="h-4 w-4 text-muted-foreground">$</div>
+            <div className="h-4 w-4 text-muted-foreground">Rs.</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$180.50</div>
+            <div className="text-2xl font-bold">Rs. 180.50</div>
             <p className="text-xs text-muted-foreground">
               Total savings from all deals
             </p>
@@ -224,7 +224,7 @@ const UserDashboard = () => {
                             </div>
                           </td>
                           <td className="p-4 align-middle font-medium">
-                            ${purchase.totalPrice.toFixed(2)}
+                            Rs. {purchase.totalPrice.toFixed(2)}
                           </td>
                           <td className="p-4 align-middle">
                             <Badge
@@ -417,7 +417,7 @@ const UserDashboard = () => {
                               </div>
                             </td>
                             <td className="p-4 align-middle font-medium">
-                              ${purchase.totalPrice.toFixed(2)}
+                              Rs. {purchase.totalPrice.toFixed(2)}
                             </td>
                             <td className="p-4 align-middle text-right">
                               <Button

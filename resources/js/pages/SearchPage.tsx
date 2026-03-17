@@ -273,10 +273,10 @@ const SearchPage = () => {
                     />
                     <div className="flex items-center justify-between">
                       <div className="bg-muted px-2 py-1 rounded">
-                        ${priceRange[0]}
+                        Rs. {priceRange[0]}
                       </div>
                       <div className="bg-muted px-2 py-1 rounded">
-                        ${priceRange[1]}
+                        Rs. {priceRange[1]}
                       </div>
                     </div>
                   </div>
@@ -461,10 +461,10 @@ const SearchPage = () => {
                         />
                         <div className="flex items-center justify-between">
                           <div className="bg-muted px-2 py-1 rounded">
-                            ${priceRange[0]}
+                            Rs. {priceRange[0]}
                           </div>
                           <div className="bg-muted px-2 py-1 rounded">
-                            ${priceRange[1]}
+                            Rs. {priceRange[1]}
                           </div>
                         </div>
                       </div>

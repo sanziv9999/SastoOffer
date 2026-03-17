@@ -66,8 +66,8 @@ const CheckoutPage = () => {
                 <h3 className="font-medium">{deal.title}</h3>
                 {vendor && <p className="text-sm text-muted-foreground">{vendor.businessName}</p>}
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-primary font-semibold">${deal.discountedPrice.toFixed(2)}</span>
-                  <span className="text-muted-foreground line-through text-sm">${deal.originalPrice.toFixed(2)}</span>
+                  <span className="text-primary font-semibold">Rs. {deal.discountedPrice.toFixed(2)}</span>
+                  <span className="text-muted-foreground line-through text-sm">Rs. {deal.originalPrice.toFixed(2)}</span>
                   <span className="text-xs text-muted-foreground">× {quantity}</span>
                 </div>
               </div>
@@ -139,30 +139,30 @@ const CheckoutPage = () => {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal ({quantity} item{quantity > 1 ? 's' : ''})</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>Rs. {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax (8%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>Rs. {tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-green-600">
                 <span>Savings</span>
-                <span>-${((deal.originalPrice - deal.discountedPrice) * quantity).toFixed(2)}</span>
+                <span>-Rs. {((deal.originalPrice - deal.discountedPrice) * quantity).toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">Rs. {total.toFixed(2)}</span>
               </div>
             </div>
 
-            <Button 
-              className="w-full mt-6" 
+            <Button
+              className="w-full mt-6"
               size="lg"
               onClick={handlePlaceOrder}
               disabled={processing}
             >
-              {processing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+              {processing ? 'Processing...' : `Pay Rs. ${total.toFixed(2)}`}
             </Button>
 
             <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">

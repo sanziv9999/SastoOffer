@@ -5,10 +5,10 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 const AdminRevenueReports = () => {
     // Mock statistical data
     const summaryStats = [
-        { label: "Total Revenue", value: "$34,250.00", icon: DollarSign, trend: "+12.5%", positive: true },
-        { label: "Platform Comission", value: "$3,425.00", icon: CreditCard, trend: "+15.2%", positive: true },
-        { label: "Average Order Value", value: "$45.20", icon: TrendingUp, trend: "+2.1%", positive: true },
-        { label: "Refunds", value: "$1,240.00", icon: ArrowDownRight, trend: "-5.4%", positive: true },
+        { label: "Total Revenue", value: "Rs. 34,250.00", icon: DollarSign, trend: "+12.5%", positive: true },
+        { label: "Platform Comission", value: "Rs. 3,425.00", icon: CreditCard, trend: "+15.2%", positive: true },
+        { label: "Average Order Value", value: "Rs. 45.20", icon: TrendingUp, trend: "+2.1%", positive: true },
+        { label: "Refunds", value: "Rs. 1,240.00", icon: ArrowDownRight, trend: "-5.4%", positive: true },
     ];
 
     const monthlyRevenue = [
@@ -73,8 +73,8 @@ const AdminRevenueReports = () => {
 
                                         {/* Tooltip */}
                                         <div className="opacity-0 group-hover:opacity-100 absolute -top-14 bg-black text-white text-xs p-2 rounded pointer-events-none transition-opacity z-10 whitespace-nowrap">
-                                            <div>Rev: ${data.revenue}</div>
-                                            <div>Com: ${data.comission}</div>
+                                            <div>Rev: Rs. {data.revenue}</div>
+                                            <div>Com: Rs. {data.comission}</div>
                                         </div>
                                     </div>
                                     <span className="text-xs text-muted-foreground font-medium">{data.month}</span>
@@ -102,10 +102,10 @@ const AdminRevenueReports = () => {
                     <CardContent>
                         <div className="space-y-6">
                             {[
-                                { category: 'Food & Dining', amount: '$15,400', percent: 45 },
-                                { category: 'Health & Beauty', amount: '$8,200', percent: 24 },
-                                { category: 'Activities', amount: '$6,500', percent: 19 },
-                                { category: 'Travel', amount: '$4,150', percent: 12 },
+                                { category: 'Food & Dining', amount: 'Rs. 15,400', percent: 45 },
+                                { category: 'Health & Beauty', amount: 'Rs. 8,200', percent: 24 },
+                                { category: 'Activities', amount: 'Rs. 6,500', percent: 19 },
+                                { category: 'Travel', amount: 'Rs. 4,150', percent: 12 },
                             ].map((item, i) => (
                                 <div key={i} className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">

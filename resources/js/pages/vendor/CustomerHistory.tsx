@@ -26,7 +26,7 @@ const CustomerHistory = ({ history }: CustomerHistoryProps) => {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">Rs. {totalRevenue.toFixed(2)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Completed</CardTitle></CardHeader>

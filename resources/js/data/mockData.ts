@@ -230,7 +230,7 @@ export const deals: Deal[] = [
   },
   {
     id: '5',
-    title: 'Premium Facial Treatment Bundle - Save $75',
+    title: 'Premium Facial Treatment Bundle - Save Rs. 75',
     description: 'Bundle of three premium facial treatments with the latest skincare technology and organic products.',
     shortDescription: 'Three premium facial treatments bundle',
     vendorId: '2',

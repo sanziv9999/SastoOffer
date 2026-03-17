@@ -98,7 +98,7 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
             {stats?.revenueChange && <p className={`text-xs ${stats.revenueChange.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
               {stats.revenueChange} from last month
             </p>}
@@ -216,9 +216,9 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
                         </td>
                         <td className="p-4 align-middle">
                           <div>
-                            <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
+                            <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
                             <div className="text-xs text-muted-foreground line-through">
-                              ${deal.originalPrice?.toFixed(2)}
+                              Rs. {deal.originalPrice?.toFixed(2)}
                             </div>
                           </div>
                         </td>
@@ -298,7 +298,7 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
                       style={{ height: `${Math.max((data.amount / maxRev) * 100, 5)}%` }}
                     />
                     <div className="opacity-0 group-hover:opacity-100 absolute -top-10 bg-black text-white text-xs p-1.5 rounded pointer-events-none transition-opacity whitespace-nowrap z-10">
-                      ${data.amount.toLocaleString()}
+                      Rs. {data.amount.toLocaleString()}
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground font-medium">{data.month}</span>

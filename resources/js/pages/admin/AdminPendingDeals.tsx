@@ -75,8 +75,8 @@ const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) =>
                                             </td>
                                             <td className="p-4 align-middle">{deal.vendorName || 'Unknown Vendor'}</td>
                                             <td className="p-4 align-middle">
-                                                <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
-                                                <div className="text-xs text-muted-foreground line-through">${deal.originalPrice?.toFixed(2)}</div>
+                                                <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
+                                                <div className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice?.toFixed(2)}</div>
                                             </td>
                                             <td className="p-4 align-middle">
                                                 <Badge variant="outline">{deal.offerTypeTitle || deal.type || '-'}</Badge>

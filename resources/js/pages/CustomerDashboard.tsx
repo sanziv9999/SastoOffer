@@ -113,7 +113,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats?.totalSavings?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {stats?.totalSavings?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               Money saved with deals
             </p>
@@ -188,9 +188,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                   <h3 className="font-semibold mb-2 line-clamp-2">{deal.title}</h3>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <span className="text-lg font-bold">${deal.discountedPrice}</span>
+                      <span className="text-lg font-bold">Rs. {deal.discountedPrice}</span>
                       <span className="text-sm text-muted-foreground line-through ml-2">
-                        ${deal.originalPrice}
+                        Rs. {deal.originalPrice}
                       </span>
                     </div>
                     <div className="flex items-center">
@@ -250,7 +250,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                               {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
                             </span>
                             <span>Qty: {purchase.quantity}</span>
-                            <span className="font-medium">${purchase.totalPrice?.toFixed(2)}</span>
+                            <span className="font-medium">Rs. {purchase.totalPrice?.toFixed(2)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

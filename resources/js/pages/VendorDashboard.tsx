@@ -155,7 +155,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
             </p>
@@ -224,7 +224,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                       style={{ height: `${(data.amount / maxSale) * 100}%` }}
                     >
                       <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
-                        ${data.amount}
+                        Rs. {data.amount}
                       </div>
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary/20" />
                     </div>
@@ -357,9 +357,9 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                             </td>
                             <td className="p-4 align-middle">
                               <div>
-                                <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
+                                <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
                                 <div className="text-xs text-muted-foreground line-through">
-                                  ${deal.originalPrice?.toFixed(2)}
+                                  Rs. {deal.originalPrice?.toFixed(2)}
                                 </div>
                               </div>
                             </td>

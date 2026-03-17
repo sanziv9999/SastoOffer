@@ -324,14 +324,18 @@ const EditDeal = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Base price *</Label>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={data.basePrice}
-                  onChange={(e) => setData('basePrice', e.target.value)}
-                  required
-                />
+                <Label>Base price (Rs.) *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">Rs.</span>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="pl-7"
+                    value={data.basePrice}
+                    onChange={(e) => setData('basePrice', e.target.value)}
+                    required
+                  />
+                </div>
                 <p className="text-[10px] text-muted-foreground">
                   This is the original price shown when no offers exist. Offers will use this price automatically.
                 </p>

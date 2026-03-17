@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Tag } from 'lucide-react';
-import { deals, categories } from '@/data/mockData';
+import { Star } from 'lucide-react';
+import { deals } from '@/data/mockData';
 
 const FeaturedProducts = () => {
   const [isLoading] = useState(false);
@@ -39,7 +39,6 @@ const FeaturedProducts = () => {
                 </Card>
               ))
             : featuredDeals.map((deal) => {
-                const category = categories.find(cat => cat.id === deal.categoryId);
                 const discountPercentage = Math.round(
                   ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100
                 );
@@ -59,20 +58,9 @@ const FeaturedProducts = () => {
                         </Badge>
                       </div>
                       <CardContent className="p-2.5 sm:p-3">
-                        <div className="flex items-center mb-1">
-                          <Tag className="h-2.5 w-2.5 mr-1 text-primary" />
-                          <span className="text-[10px] sm:text-xs text-muted-foreground">{category?.name}</span>
-                        </div>
-                        <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
-                          {deal.title}
-                        </h3>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-sm sm:text-base font-bold text-primary">
-                            ${deal.discountedPrice}
-                          </span>
-                          <span className="text-[10px] sm:text-xs line-through text-muted-foreground">
-                            ${deal.originalPrice}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-primary">Rs. {deal.discountedPrice}</span>
+                          <span className="text-sm text-muted-foreground line-through">Rs. {deal.originalPrice}</span>
                         </div>
                       </CardContent>
                     </Card>

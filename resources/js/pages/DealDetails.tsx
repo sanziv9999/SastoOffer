@@ -192,16 +192,16 @@ const DealDetails = () => {
           <div className="bg-muted/50 p-5 rounded-xl mb-6">
             <div className="flex items-end gap-3 mb-2">
               <span className="text-3xl font-bold text-primary">
-                NPR {discountedPrice.toFixed(2)}
+                Rs. {discountedPrice.toFixed(2)}
               </span>
               {originalPrice > 0 && (
                 <span className="text-lg text-muted-foreground line-through">
-                  NPR {originalPrice.toFixed(2)}
+                  Rs. {originalPrice.toFixed(2)}
                 </span>
               )}
               {savingsAmount > 0 && (
                 <span className="text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                  Save NPR {savingsAmount.toFixed(2)}
+                  Save Rs. {savingsAmount.toFixed(2)}
                 </span>
               )}
             </div>

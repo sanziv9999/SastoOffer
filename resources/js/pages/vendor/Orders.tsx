@@ -74,7 +74,7 @@ const Orders = ({ orders }: OrdersProps) => {
               </td>
               <td className="p-4 hidden md:table-cell">{order.deal}</td>
               <td className="p-4">{order.quantity}</td>
-              <td className="p-4 font-medium">${order.total?.toFixed(2)}</td>
+              <td className="p-4 font-medium">Rs. {order.total?.toFixed(2)}</td>
               <td className="p-4">
                 <Select
                   value={order.status}
@@ -126,7 +126,7 @@ const Orders = ({ orders }: OrdersProps) => {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${localOrders?.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0).toFixed(2)}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">Rs. {localOrders?.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0).toFixed(2)}</div></CardContent>
         </Card>
       </div>
 

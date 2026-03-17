@@ -103,9 +103,9 @@ const SuperAdminDashboard = ({ stats, databaseStatus, securityStatus, paymentSta
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
-              Commission: ${stats?.platformCommission?.toFixed(2) || '0.00'}
+              Commission: Rs. {stats?.platformCommission?.toFixed(2) || '0.00'}
             </p>
           </CardContent>
         </Card>

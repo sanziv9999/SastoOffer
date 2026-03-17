@@ -140,16 +140,16 @@
                 <div class="bg-muted/50 p-5 rounded-xl mb-6">
                     <div class="flex items-end gap-3 mb-2">
                         <span class="text-3xl font-bold text-primary">
-                            ${{ number_format($discountedPrice, 2, '.', '') }}
+                            Rs. {{ number_format($discountedPrice, 2, '.', '') }}
                         </span>
                         @if($originalPrice > 0)
                             <span class="text-lg text-muted-foreground line-through">
-                                ${{ number_format($originalPrice, 2, '.', '') }}
+                                Rs. {{ number_format($originalPrice, 2, '.', '') }}
                             </span>
                         @endif
                         @if($savingsAmount > 0)
                             <span class="text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                Save ${{ number_format($savingsAmount, 2, '.', '') }}
+                                Save Rs. {{ number_format($savingsAmount, 2, '.', '') }}
                             </span>
                         @endif
                     </div>

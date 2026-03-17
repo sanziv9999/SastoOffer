@@ -57,7 +57,7 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div></CardContent>
+          <CardContent><div className="text-2xl font-bold">Rs. {totalRevenue.toLocaleString()}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Transactions</CardTitle></CardHeader>
@@ -91,7 +91,7 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
                     <TableCell className="font-medium">{row.deal}</TableCell>
                     <TableCell className="text-right">{row.totalSold}</TableCell>
                     <TableCell className="text-right">{row.transactions}</TableCell>
-                    <TableCell className="text-right font-medium">${row.totalRevenue.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-medium">Rs. {row.totalRevenue.toLocaleString()}</TableCell>
                   </TableRow>
                 )) : (
                   <TableRow><TableCell colSpan={4} className="text-center py-4 text-muted-foreground">No deal summary available</TableCell></TableRow>
@@ -135,8 +135,8 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
                     <TableCell className="font-medium max-w-[150px] truncate">{sale.deal}</TableCell>
                     <TableCell className="hidden md:table-cell">{sale.customer}</TableCell>
                     <TableCell className="text-right">{sale.quantity}</TableCell>
-                    <TableCell className="text-right">${sale.unitPrice?.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-medium">${sale.total?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">Rs. {sale.unitPrice?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">Rs. {sale.total?.toFixed(2)}</TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground">{sale.date}</TableCell>
                     <TableCell>
                       <Badge className={`${getStatusColor(sale.status)} text-white`}>{sale.status}</Badge>

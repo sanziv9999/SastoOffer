@@ -1,4 +1,3 @@
-
 import Link from '@/components/Link';
 import { ShoppingBag, Calendar, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +30,7 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{purchases?.length || 0}</div>
+            <div className="text-2xl font-bold">{(purchases?.length || 0)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -40,7 +39,7 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activePurchases.length}</div>
+            <div className="text-2xl font-bold">{(activePurchases.length)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -50,7 +49,7 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${purchases?.reduce((sum: number, p: any) => sum + p.totalPrice, 0).toFixed(2) || '0.00'}
+              Rs. {(purchases?.reduce((sum: number, p: any) => sum + p.totalPrice, 0).toFixed(2) || '0.00')}
             </div>
           </CardContent>
         </Card>
@@ -58,9 +57,9 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
 
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="all">All ({purchases?.length || 0})</TabsTrigger>
-          <TabsTrigger value="active">Active ({activePurchases.length})</TabsTrigger>
-          <TabsTrigger value="redeemed">Redeemed ({redeemedPurchases.length})</TabsTrigger>
+          <TabsTrigger value="all">All {(purchases?.length || 0)}</TabsTrigger>
+          <TabsTrigger value="active">Active {(activePurchases.length)}</TabsTrigger>
+          <TabsTrigger value="redeemed">Redeemed {(redeemedPurchases.length)}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-3">
@@ -71,20 +70,20 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
                 <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
                   {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
                   <div className="flex-grow">
-                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <h4 className="font-medium">{(deal?.title || 'Unknown Deal')}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
                       </span>
-                      <span>Qty: {purchase.quantity}</span>
+                      <span>Qty: {(purchase.quantity)}</span>
                     </div>
-                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{(purchase.couponCode)}</code>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
-                    <div className="font-semibold text-primary">${purchase.totalPrice?.toFixed(2)}</div>
-                    <Badge variant={purchase.redeemed ? "outline" : "default"} className={purchase.redeemed ? "text-muted-foreground" : "bg-green-500 hover:bg-green-600"}>
-                      {purchase.redeemed ? "Used" : "Active"}
+                    <div className="font-semibold text-primary">Rs. {(purchase.totalPrice?.toFixed(2))}</div>
+                    <Badge variant={(purchase.redeemed ? "outline" : "default")} className={(purchase.redeemed ? "text-muted-foreground" : "bg-green-500 hover:bg-green-600")}>
+                      {(purchase.redeemed ? "Used" : "Active")}
                     </Badge>
                   </div>
                 </div>
@@ -100,18 +99,18 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
                 <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
                   {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
                   <div className="flex-grow">
-                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <h4 className="font-medium">{(deal?.title || 'Unknown Deal')}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
                       </span>
-                      <span>Qty: {purchase.quantity}</span>
+                      <span>Qty: {(purchase.quantity)}</span>
                     </div>
-                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{(purchase.couponCode)}</code>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
-                    <div className="font-semibold text-primary">${purchase.totalPrice?.toFixed(2)}</div>
+                    <div className="font-semibold text-primary">Rs. {(purchase.totalPrice?.toFixed(2))}</div>
                     <Badge variant="default" className="bg-green-500 hover:bg-green-600">
                       Active
                     </Badge>
@@ -129,18 +128,18 @@ const MyPurchases = ({ purchases, deals }: MyPurchasesProps) => {
                 <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/70 transition-colors bg-card">
                   {deal && <img src={deal.image} alt={deal.title} className="h-14 w-14 rounded object-cover flex-shrink-0" />}
                   <div className="flex-grow">
-                    <h4 className="font-medium">{deal?.title || 'Unknown Deal'}</h4>
+                    <h4 className="font-medium">{(deal?.title || 'Unknown Deal')}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
                       </span>
-                      <span>Qty: {purchase.quantity}</span>
+                      <span>Qty: {(purchase.quantity)}</span>
                     </div>
-                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{purchase.couponCode}</code>
+                    <code className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{(purchase.couponCode)}</code>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
-                    <div className="font-semibold text-muted-foreground">${purchase.totalPrice?.toFixed(2)}</div>
+                    <div className="font-semibold text-muted-foreground">Rs. {(purchase.totalPrice?.toFixed(2))}</div>
                     <Badge variant="outline" className="text-muted-foreground">
                       Used
                     </Badge>
