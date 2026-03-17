@@ -85,7 +85,7 @@ class AdminController extends Controller
                     'is_new_arrival' => (bool) $deal->is_new_arrival,
                     'discountedPrice' => $offer ? (float) $offer->final_price : null,
                     'originalPrice' => $offer ? (float) $offer->original_price : null,
-                    'endDate' => $deal->ends_at?->toIso8601String(),
+                    'endDate' => $offer?->ends_at?->toIso8601String(),
                     'image' => $deal->images->first()?->image_url,
                 ];
             })

@@ -33,7 +33,7 @@ class VendorAnalyticsController extends Controller
                     'discountedPrice'=> $offer ? (float) $offer->final_price : 0,
                     'originalPrice'  => $offer ? (float) $offer->original_price : 0,
                     'quantitySold'   => $quantitySold,
-                    'endDate'        => $deal->ends_at?->toIso8601String(),
+                    'endDate'        => $offer?->ends_at?->toIso8601String(),
                     'image'          => $deal->images->first()?->image_url,
                 ];
             });

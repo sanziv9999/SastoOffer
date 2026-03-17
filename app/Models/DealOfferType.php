@@ -18,6 +18,8 @@ class DealOfferType extends Pivot
         'savings_amount'   => 'decimal:2',
         'savings_percent'  => 'decimal:4',
         'final_price'      => 'decimal:2',
+        'starts_at'        => 'datetime',
+        'ends_at'          => 'datetime',
     ];
 
     public function deal(): BelongsTo
@@ -32,6 +34,15 @@ class DealOfferType extends Pivot
 
     public function calculatePrices(array $override = []): self
     {
+        $this->loadMissing('offerType');
+
+        if (!$this->offerType) {
+            // Can't calculate without offer type definition; keep final price as base.
+            $this->final_price = (float) ($this->original_price ?? 0);
+            $this->saveQuietly();
+            return $this;
+        }
+
         $rule = $this->offerType?->calculation_rule ?? [];
         if (is_string($rule)) {
             $rule = json_decode($rule, true) ?: [];

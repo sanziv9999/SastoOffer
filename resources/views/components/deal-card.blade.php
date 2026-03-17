@@ -87,6 +87,16 @@
                     </div>
                 @endif
             </div>
+
+            @if(!empty($deal['offerTypeTitle']))
+                <div class="mb-2">
+                    <span class="inline-flex items-center rounded-md border border-transparent bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
+                        {{ $deal['offerTypeTitle'] }}
+                    </span>
+                </div>
+            @endif
+
+            {{-- Search page can render one card per offer, so we don't list multiple offers here. --}}
             
             {{-- Title --}}
             <a href="{{ route('deals.show', ['id' => $deal['id']]) }}">

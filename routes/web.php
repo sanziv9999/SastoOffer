@@ -58,6 +58,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/vendor/deals', [DealController::class, 'store'])->name('vendor.deals.store');
     Route::get('/vendor/deals/{deal}/edit', [DealController::class, 'editDeal'])->name('vendor.deals.edit');
     Route::put('/vendor/deals/{deal}', [DealController::class, 'updateDeal'])->name('vendor.deals.update');
+    Route::get('/vendor/deals/{deal}/offers', [DealController::class, 'offers'])->name('vendor.deals.offers');
+    Route::post('/vendor/deals/{deal}/offers', [DealController::class, 'attachOffer'])->name('vendor.deals.offers.attach');
+    Route::put('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'updateOffer'])->name('vendor.deals.offers.update');
+    Route::delete('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'removeOffer'])->name('vendor.deals.offers.remove');
 
     Route::get('/vendor/settings', [VendorProfileController::class, 'edit'])->name('vendor.settings');
     Route::put('/vendor/settings', [VendorProfileController::class, 'updateSettings'])->name('vendor.settings.update');

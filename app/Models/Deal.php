@@ -17,29 +17,22 @@ class Deal extends Model
 
     protected $fillable = [
         'vendor_id',
-        'business_sub_category_id',
+        'category_id',
         'title',
         'slug',
+        'base_price',
         'short_description',
         'long_description',
         'highlights',
         'status',
         'total_inventory',
-        'min_per_customer',
-        'max_per_customer',
-        'starts_at',
-        'ends_at',
-        'voucher_valid_days',
         'view_count',
-        'offer_validation_rules',
     ];
 
     protected $casts = [
         'highlights'             => 'array',
-        'offer_validation_rules' => 'array',
-        'starts_at'              => 'datetime',
-        'ends_at'                => 'datetime',
         'view_count'             => 'integer',
+        'base_price'             => 'decimal:2',
     ];
 
     // ─── Relationships ────────────────────────────────────────
@@ -49,9 +42,15 @@ class Deal extends Model
         return $this->belongsTo(VendorProfile::class, 'vendor_id');
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
     public function subCategory(): BelongsTo
     {
-        return $this->belongsTo(BusinessSubCategory::class, 'business_sub_category_id');
+        // Backwards-compatible alias for older code paths
+        return $this->category();
     }
 
     /**
@@ -71,6 +70,8 @@ class Deal extends Model
                 'currency_code',
                 'params',
                 'status',
+                'starts_at',
+                'ends_at',
             ])
             ->withTimestamps();
     }
@@ -171,10 +172,7 @@ class Deal extends Model
 
     public function isActive(): bool
     {
-        $now = now();
-        return $this->status === 'active'
-            && ($this->starts_at === null || $now >= $this->starts_at)
-            && ($this->ends_at === null || $now <= $this->ends_at);
+        return $this->status === 'active';
     }
 
     public function isRunning(): bool
@@ -185,11 +183,6 @@ class Deal extends Model
     public function hasActiveOffers(): bool
     {
         return $this->activeOfferTypes()->exists();
-    }
-
-    public function getCustomValidationRules(): array
-    {
-        return $this->offer_validation_rules ?? [];
     }
 
     /**

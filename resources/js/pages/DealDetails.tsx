@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -52,8 +52,19 @@ const DealDetails = () => {
   const featureImage = deal.images?.find((img: any) => img.attribute_name === 'feature_photo');
   const galleryImages = deal.images?.filter((img: any) => img.attribute_name === 'gallery') ?? [];
 
-  const timeLeft = deal.ends_at
-    ? formatDistanceToNow(new Date(deal.ends_at), { addSuffix: true })
+  const offers = Array.isArray(deal.offers) ? deal.offers : [];
+  const [selectedOfferId, setSelectedOfferId] = useState<number | null>(offers?.[0]?.id ?? null);
+
+  const selectedOffer = useMemo(() => {
+    if (!offers.length) return null;
+    if (selectedOfferId === null) return offers[0] ?? null;
+    return offers.find((o: any) => Number(o.id) === Number(selectedOfferId)) ?? offers[0] ?? null;
+  }, [offers, selectedOfferId]);
+
+  const selectedEndsAt = selectedOffer?.pivot?.ends_at ?? deal.ends_at ?? null;
+
+  const timeLeft = selectedEndsAt
+    ? formatDistanceToNow(new Date(selectedEndsAt), { addSuffix: true })
     : null;
 
   const handleAddToCart = () => {
@@ -152,6 +163,31 @@ const DealDetails = () => {
             </div>
           )}
 
+          {/* Offer selector (when multiple offers exist) */}
+          {offers.length > 1 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium mb-2">Choose an offer</p>
+              <div className="flex flex-wrap gap-2">
+                {offers.map((o: any) => {
+                  const active = Number(o.id) === Number(selectedOffer?.id);
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setSelectedOfferId(Number(o.id))}
+                      className={[
+                        'px-3 py-1.5 rounded-full text-xs border transition-colors',
+                        active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-input',
+                      ].join(' ')}
+                    >
+                      {o.display_name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Price */}
           <div className="bg-muted/50 p-5 rounded-xl mb-6">
             <div className="flex items-end gap-3 mb-2">
@@ -174,7 +210,7 @@ const DealDetails = () => {
               <div className="flex items-center text-sm text-muted-foreground mt-2">
                 <Clock className="h-4 w-4 mr-1.5" />
                 <span>
-                  {deal.ends_at && new Date() > new Date(deal.ends_at)
+                  {selectedEndsAt && new Date() > new Date(selectedEndsAt)
                     ? 'Offer expired'
                     : `Offer ends ${timeLeft}`}
                 </span>

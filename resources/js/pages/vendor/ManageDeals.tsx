@@ -65,8 +65,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     </div>
                   </td>
                   <td className="p-4 align-middle">
-                    <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
-                    <div className="text-xs text-muted-foreground line-through">${deal.originalPrice?.toFixed(2)}</div>
+                    <div className="font-medium">${Number(deal.price ?? 0).toFixed(2)}</div>
                   </td>
                   <td className="p-4 align-middle">
                     <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'expired' ? 'secondary' : 'outline'}
@@ -82,6 +81,9 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" asChild>
                         <a href={`/vendor/deals/${deal.id}/edit`}>Edit</a>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={`/vendor/deals/${deal.id}/offers`}>Offers</a>
                       </Button>
                       <Button variant="ghost" size="sm" asChild>
                         <a href={`/deals/${deal.id}`}>View</a>

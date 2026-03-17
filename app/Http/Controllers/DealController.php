@@ -6,19 +6,20 @@ use App\Models\Deal;
 use App\Models\DealOfferType;
 use App\Models\OfferType;
 use App\Models\VendorProfile;
-use App\Models\BusinessSubCategory;
+use App\Models\Category;
 use App\Services\DealOfferService;
 use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class DealController extends Controller
 {
     public function index(Request $request)
     {
         $deals = Deal::query()
-            ->with(['vendor', 'subCategory'])
+            ->with(['vendor', 'category'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('vendor_id'), fn ($q) => $q->where('vendor_id', $request->vendor_id))
             ->latest()
@@ -41,11 +42,12 @@ class DealController extends Controller
         }
 
         $deals = Deal::where('vendor_id', $vendor->id)
-            ->with(['subCategory', 'offerTypes', 'images'])
+            ->with(['category', 'offerTypes', 'images'])
             ->latest()
             ->get()
             ->map(function ($deal) {
                 $offer = $deal->offerTypes->first()?->pivot;
+                $base = (float) ($deal->base_price ?? 0);
 
                 // Placeholder: when you implement real purchases, replace quantitySold
                 $quantitySold = 0;
@@ -54,11 +56,11 @@ class DealController extends Controller
                     'id'             => $deal->id,
                     'title'          => $deal->title,
                     'status'         => $deal->status,
-                    'discountedPrice'=> $offer ? (float) $offer->final_price : 0,
-                    'originalPrice'  => $offer ? (float) $offer->original_price : 0,
+                    'discountedPrice'=> $offer ? (float) $offer->final_price : $base,
+                    'originalPrice'  => $offer ? (float) $offer->original_price : $base,
                     'quantitySold'   => $quantitySold,
                     'maxQuantity'    => $deal->total_inventory,
-                    'endDate'        => $deal->ends_at?->toIso8601String(),
+                    'endDate'        => $offer?->ends_at?->toIso8601String(),
                     'image'          => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
                 ];
             });
@@ -93,20 +95,21 @@ class DealController extends Controller
         }
 
         $deals = Deal::where('vendor_id', $vendor->id)
-            ->with(['subCategory', 'offerTypes', 'images'])
+            ->with(['category', 'offerTypes', 'images'])
             ->latest()
             ->get()
             ->map(function ($deal) {
-                $offer = $deal->offerTypes->first()?->pivot;
+                $base = (float) ($deal->base_price ?? 0);
                 return [
                     'id' => $deal->id,
                     'title' => $deal->title,
                     'status' => $deal->status,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : 0,
-                    'originalPrice' => $offer ? (float) $offer->original_price : 0,
+                    // Manage Deals list should show only deal table data (base price),
+                    // offers are managed separately in the Offers screen.
+                    'price' => $base,
                     'quantitySold' => 0,
                     'maxQuantity' => $deal->total_inventory,
-                    'endDate' => $deal->ends_at?->toIso8601String(),
+                    'endDate' => null,
                     'image' => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
                 ];
             });
@@ -119,13 +122,11 @@ class DealController extends Controller
     public function create()
     {
         $vendors = VendorProfile::orderBy('business_name')->get();
-        $subCategories = BusinessSubCategory::active()->orderBy('display_order')->get();
-        $offerTypes = OfferType::where('is_active', true)->orderBy('display_name')->get();
+        $categories = Category::where('is_active', true)->orderBy('display_order')->orderBy('name')->get();
 
         return \Inertia\Inertia::render('vendor/CreateDeal', [
             'vendors' => $vendors,
-            'categories' => $subCategories,
-            'offerTypes' => $offerTypes,
+            'categories' => $categories,
         ]);
     }
 
@@ -150,18 +151,17 @@ class DealController extends Controller
             'has_gallery' => $request->hasFile('gallery'),
         ]);
 
-        // Map React fields to DB fields
+        // Map React fields to DB fields (core deal only; offers added separately)
         $dealData = [
             'vendor_id' => $vendor->id,
-            'business_sub_category_id' => (int) ($data['categoryId'] ?? 0),
+            'category_id' => (int) ($data['categoryId'] ?? 0),
             'title' => $data['title'] ?? 'Untitled Deal',
             'slug' => Str::slug($data['title'] ?? 'untitled') . '-' . rand(1000, 9999),
+            'base_price' => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : null,
             'short_description' => $data['shortDesc'] ?? null,
             'long_description' => $data['description'] ?? null,
             'status' => $data['status'] ?? 'active',
             'total_inventory' => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
-            'starts_at' => !empty($data['startDate']) ? $data['startDate'] : now(),
-            'ends_at' => !empty($data['endDate']) ? $data['endDate'] : now()->addDays(30),
             'highlights' => is_array($data['tags'] ?? []) ? $data['tags'] ?? [] : [$data['tags'] ?? ''],
         ];
 
@@ -199,34 +199,9 @@ class DealController extends Controller
             }
         }
 
-        $offerTypeId = $data['offerTypeId'] ?? null;
-        $offerType = $offerTypeId ? OfferType::find($offerTypeId) : null;
-
-        if ($offerType) {
-            $params = [];
-            $uiType = $data['uiType'] ?? 'percentage';
-
-            if ($uiType === 'percentage') {
-                $params['discount_percent'] = $data['discountPercentage'];
-            } elseif (in_array($uiType, ['fixed', 'flash', 'bundle'])) {
-                $params['discount_amount'] = (float)$data['originalPrice'] - (float)$data['discountedPrice'];
-            } elseif ($uiType === 'bogo') {
-                $params['buy_quantity'] = 1;
-                $params['get_quantity'] = 1;
-                $params['get_discount_percent'] = 100;
-            }
-
-            $service = app(DealOfferService::class);
-            $service->attachOfferToDeal($deal, $offerType, [
-                'original_price' => (float)$data['originalPrice'],
-                'discounted_price' => (float)$data['discountedPrice'], // Note: service uses original_price and params to calculate final_price
-                'params' => $params,
-                'status' => 'active',
-                'currency_code' => 'NPR',
-            ]);
-        }
-
-        return redirect()->route('vendor.deals.index')->with('success', 'Deal created and published successfully!');
+        return redirect()
+            ->route('vendor.deals.offers', $deal)
+            ->with('success', 'Deal created. Now add one or more offers.');
     }
 
     /**
@@ -236,12 +211,14 @@ class DealController extends Controller
     {
         try {
 
-            $deal = Deal::with(['vendor', 'subCategory', 'images', 'offerTypes'])->find($id);
+            $deal = Deal::with(['vendor', 'category', 'images', 'offerTypes'])->find($id);
             if (!$deal) {
                 return view('deals.show', ['deal' => null]);
             }
 
-            $offer = $deal->offerTypes->first()?->pivot;
+            $offerType = $deal->offerTypes->first();
+            $offer = $offerType?->pivot;
+            $base = $deal->base_price !== null ? (float) $deal->base_price : null;
             return view('deals.show', [
                 'deal' => [
                     'id'               => $deal->id,
@@ -250,11 +227,27 @@ class DealController extends Controller
                     'long_description' => $deal->long_description,
                     'status'           => $deal->status,
                     'highlights'       => is_array($deal->highlights) ? $deal->highlights : [],
-                    'ends_at'          => $deal->ends_at?->toIso8601String(),
+                    'ends_at'          => $offer?->ends_at?->toIso8601String(),
                     'is_featured'      => (bool) $deal->is_featured,
-                    'discountedPrice'  => $offer ? (float) $offer->final_price : null,
-                    'originalPrice'    => $offer ? (float) $offer->original_price : null,
+                    'discountedPrice'  => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice'    => $offer ? (float) $offer->original_price : $base,
                     'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
+                    'offers'           => $deal->offerTypes->map(function ($ot) {
+                        return [
+                            'id' => $ot->id,
+                            'name' => $ot->name,
+                            'display_name' => $ot->display_name,
+                            'pivot' => [
+                                'original_price' => $ot->pivot?->original_price,
+                                'final_price' => $ot->pivot?->final_price,
+                                'currency_code' => $ot->pivot?->currency_code,
+                                'status' => $ot->pivot?->status,
+                                'params' => $ot->pivot?->params,
+                                'starts_at' => $ot->pivot?->starts_at?->toIso8601String(),
+                                'ends_at' => $ot->pivot?->ends_at?->toIso8601String(),
+                            ],
+                        ];
+                    })->values()->toArray(),
                     'images'           => $deal->images->map(fn($img) => [
                         'id'             => $img->id,
                         'image_url'      => $img->image_url,
@@ -266,9 +259,9 @@ class DealController extends Controller
                         'rating'        => 4.8, 
                         'reviewCount'   => 42
                     ] : null,
-                    'subCategory'      => $deal->subCategory ? [
-                        'id'   => $deal->subCategory->id,
-                        'name' => $deal->subCategory->name,
+                    'category'      => $deal->category ? [
+                        'id'   => $deal->category->id,
+                        'name' => $deal->category->name,
                     ] : null,
                 ],
             ]);
@@ -293,8 +286,7 @@ class DealController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $subCategories = BusinessSubCategory::active()->orderBy('display_order')->get();
-        $offerTypes    = OfferType::where('is_active', true)->orderBy('display_name')->get();
+        $categories = Category::where('is_active', true)->orderBy('display_order')->orderBy('name')->get();
         $deal->load(['offerTypes', 'images']);
 
         $offer = $deal->offerTypes->first()?->pivot;
@@ -305,15 +297,10 @@ class DealController extends Controller
                 'title'            => $deal->title,
                 'shortDesc'        => $deal->short_description,
                 'description'      => $deal->long_description,
-                'categoryId'       => $deal->business_sub_category_id,
-                'offerTypeId'      => $deal->offerTypes->first()?->id,
+                'categoryId'       => $deal->category_id,
+                'basePrice'        => $deal->base_price ? (string) $deal->base_price : '',
                 'tags'             => $deal->highlights ?? [],
-                'originalPrice'    => $offer ? (string) $offer->original_price : '',
-                'discountedPrice'  => $offer ? (string) $offer->final_price : '',
-                'discountPercent'  => $offer ? (float) ($offer->discount_percent ?? 0) : null,
                 'maxQuantity'      => $deal->total_inventory ? (string) $deal->total_inventory : '',
-                'startDate'        => $deal->starts_at?->format('Y-m-d'),
-                'endDate'          => $deal->ends_at?->format('Y-m-d'),
                 'requestFeatured'  => (bool) $deal->is_featured,
                 'status'           => $deal->status,
                 'images'           => $deal->images->map(fn($img) => [
@@ -322,8 +309,7 @@ class DealController extends Controller
                     'attribute_name' => $img->attribute_name,
                 ]),
             ],
-            'categories' => $subCategories,
-            'offerTypes' => $offerTypes,
+            'categories' => $categories,
         ]);
     }
 
@@ -341,18 +327,33 @@ class DealController extends Controller
 
         $data = $request->all();
 
+        $oldBasePrice = $deal->base_price !== null ? (float) $deal->base_price : null;
+
         $deal->update([
-            'business_sub_category_id' => (int) ($data['categoryId'] ?? $deal->business_sub_category_id),
+            'category_id'              => (int) ($data['categoryId'] ?? $deal->category_id),
             'title'                    => $data['title'] ?? $deal->title,
             'slug'                     => Str::slug($data['title'] ?? $deal->title) . '-' . $deal->id,
+            'base_price'               => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : $deal->base_price,
             'short_description'        => $data['shortDesc'] ?? $deal->short_description,
             'long_description'         => $data['description'] ?? $deal->long_description,
             'total_inventory'          => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
-            'starts_at'                => !empty($data['startDate']) ? $data['startDate'] : $deal->starts_at,
-            'ends_at'                  => !empty($data['endDate']) ? $data['endDate'] : $deal->ends_at,
             'highlights'               => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
             'status'                   => $data['status'] ?? $deal->status,
         ]);
+
+        // If base price changes, keep all offers in sync and recalculate their final prices.
+        $newBasePrice = $deal->base_price !== null ? (float) $deal->base_price : null;
+        if ($newBasePrice !== null && $oldBasePrice !== $newBasePrice) {
+            $deal->load('offerTypes');
+            foreach ($deal->offerTypes as $offerType) {
+                $pivot = $offerType->pivot;
+                if ($pivot instanceof \App\Models\DealOfferType) {
+                    $pivot->original_price = $newBasePrice;
+                    $pivot->saveQuietly();
+                    $pivot->calculatePrices();
+                }
+            }
+        }
 
         // Handle Feature Photo replacement
         $featurePhoto = $request->file('featurePhoto');
@@ -401,57 +402,180 @@ class DealController extends Controller
             }
         }
 
-        // ─── Sync Offer Type & Pricing (pivot: deal_offer_type) ─────────────
+        return redirect()->route('vendor.deals.index')->with('success', 'Deal updated successfully!');
+    }
 
-        $offerTypeId = $data['offerTypeId'] ?? null;
-        $offerType   = $offerTypeId ? OfferType::find($offerTypeId) : null;
+    /**
+     * Vendor: manage offers for a deal (add multiple offer types)
+     */
+    public function offers(Deal $deal)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
 
-        if ($offerType) {
-            $params = [];
-            $uiType = $data['uiType'] ?? 'percentage';
-
-            if ($uiType === 'percentage') {
-                $params['discount_percent'] = (float) ($data['discountPercentage'] ?? 0);
-            } elseif (in_array($uiType, ['fixed', 'flash', 'bundle'], true)) {
-                $original   = (float) ($data['originalPrice'] ?? 0);
-                $discounted = (float) ($data['discountedPrice'] ?? 0);
-                $params['discount_amount'] = max(0, $original - $discounted);
-            } elseif ($uiType === 'bogo') {
-                $params['buy_quantity']         = 1;
-                $params['get_quantity']         = 1;
-                $params['get_discount_percent'] = 100;
-            }
-
-            $service = app(DealOfferService::class);
-
-            $payload = [
-                'original_price' => (float) ($data['originalPrice'] ?? 0),
-                'currency_code'  => 'NPR',
-                'params'         => $params,
-                'status'         => 'active',
-            ];
-
-            // If pivot exists for this offer type, update; otherwise attach new
-            $existingPivot = DealOfferType::where('deal_id', $deal->id)
-                ->where('offer_type_id', $offerType->id)
-                ->first();
-
-            if ($existingPivot) {
-                $service->updateOfferOnDeal($deal, $offerType, $payload);
-            } else {
-                $service->attachOfferToDeal($deal, $offerType, $payload);
-            }
-
-            // Ensure only the selected offer type remains attached to this deal
-            $deal->load('offerTypes');
-            foreach ($deal->offerTypes as $attached) {
-                if ($attached->id !== $offerType->id) {
-                    $service->removeOfferFromDeal($deal, $attached);
-                }
-            }
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
         }
 
-        return redirect()->route('vendor.deals.index')->with('success', 'Deal updated successfully!');
+        $deal->load(['offerTypes']);
+        $offerTypes = OfferType::where('is_active', true)->orderBy('display_name')->get(['id', 'name', 'display_name']);
+
+        return \Inertia\Inertia::render('vendor/DealOffers', [
+            'deal' => [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'basePrice' => $deal->base_price,
+            ],
+            'offerTypes' => $offerTypes,
+            'attachedOffers' => $deal->offerTypes->map(function ($ot) {
+                return [
+                    'id' => $ot->id,
+                    'name' => $ot->name,
+                    'display_name' => $ot->display_name,
+                    'pivot' => [
+                        'original_price' => $ot->pivot?->original_price,
+                        'discount_percent' => $ot->pivot?->discount_percent,
+                        'discount_amount' => $ot->pivot?->discount_amount,
+                        'final_price' => $ot->pivot?->final_price,
+                        'currency_code' => $ot->pivot?->currency_code,
+                        'status' => $ot->pivot?->status,
+                        'params' => $ot->pivot?->params,
+                        'starts_at' => $ot->pivot?->starts_at?->toDateString(),
+                        'ends_at' => $ot->pivot?->ends_at?->toDateString(),
+                    ],
+                ];
+            }),
+        ]);
+    }
+
+    public function attachOffer(Request $request, Deal $deal)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'offer_type_id' => ['required', 'exists:offer_types,id'],
+            // original_price defaults to deal.base_price (no manual entry needed)
+            'original_price' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'status' => ['nullable', 'string'],
+            'params' => ['nullable', 'array'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            // UI helpers (converted into params on the server)
+            'discount_percent' => ['nullable', 'numeric', 'min:0'],
+            'offer_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if (!isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
+            if ($deal->base_price === null) {
+                return back()->withErrors(['original_price' => 'Set a base price on the deal before adding offers.']);
+            }
+            $validated['original_price'] = (float) $deal->base_price;
+        }
+
+        $offerType = OfferType::findOrFail((int) $validated['offer_type_id']);
+        $service = app(DealOfferService::class);
+
+        // Normalize UI helper fields into params so pricing always recalculates.
+        $params = is_array($validated['params'] ?? null) ? ($validated['params'] ?? []) : [];
+        if (isset($validated['discount_percent']) && $validated['discount_percent'] !== null && $validated['discount_percent'] !== '') {
+            $params['discount_percent'] = (float) $validated['discount_percent'];
+        }
+        if (isset($validated['offer_price']) && $validated['offer_price'] !== null && $validated['offer_price'] !== '') {
+            $params['discount_amount'] = max(0, (float) $validated['original_price'] - (float) $validated['offer_price']);
+        }
+        $validated['params'] = $params;
+
+        $service->attachOfferToDeal($deal, $offerType, $validated);
+
+        return redirect()->route('vendor.deals.offers', $deal)->with('success', 'Offer added.');
+    }
+
+    public function updateOffer(Request $request, Deal $deal, OfferType $offerType)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            // allow changing offer type (replace flow)
+            'offer_type_id' => ['nullable', 'exists:offer_types,id'],
+            'original_price' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'status' => ['nullable', 'string'],
+            'params' => ['nullable', 'array'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            // UI helpers (converted into params on the server)
+            'discount_percent' => ['nullable', 'numeric', 'min:0'],
+            'offer_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if (!isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
+            if ($deal->base_price === null) {
+                return back()->withErrors(['original_price' => 'Set a base price on the deal before updating offers.']);
+            }
+            $validated['original_price'] = (float) $deal->base_price;
+        }
+
+        $service = app(DealOfferService::class);
+
+        // Normalize UI helper fields into params so pricing always recalculates.
+        $params = is_array($validated['params'] ?? null) ? ($validated['params'] ?? []) : [];
+        if (isset($validated['discount_percent']) && $validated['discount_percent'] !== null && $validated['discount_percent'] !== '') {
+            $params['discount_percent'] = (float) $validated['discount_percent'];
+        }
+        if (isset($validated['offer_price']) && $validated['offer_price'] !== null && $validated['offer_price'] !== '') {
+            $params['discount_amount'] = max(0, (float) $validated['original_price'] - (float) $validated['offer_price']);
+        }
+        $validated['params'] = $params;
+
+        $newOfferTypeId = isset($validated['offer_type_id']) && $validated['offer_type_id'] !== null && $validated['offer_type_id'] !== ''
+            ? (int) $validated['offer_type_id']
+            : null;
+
+        if ($newOfferTypeId !== null && $newOfferTypeId !== (int) $offerType->id) {
+            // Prevent duplicates
+            $alreadyAttached = \App\Models\DealOfferType::where('deal_id', $deal->id)
+                ->where('offer_type_id', $newOfferTypeId)
+                ->exists();
+
+            if ($alreadyAttached) {
+                return back()->withErrors(['offer_type_id' => 'This offer type is already attached to the deal.']);
+            }
+
+            $newOfferType = OfferType::findOrFail($newOfferTypeId);
+
+            DB::transaction(function () use ($service, $deal, $offerType, $newOfferType, $validated) {
+                // Replace: remove old then attach new using the same payload
+                $service->removeOfferFromDeal($deal, $offerType);
+                $service->attachOfferToDeal($deal, $newOfferType, $validated);
+            });
+        } else {
+            $service->updateOfferOnDeal($deal, $offerType, $validated);
+        }
+
+        return redirect()->route('vendor.deals.offers', $deal)->with('success', 'Offer updated.');
+    }
+
+    public function removeOffer(Deal $deal, OfferType $offerType)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+        if ($vendor && $deal->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $service = app(DealOfferService::class);
+        $service->removeOfferFromDeal($deal, $offerType);
+
+        return redirect()->route('vendor.deals.offers', $deal)->with('success', 'Offer removed.');
     }
 
     public function show(Deal $deal)

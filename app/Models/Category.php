@@ -24,6 +24,15 @@ class Category extends Model
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
+    /**
+     * Backwards-compatible alias for older code paths that used
+     * BusinessSubCategory->primaryCategory().
+     */
+    public function primaryCategory()
+    {
+        return $this->parent();
+    }
+
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id')

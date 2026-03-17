@@ -5,14 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   ArrowLeft, X, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Clock, Tag, Info, Percent, Banknote, ShoppingCart, Save,
+  Tag, Info, Save,
   Upload, ImagePlus
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -25,35 +24,18 @@ const SUGGESTED_TAGS_MAP: Record<string, string[]> = {
   entertainment: ['movies', 'concert', 'event', 'tickets', 'show', 'fun', 'nightlife', 'experience', 'activity', 'theme-park'],
 };
 
-const DEAL_TYPE_TAGS: Record<string, string[]> = {
-  percentage: ['discount', 'percent-off', 'savings'],
-  fixed: ['flat-price', 'fixed-deal', 'value-deal'],
-  bogo: ['buy-one-get-one', 'bogo', '2-for-1'],
-  bundle: ['combo', 'bundle-deal', 'package'],
-  flash: ['flash-sale', 'limited-time', 'urgent', 'today-only'],
-};
-
 const EditDeal = () => {
-  const { categories, offerTypes, deal: existingDeal } = usePage().props as any;
+  const { categories, deal: existingDeal } = usePage().props as any;
 
   const { data, setData, put, processing } = useForm({
     title: existingDeal?.title || '',
     shortDesc: existingDeal?.shortDesc || '',
     description: existingDeal?.description || '',
     categoryId: existingDeal?.categoryId?.toString() || categories?.[0]?.id?.toString() || '',
-    offerTypeId: existingDeal?.offerTypeId?.toString() || offerTypes?.[0]?.id?.toString() || '',
-    uiType: 'percentage' as 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle',
     tags: (existingDeal?.tags || []) as string[],
-    originalPrice: existingDeal?.originalPrice || '',
-    discountedPrice: existingDeal?.discountedPrice || '',
-    discountPercentage:
-      typeof existingDeal?.discountPercent === 'number' && existingDeal.discountPercent > 0
-        ? String(existingDeal.discountPercent)
-        : '',
+    basePrice: existingDeal?.basePrice || '',
     maxQuantity: existingDeal?.maxQuantity || '',
     status: existingDeal?.status || 'active',
-    startDate: existingDeal?.startDate || '',
-    endDate: existingDeal?.endDate || '',
     requestFeatured: existingDeal?.requestFeatured || false,
     featurePhoto: null as File | null,
     gallery: [] as File[],
@@ -94,58 +76,19 @@ const EditDeal = () => {
     }
   }, []);
 
-  const getUIType = (id: string | number): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' => {
-    const name = offerTypes?.find((ot: any) => ot.id.toString() === id.toString())?.name;
-    if (name === 'percentage_discount') return 'percentage';
-    if (name === 'fixed_amount_discount') return 'fixed';
-    if (name === 'bogo') return 'bogo';
-    if (name === 'flash_sale') return 'flash';
-    return 'fixed';
-  };
-
-  const uiType = getUIType(data.offerTypeId);
-
-  useEffect(() => {
-    setData('uiType', uiType);
-  }, [data.offerTypeId]);
-
-  // Auto-calculate prices
-  useEffect(() => {
-    if (uiType === 'percentage') {
-      const original = parseFloat(data.originalPrice);
-      const percent = parseFloat(data.discountPercentage);
-      if (!isNaN(original) && !isNaN(percent)) {
-        const discounted = original - (original * percent / 100);
-        if (data.discountedPrice !== discounted.toFixed(2)) {
-          setData(d => ({ ...d, discountedPrice: discounted.toFixed(2) }));
-        }
-      }
-    } else if (uiType === 'fixed' || uiType === 'flash' || uiType === 'bundle') {
-      const original = parseFloat(data.originalPrice);
-      const discounted = parseFloat(data.discountedPrice);
-      if (!isNaN(original) && !isNaN(discounted) && original > 0) {
-        const percent = ((original - discounted) / original) * 100;
-        if (data.discountPercentage !== percent.toFixed(0)) {
-          setData(d => ({ ...d, discountPercentage: percent.toFixed(0) }));
-        }
-      }
-    }
-  }, [data.originalPrice, data.discountPercentage, data.discountedPrice, uiType]);
-
   const generateAITags = useCallback(async () => {
     setIsGeneratingTags(true);
     await new Promise(r => setTimeout(r, 800));
     const selectedCategory = categories?.find((c: any) => c.id.toString() === data.categoryId.toString());
     const categorySlug = selectedCategory?.slug || 'food';
     const catTags = SUGGESTED_TAGS_MAP[categorySlug] || SUGGESTED_TAGS_MAP.food;
-    const typeTags = DEAL_TYPE_TAGS[uiType] || DEAL_TYPE_TAGS.percentage;
     const titleWords = data.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-    const allSuggestions = [...new Set([...typeTags, ...catTags.slice(0, 5), ...titleWords.slice(0, 3)])];
+    const allSuggestions = [...new Set([...catTags.slice(0, 5), ...titleWords.slice(0, 3)])];
     const newTags = allSuggestions.filter(t => !data.tags.includes(t));
     setData('tags', [...new Set([...data.tags, ...newTags])].slice(0, 15));
     setIsGeneratingTags(false);
     toast.success(`${newTags.length} AI-suggested tags added.`);
-  }, [data.categoryId, data.offerTypeId, uiType, data.title, data.tags, categories]);
+  }, [data.categoryId, data.title, data.tags, categories]);
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase().replace(/\s+/g, '-');
@@ -355,17 +298,6 @@ const EditDeal = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Deal Type</Label>
-                <Select value={data.offerTypeId?.toString()} onValueChange={v => setData(d => ({ ...d, offerTypeId: v, discountPercentage: '', discountedPrice: '' }))}>
-                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                  <SelectContent>
-                    {offerTypes?.map((ot: any) => (
-                      <SelectItem key={ot.id} value={ot.id.toString()}>{ot.display_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label>Category</Label>
                 <Select value={data.categoryId?.toString()} onValueChange={v => setData('categoryId', v)}>
                   <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
@@ -388,78 +320,31 @@ const EditDeal = () => {
                 </Select>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Pricing */}
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-primary/5 pb-4">
-            <CardTitle className="flex items-center gap-2">
-              {uiType === 'percentage' && <Percent className="h-5 w-5 text-primary" />}
-              {(uiType === 'fixed' || uiType === 'flash') && <Banknote className="h-5 w-5 text-primary" />}
-              {(uiType === 'bogo' || uiType === 'bundle') && <ShoppingCart className="h-5 w-5 text-primary" />}
-              Pricing Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">
-                  {uiType === 'bundle' ? 'Total Bundle Value ($)' : 'Original Price ($) *'}
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                  <Input type="number" placeholder="0.00" className="pl-7" value={data.originalPrice}
-                    onChange={e => setData('originalPrice', e.target.value)} required />
-                </div>
+                <Label>Base price *</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={data.basePrice}
+                  onChange={(e) => setData('basePrice', e.target.value)}
+                  required
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  This is the original price shown when no offers exist. Offers will use this price automatically.
+                </p>
               </div>
 
-              {uiType === 'percentage' ? (
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-primary flex items-center gap-1">
-                    <Percent className="h-3.5 w-3.5" /> Discount Percentage (%) *
-                  </Label>
-                  <div className="relative">
-                    <Input type="number" placeholder="e.g. 50" value={data.discountPercentage}
-                      onChange={e => setData('discountPercentage', e.target.value)} required />
-                    <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-primary">
-                    {uiType === 'bogo' ? 'Unit Price ($) *' : 'Offer Price ($) *'}
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                    <Input type="number" placeholder="0.00" className="pl-7" value={data.discountedPrice}
-                      onChange={e => setData('discountedPrice', e.target.value)} required />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Max Quantity Available</Label>
-                <Input type="number" placeholder="Unlimited" value={data.maxQuantity}
-                  onChange={e => setData('maxQuantity', e.target.value)} />
+                <Label>Max Quantity Available</Label>
+                <Input
+                  type="number"
+                  placeholder="Unlimited"
+                  value={data.maxQuantity}
+                  onChange={e => setData('maxQuantity', e.target.value)}
+                />
                 <p className="text-[10px] text-muted-foreground">Leave empty for unlimited</p>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 rounded-lg bg-muted/30 border border-dashed flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="text-center sm:text-left">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">You're offering</p>
-                  <span className="text-2xl font-bold text-primary">
-                    {uiType === 'percentage' ? `${data.discountPercentage || 0}% OFF` :
-                      uiType === 'bogo' ? 'BOGO FREE' :
-                        `$${(data.originalPrice ? parseFloat(data.originalPrice) - parseFloat(data.discountedPrice || '0') : 0).toFixed(2)} savings`}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Customer pays</p>
-                <p className="text-xl font-bold">${parseFloat(data.discountedPrice || '0').toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -490,21 +375,6 @@ const EditDeal = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Schedule</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Start Date *</Label>
-              <Input type="date" value={data.startDate} onChange={e => setData('startDate', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>End Date *</Label>
-              <Input type="date" value={data.endDate} onChange={e => setData('endDate', e.target.value)} required />
-            </div>
           </CardContent>
         </Card>
 

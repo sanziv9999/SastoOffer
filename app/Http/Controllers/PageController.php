@@ -26,62 +26,72 @@ class PageController extends Controller
         $reqMinPrice = $request->query('minPrice');
         $reqMaxPrice = $request->query('maxPrice');
 
-        $dealsQuery = Deal::query()
-            ->with(['subCategory.primaryCategory', 'offerTypes', 'images', 'vendor'])
-            ->when($query !== '', function ($q) use ($query) {
-                $q->where('title', 'like', '%' . $query . '%');
-            })
-            // Filter by subcategory slug if provided
-            ->when($subSlug, function ($q) use ($subSlug) {
-                $q->whereHas('subCategory', fn ($qq) => $qq->where('slug', $subSlug));
-            })
-            // Otherwise filter by primary category slug (if not 'all')
-            ->when(!$subSlug && $category !== 'all', function ($q) use ($category) {
-                $q->whereHas('subCategory.primaryCategory', fn ($qq) => $qq->where('slug', $category));
-            })
-            ->when($featured, function ($q) {
-                $q->where('is_featured', true);
+        // Fetch deals via deal_offer_type (offers) instead of deals table.
+        // This means only deals with at least one attached offer will appear here.
+        $offerQuery = DealOfferType::query()
+            ->with([
+                'deal.category.parent',
+                'deal.images',
+                'deal.vendor.defaultAddress',
+                'offerType',
+            ])
+            ->where('status', 'active')
+            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category) {
+                $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
+                    ->when($featured, fn ($qq) => $qq->where('is_featured', true))
+                    ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
+                    ->when(!$subSlug && $category !== 'all', fn ($qq) => $qq->whereHas('category.parent', fn ($c) => $c->where('slug', $category)));
             });
 
-        // Sorting
-        $dealsQuery->when($sort === 'priceAsc', function ($q) {
-                $q->orderBy('base_price', 'asc');
-            })
-            ->when($sort === 'priceDesc', function ($q) {
-                $q->orderBy('base_price', 'desc');
-            })
-            ->when($sort === 'discountDesc', function ($q) {
-                $q->orderBy('discount_percent', 'desc');
-            }, function ($q) use ($sort) {
-                if ($sort === 'relevance') {
-                    $q->latest();
-                }
-            });
+        // If filtering by offer type, find deals that have that type,
+        // but still fetch/show all offers attached to those deals.
+        if ($type !== 'all') {
+            $dealIds = (clone $offerQuery)
+                ->whereHas('offerType', fn ($q) => $q->where('slug', $type)->orWhere('name', $type))
+                ->pluck('deal_id')
+                ->unique()
+                ->values();
 
-        $rawDeals = $dealsQuery->take(60)->get();
+            $offerQuery->whereIn('deal_id', $dealIds);
+        }
 
-        $mappedDeals = $rawDeals
-            ->map(function ($deal) {
-                $offer = $deal->offerTypes->first()?->pivot;
+        // Pull a reasonable working set and group in memory (pivot-driven).
+        $rawOffers = $offerQuery->take(500)->get();
 
-                return [
-                    'id'                => $deal->id,
-                    'title'             => $deal->title,
-                    'categorySlug'      => optional($deal->subCategory->primaryCategory)->slug ?? 'uncategorized',
-                    'categoryName'      => optional($deal->subCategory->primaryCategory)->name ?? 'Uncategorized',
-                    'originalPrice'     => $offer ? (float) $offer->original_price : 0,
-                    'discountedPrice'   => $offer ? (float) $offer->final_price : 0,
-                    'discountPercentage'=> null,
-                    'image'             => $deal->images->first()?->image_url
-                                           ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
-                    'featured'          => (bool) ($deal->is_featured ?? false),
-                    'type'              => $deal->offerTypes->first()->code ?? 'percentage',
-                    'location'          => [
-                        'city' => $deal->vendor?->defaultAddress?->municipality ?? 'City',
-                    ],
-                    'timeLeft'          => optional($deal->ends_at)?->diffForHumans() ?? 'soon',
-                ];
-            });
+        // Sorting (each row = one offer card)
+        $rawOffers = match ($sort) {
+            'priceAsc'     => $rawOffers->sortBy(fn ($p) => (float) ($p->final_price ?? PHP_FLOAT_MAX))->values(),
+            'priceDesc'    => $rawOffers->sortByDesc(fn ($p) => (float) ($p->final_price ?? 0))->values(),
+            'discountDesc' => $rawOffers->sortByDesc(fn ($p) => (float) ($p->savings_percent ?? $p->discount_percent ?? 0))->values(),
+            default        => $rawOffers->sortByDesc(fn ($p) => optional($p->deal)->created_at)->values(),
+        };
+
+        $mappedDeals = $rawOffers->take(60)->map(function (DealOfferType $pivot) {
+            $deal = $pivot->deal;
+            $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
+
+            return [
+                // keep deal id for routing
+                'id'                => $deal?->id,
+                // unique offer id (useful if you later want deep-linking)
+                'offerPivotId'      => $pivot->id,
+                'title'             => $deal?->title,
+                'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
+                'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+                'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
+                'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
+                'discountPercentage'=> $discountPct > 0 ? $discountPct : null,
+                'image'             => $deal?->images?->first()?->image_url
+                                       ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+                'featured'          => (bool) ($deal?->is_featured ?? false),
+                'type'              => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? 'offer',
+                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                'location'          => [
+                    'city' => $deal?->vendor?->defaultAddress?->municipality ?? 'City',
+                ],
+                'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+            ];
+        });
 
         $availableMinPrice = (int) floor($mappedDeals->min('discountedPrice') ?? 0);
         $availableMaxPrice = (int) ceil($mappedDeals->max('discountedPrice') ?? 100000);

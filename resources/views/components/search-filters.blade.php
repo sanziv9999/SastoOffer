@@ -1,6 +1,19 @@
 @props(['categories', 'currentCategory', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'isMobile' => false])
 
-<div class="{{ $isMobile ? 'space-y-6' : 'bg-card shadow-sm rounded-lg p-5 sticky top-20 border' }}">
+<div
+    class="{{ $isMobile ? 'space-y-6' : 'bg-card shadow-sm rounded-lg p-5 sticky top-20 border' }}"
+    x-init="
+        if (typeof selectedCategory === 'undefined') selectedCategory = @js($currentCategory);
+        if (typeof sortBy === 'undefined') sortBy = @js($sortBy);
+        if (typeof minPrice === 'undefined') minPrice = {{ (int) $minPrice }};
+        if (typeof maxPrice === 'undefined') maxPrice = {{ (int) $maxPrice }};
+        if (typeof availableMinPrice === 'undefined') availableMinPrice = {{ (int) $minPrice }};
+        if (typeof availableMaxPrice === 'undefined') availableMaxPrice = {{ (int) $maxPrice }};
+        if (typeof dealType === 'undefined') dealType = @js($dealType);
+        if (typeof isFeatured === 'undefined') isFeatured = {{ $isFeatured ? 'true' : 'false' }};
+        if (typeof searchQuery === 'undefined') searchQuery = '';
+    "
+>
     @if(!$isMobile)
         <div class="mb-4">
             <h3 class="font-medium mb-2">Search</h3>
@@ -162,10 +175,12 @@
             <div class="space-y-2">
                 @foreach([
                     'all' => 'All Types',
-                    'percentage' => 'Percentage Off',
-                    'fixed' => 'Fixed Price',
+                    'percentage_discount' => 'Percentage Discount',
+                    'fixed_amount_discount' => 'Fixed Amount Discount',
                     'bogo' => 'Buy One Get One',
-                    'bundle' => 'Bundle Deals'
+                    'flash_sale' => 'Flash Sale',
+                    'free_shipping' => 'Free Shipping',
+                    'cashback' => 'Cashback Offer',
                 ] as $val => $label)
                     <div class="flex items-center space-x-2">
                         <input
