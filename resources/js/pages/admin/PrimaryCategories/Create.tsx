@@ -4,15 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
+
+type PageProps = {
+  parentOptions: Array<{ id: number; name: string }>;
+};
 
 const Create = () => {
+  const { parentOptions } = usePage<PageProps>().props;
+
   const { data, setData, post, processing, errors } = useForm({
     name: '',
     slug: '',
     description: '',
     display_order: '',
     is_active: true,
+    parent_id: '' as number | '' | null,
   });
 
   const onSubmit = (e: React.FormEvent) => {
@@ -24,8 +31,10 @@ const Create = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Primary Category</h1>
-          <p className="text-muted-foreground">Add a new primary category.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Create Category</h1>
+          <p className="text-muted-foreground">
+            Create a top-level category or assign a parent to make it a sub-category.
+          </p>
         </div>
         <Button variant="outline" asChild>
           <Link href="/admin/primary-categories">Back</Link>
@@ -38,6 +47,27 @@ const Create = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4 max-w-2xl">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Parent category (optional)</label>
+              <select
+                className="border rounded-md px-3 py-2 text-sm w-full"
+                value={data.parent_id ?? ''}
+                onChange={(e) =>
+                  setData('parent_id', e.target.value ? Number(e.target.value) : '')
+                }
+              >
+                <option value="">— No parent (top-level) —</option>
+                {parentOptions?.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.name}
+                  </option>
+                ))}
+              </select>
+              {errors.parent_id && (
+                <p className="text-xs text-destructive">{errors.parent_id}</p>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Name</label>
               <Input value={data.name} onChange={(e) => setData('name', e.target.value)} />

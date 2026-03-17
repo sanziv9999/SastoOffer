@@ -21,11 +21,9 @@ return new class extends Migration
             // Vendor-specific fields
             $table->string('business_name', 150);
             $table->string('slug', 180)->unique();
-            // Business category/type
-            $table->foreignId('primary_category_id')
-                  ->nullable()
-                  ->constrained('primary_categories')
-                  ->nullOnDelete();
+            // Business category/type (linked to unified categories table)
+            $table->foreignId('category_id')
+                  ->nullable();
     
             $table->enum('business_type', [
                 'service',
@@ -66,7 +64,7 @@ return new class extends Migration
 
             // Indexes for common queries
             $table->index('verified_status');
-            $table->index('primary_category_id');
+            $table->index('category_id');
         });
     }
 
@@ -75,13 +73,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('vendor_profiles', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['primary_category_id']);
-            $table->dropForeign(['verified_by_user_id']);
-            $table->dropForeign(['default_address_id']);
-        });
-
         Schema::dropIfExists('vendor_profiles');
     }
 };

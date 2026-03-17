@@ -20,10 +20,11 @@ class UpdatePrimaryCategoryRequest extends FormRequest
 
         return [
             'name'          => ['sometimes', 'string', 'max:255'],
-            'slug'          => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('primary_categories', 'slug')->ignore($primaryCategory->id)],
+            'slug'          => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('categories', 'slug')->ignore($primaryCategory->id)],
             'description'   => ['nullable', 'string'],
             'display_order' => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['nullable', 'boolean'],
+            'parent_id'     => ['nullable', 'exists:categories,id'],
             'image'         => ['nullable', 'image', 'max:2048'],
         ];
     }

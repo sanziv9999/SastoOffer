@@ -243,7 +243,7 @@
                                             </a>
                                         </div>
 
-                                        @foreach($category->subCategories as $sub)
+                                        @foreach($category->children as $sub)
                                             <div class="p-1.5 font-sans hover:bg-muted/50 rounded-md transition-colors">
                                                 <a href="{{ route('search', ['category' => $category->slug, 'subcategory' => $sub->slug]) }}" class="block font-medium text-sm hover:text-primary tooltip-trigger text-foreground whitespace-normal group/sub">
                                                     {{ $sub->name }}

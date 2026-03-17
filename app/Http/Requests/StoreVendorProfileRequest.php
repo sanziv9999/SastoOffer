@@ -19,7 +19,7 @@ class StoreVendorProfileRequest extends FormRequest
             'business_name'        => ['required', 'string', 'max:150'],
             'business_type'        => ['nullable', 'in:service,product,hybrid'],
             'slug'                 => ['nullable', 'string', 'max:180', 'unique:vendor_profiles,slug'],
-            'primary_category_id'  => ['nullable', 'exists:primary_categories,id'],
+            'category_id'          => ['nullable', 'exists:categories,id'],
             'verified_status'      => ['nullable', 'in:pending,verified,rejected,suspended'],
             'description'          => ['nullable', 'string'],
             'website_url'          => ['nullable', 'url', 'max:255'],

@@ -39,8 +39,8 @@ const vendorLinks = [
 const adminLinks = [
   { icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin' },
   { icon: LayoutDashboard, label: 'Featured Deal Ranking', path: '/admin/featured-ranking' },
-  { icon: Tags, label: 'Primary Categories', path: '/admin/primary-categories' },
-  { icon: Tags, label: 'Sub Categories', path: '/admin/sub-categories' },
+  // Unified categories entry (handles both primary and sub-categories)
+  { icon: Tags, label: 'Categories', path: '/admin/primary-categories' },
   { icon: Tags, label: 'Offer Types', path: '/admin/offer-types' },
   { icon: ClipboardList, label: 'Banners', path: '/admin/banners' },
   { icon: Users, label: 'Users', path: '/admin/users' },

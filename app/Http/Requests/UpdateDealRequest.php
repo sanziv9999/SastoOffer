@@ -18,7 +18,7 @@ class UpdateDealRequest extends FormRequest
 
         return [
             'vendor_id'                 => ['sometimes', 'exists:vendor_profiles,id'],
-            'business_sub_category_id'  => ['sometimes', 'exists:business_sub_categories,id'],
+            'category_id'               => ['sometimes', 'exists:categories,id'],
             'title'                     => ['sometimes', 'string', 'max:255'],
             'slug'                      => ['nullable', 'string', 'max:300', Rule::unique('deals', 'slug')->ignore($deal->id)],
             'short_description'         => ['nullable', 'string'],

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\VendorProfile;
-use App\Models\PrimaryCategory;
+use App\Models\Category;
 use App\Models\Address;
 use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
@@ -24,7 +24,7 @@ class VendorProfileController extends Controller
                 });
             })
             ->when($request->filled('verified_status'), fn ($q) => $q->where('verified_status', $request->verified_status))
-            ->when($request->filled('primary_category_id'), fn ($q) => $q->where('primary_category_id', $request->primary_category_id))
+            ->when($request->filled('primary_category_id'), fn ($q) => $q->where('category_id', $request->primary_category_id))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -37,7 +37,9 @@ class VendorProfileController extends Controller
 
     public function create()
     {
-        $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
+        $primaryCategories = Category::whereNull('parent_id')
+            ->orderBy('display_order')
+            ->get();
 
         return Inertia::render('vendor-profiles/Create', compact('primaryCategories'));
     }
@@ -105,7 +107,9 @@ class VendorProfileController extends Controller
             ]
         );
         
-        $primaryCategories = PrimaryCategory::orderBy('display_order')->get();
+        $primaryCategories = Category::whereNull('parent_id')
+            ->orderBy('display_order')
+            ->get();
         $addresses = Address::where('user_id', auth()->id())->latest()->get();
         $vendorProfile->load(['images', 'defaultAddress']);
 

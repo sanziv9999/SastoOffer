@@ -18,10 +18,12 @@ class StorePrimaryCategoryRequest extends FormRequest
     {
         return [
             'name'          => ['required', 'string', 'max:255'],
-            'slug'          => ['nullable', 'string', 'max:255', 'unique:primary_categories,slug'],
+            'slug'          => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
             'description'   => ['nullable', 'string'],
             'display_order' => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['nullable', 'boolean'],
+            // Optional parent: when set, this row becomes a sub-category
+            'parent_id'     => ['nullable', 'exists:categories,id'],
             'image'         => ['nullable', 'image', 'max:2048'],
         ];
     }

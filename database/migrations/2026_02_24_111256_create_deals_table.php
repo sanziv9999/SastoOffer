@@ -19,10 +19,9 @@ return new class extends Migration
                 ->constrained('vendor_profiles')
                 ->cascadeOnDelete();
 
-            // Business Sub Category
-            $table->foreignId('business_sub_category_id')
-                ->constrained('business_sub_categories')
-                ->cascadeOnDelete();
+            // Category (leaf category from unified categories table)
+            // NOTE: FK added in a later migration once categories table exists
+            $table->foreignId('category_id');
 
             $table->string('title', 255);
             $table->string('slug', 300)->unique();
@@ -55,7 +54,7 @@ return new class extends Migration
 
             // Indexes for performance
             $table->index(['vendor_id', 'status']);
-            $table->index('business_sub_category_id');
+            $table->index('category_id');
             $table->index('starts_at');
             $table->index('ends_at');
             $table->index('is_featured');

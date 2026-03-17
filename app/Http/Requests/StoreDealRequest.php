@@ -15,7 +15,7 @@ class StoreDealRequest extends FormRequest
     {
         return [
             'vendor_id'                 => ['required', 'exists:vendor_profiles,id'],
-            'business_sub_category_id'  => ['required', 'exists:business_sub_categories,id'],
+            'category_id'               => ['required', 'exists:categories,id'],
             'title'                     => ['required', 'string', 'max:255'],
             'slug'                      => ['nullable', 'string', 'max:300', 'unique:deals,slug'],
             'short_description'        => ['nullable', 'string'],

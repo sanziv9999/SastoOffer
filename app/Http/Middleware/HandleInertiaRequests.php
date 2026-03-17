@@ -45,7 +45,9 @@ class HandleInertiaRequests extends Middleware
                     'role' => $request->user()->getRoleNames()->first() ?? 'customer',
                 ] : null,
             ],
-            'categories' => \App\Models\BusinessSubCategory::active()->orderBy('name')->get(['id', 'name', 'slug']),
+            'categories' => \App\Models\Category::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
             'offerTypes' => \App\Models\OfferType::where('is_active', true)->get(['id', 'name', 'display_name']),
             'flash' => [
                 'success' => session('success'),

@@ -4,19 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 
 type Props = {
   primaryCategory: any;
+  parentOptions: Array<{ id: number; name: string }>;
 };
 
-const Edit = ({ primaryCategory }: Props) => {
+const Edit = ({ primaryCategory, parentOptions }: Props) => {
   const { data, setData, processing, errors } = useForm({
     name: primaryCategory?.name || '',
     slug: primaryCategory?.slug || '',
     description: primaryCategory?.description || '',
     display_order: primaryCategory?.display_order ?? '',
     is_active: !!primaryCategory?.is_active,
+    parent_id: primaryCategory?.parent_id ?? '',
   });
 
   const onSubmit = (e: React.FormEvent) => {
@@ -28,7 +30,7 @@ const Edit = ({ primaryCategory }: Props) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Primary Category</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Edit Category</h1>
           <p className="text-muted-foreground">{primaryCategory?.name}</p>
         </div>
         <Button variant="outline" asChild>
@@ -42,6 +44,27 @@ const Edit = ({ primaryCategory }: Props) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4 max-w-2xl">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Parent category (optional)</label>
+              <select
+                className="border rounded-md px-3 py-2 text-sm w-full"
+                value={data.parent_id ?? ''}
+                onChange={(e) =>
+                  setData('parent_id', e.target.value ? Number(e.target.value) : '')
+                }
+              >
+                <option value="">— No parent (top-level) —</option>
+                {parentOptions?.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.name}
+                  </option>
+                ))}
+              </select>
+              {errors.parent_id && (
+                <p className="text-xs text-destructive">{errors.parent_id}</p>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Name</label>
               <Input value={data.name} onChange={(e) => setData('name', e.target.value)} />

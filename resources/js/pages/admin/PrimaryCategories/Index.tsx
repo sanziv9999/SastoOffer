@@ -59,19 +59,47 @@ const Index = ({ primaryCategories, filters }: Props) => {
         <CardContent className="space-y-2">
           {items.length ? (
             items.map((c: any) => (
-              <div key={c.id} className="flex items-center justify-between gap-3 border rounded-md p-3">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{c.name}</div>
-                  <div className="text-xs text-muted-foreground">Slug: {c.slug || '-'}</div>
+              <div key={c.id} className="space-y-1">
+                <div className="flex items-center justify-between gap-3 border rounded-md p-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{c.name}</div>
+                    <div className="text-xs text-muted-foreground">Slug: {c.slug || '-'}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/primary-categories/${c.id}/edit`}>Edit</Link>
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => onDelete(c.id)}>
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/primary-categories/${c.id}/edit`}>Edit</Link>
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => onDelete(c.id)}>
-                    Delete
-                  </Button>
-                </div>
+
+                {Array.isArray(c.children) && c.children.length > 0 && (
+                  <div className="ml-6 space-y-1">
+                    {c.children.map((child: any) => (
+                      <div
+                        key={child.id}
+                        className="flex items-center justify-between gap-3 border rounded-md p-2 bg-muted/40"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{child.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Slug: {child.slug || '-'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/admin/primary-categories/${child.id}/edit`}>Edit</Link>
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => onDelete(child.id)}>
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           ) : (

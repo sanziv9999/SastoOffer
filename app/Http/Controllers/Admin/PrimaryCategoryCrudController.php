@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrimaryCategoryRequest;
 use App\Http\Requests\UpdatePrimaryCategoryRequest;
-use App\Models\PrimaryCategory;
+use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,7 +17,9 @@ class PrimaryCategoryCrudController extends Controller
     public function index(Request $request): Response
     {
         $search = trim((string) $request->query('search', ''));
-        $primaryCategories = PrimaryCategory::query()
+        $primaryCategories = Category::query()
+            ->whereNull('parent_id')
+            ->with('children')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('name', 'like', "%{$search}%")
@@ -37,7 +39,13 @@ class PrimaryCategoryCrudController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('admin/PrimaryCategories/Create');
+        $parentOptions = Category::whereNull('parent_id')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('admin/PrimaryCategories/Create', [
+            'parentOptions' => $parentOptions,
+        ]);
     }
 
     public function store(StorePrimaryCategoryRequest $request): RedirectResponse
@@ -52,19 +60,28 @@ class PrimaryCategoryCrudController extends Controller
             $data['slug'] = Str::slug($data['name']);
         }
 
-        PrimaryCategory::create($data);
+        // If parent_id is supplied, this becomes a sub-category under that parent.
+        // If not supplied, it will be a top-level category (parent_id = null).
+        $data['parent_id'] = $data['parent_id'] ?? null;
+        Category::create($data);
 
         return redirect()->route('admin.primary-categories.index')->with('success', 'Primary category created.');
     }
 
-    public function edit(PrimaryCategory $primaryCategory): Response
+    public function edit(Category $primaryCategory): Response
     {
+        $parentOptions = Category::whereNull('parent_id')
+            ->where('id', '!=', $primaryCategory->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('admin/PrimaryCategories/Edit', [
             'primaryCategory' => $primaryCategory,
+            'parentOptions'   => $parentOptions,
         ]);
     }
 
-    public function update(UpdatePrimaryCategoryRequest $request, PrimaryCategory $primaryCategory): RedirectResponse
+    public function update(UpdatePrimaryCategoryRequest $request, Category $primaryCategory): RedirectResponse
     {
         $data = $request->validated();
         if ($request->has('is_active')) {
@@ -82,7 +99,7 @@ class PrimaryCategoryCrudController extends Controller
         return redirect()->route('admin.primary-categories.index')->with('success', 'Primary category updated.');
     }
 
-    public function destroy(PrimaryCategory $primaryCategory): RedirectResponse
+    public function destroy(Category $primaryCategory): RedirectResponse
     {
         $primaryCategory->delete();
 

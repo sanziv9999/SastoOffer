@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\Deal;
-use App\Models\PrimaryCategory;
+use App\Models\Category;
 use App\Models\DealOfferType;
 
 class PageController extends Controller
@@ -101,7 +101,8 @@ class PageController extends Controller
             ->values()
             ->all();
 
-        $categories = PrimaryCategory::where('is_active', true)
+        $categories = Category::where('is_active', true)
+            ->whereNull('parent_id')
             ->orderBy('display_order')
             ->get(['id', 'name', 'slug'])
             ->map(fn ($cat) => [

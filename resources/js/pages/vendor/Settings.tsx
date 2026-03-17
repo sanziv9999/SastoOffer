@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useForm } from '@inertiajs/react';
 import {
     Building2,
@@ -9,7 +9,6 @@ import {
     Globe,
     Instagram,
     Facebook,
-    Twitter,
     Save,
     Plus,
     Navigation
@@ -53,9 +52,50 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
     vendorProfile: any, 
     primaryCategories: any[]
 }) => {
+    const DEFAULT_SOCIAL_PLATFORMS = useMemo(
+        () => (['instagram', 'facebook', 'tiktok'] as const),
+        []
+    );
+
+    const EXTRA_SOCIAL_PLATFORMS = useMemo(
+        () =>
+            ([
+                { id: 'youtube', label: 'YouTube' },
+                { id: 'x', label: 'X' },
+                { id: 'linkedin', label: 'LinkedIn' },
+                { id: 'website', label: 'Website' },
+            ] as const),
+        []
+    );
+
+    const normalizeSocialMedia = (input: any): Array<{ platform: string; url: string }> => {
+        const arr = Array.isArray(input) ? input : [];
+        const normalized = arr
+            .map((row: any) => ({
+                platform: String(row?.platform ?? '').trim().toLowerCase(),
+                url: String(row?.url ?? '').trim(),
+            }))
+            .filter((row: any) => row.platform.length > 0);
+
+        // Ensure defaults exist (with empty url if missing)
+        for (const p of DEFAULT_SOCIAL_PLATFORMS) {
+            if (!normalized.some((x) => x.platform === p)) {
+                normalized.push({ platform: p, url: '' });
+            }
+        }
+
+        // De-dupe by platform (keep first)
+        const seen = new Set<string>();
+        return normalized.filter((row) => {
+            if (seen.has(row.platform)) return false;
+            seen.add(row.platform);
+            return true;
+        });
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         business_name: vendorProfile?.business_name || '',
-        primary_category_id: vendorProfile?.primary_category_id || '',
+        category_id: vendorProfile?.category_id || vendorProfile?.primary_category_id || '',
         business_type: vendorProfile?.business_type || 'service',
         description: vendorProfile?.description || '',
         public_email: vendorProfile?.public_email || '',
@@ -76,11 +116,7 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
             { day: 'Friday', open: '09:00', close: '18:00', is_closed: false },
             { day: 'Saturday', open: '09:00', close: '18:00', is_closed: true }
         ],
-        social_media: vendorProfile?.social_media || [
-            { platform: 'Instagram', url: '' },
-            { platform: 'Facebook', url: '' },
-            { platform: 'Twitter', url: '' }
-        ],
+        social_media: normalizeSocialMedia(vendorProfile?.social_media),
         province: vendorProfile?.default_address?.province || 'bagmati',
         district: vendorProfile?.default_address?.district || 'Kathmandu',
         municipality: vendorProfile?.default_address?.municipality || 'Kathmandu Metropolitan City',
@@ -92,6 +128,48 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
         cover: null as File | null,
         _method: 'put',
     });
+
+    const [newPlatform, setNewPlatform] = useState<string>('youtube');
+
+    const getSocialUrl = (platformId: string) => {
+        const match = Array.isArray(data.social_media)
+            ? data.social_media.find((x: any) => String(x?.platform).toLowerCase() === platformId)
+            : null;
+        return match?.url ?? '';
+    };
+
+    const setSocialUrl = (platformId: string, url: string) => {
+        const current = Array.isArray(data.social_media) ? [...data.social_media] : [];
+        const idx = current.findIndex((x: any) => String(x?.platform).toLowerCase() === platformId);
+        if (idx >= 0) {
+            current[idx] = { ...current[idx], platform: platformId, url };
+        } else {
+            current.push({ platform: platformId, url });
+        }
+        setData('social_media', current);
+    };
+
+    const addPlatform = () => {
+        const id = String(newPlatform || '').toLowerCase();
+        if (!id) return;
+        const current = Array.isArray(data.social_media) ? [...data.social_media] : [];
+        if (current.some((x: any) => String(x?.platform).toLowerCase() === id)) {
+            toast.error('Platform already added.');
+            return;
+        }
+        current.push({ platform: id, url: '' });
+        setData('social_media', current);
+    };
+
+    const removePlatform = (platformId: string) => {
+        // Prevent removing defaults
+        if (DEFAULT_SOCIAL_PLATFORMS.includes(platformId as any)) return;
+        const current = Array.isArray(data.social_media) ? [...data.social_media] : [];
+        setData(
+            'social_media',
+            current.filter((x: any) => String(x?.platform).toLowerCase() !== platformId)
+        );
+    };
 
     const [logoPreview, setLogoPreview] = useState<string | null>(
         vendorProfile?.images?.find((img: any) => img.attribute_name === 'logo')?.image_url || null
@@ -289,10 +367,10 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                                         {errors.business_name && <p className="text-xs text-red-500">{errors.business_name}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="category">Primary Category</Label>
+                                        <Label htmlFor="category">Category</Label>
                                         <Select 
-                                            value={data.primary_category_id?.toString()} 
-                                            onValueChange={val => setData('primary_category_id', val)}
+                                            value={data.category_id?.toString()} 
+                                            onValueChange={val => setData('category_id', val)}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select Category" />
@@ -592,29 +670,97 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-4">
-                                    {data.social_media?.map((social: any, index: number) => (
-                                        <div key={index} className="flex items-center gap-4">
-                                            {social.platform === 'Instagram' && <Instagram className="h-5 w-5 text-pink-600" />}
-                                            {social.platform === 'Facebook' && <Facebook className="h-5 w-5 text-blue-600" />}
-                                            {social.platform === 'Twitter' && <Twitter className="h-5 w-5 text-sky-500" />}
-                                            <Input
-                                                placeholder={`${social.platform} URL/Username`}
-                                                value={social.url}
-                                                onChange={e => {
-                                                    const newSocial = [...data.social_media];
-                                                    newSocial[index].url = e.target.value;
-                                                    setData('social_media', newSocial);
-                                                }}
-                                            />
+                                    <div className="flex items-center gap-4">
+                                        <Instagram className="h-5 w-5 text-pink-600" />
+                                        <Input
+                                            placeholder="Instagram URL"
+                                            value={getSocialUrl('instagram')}
+                                            onChange={(e) => setSocialUrl('instagram', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <Facebook className="h-5 w-5 text-blue-600" />
+                                        <Input
+                                            placeholder="Facebook URL"
+                                            value={getSocialUrl('facebook')}
+                                            onChange={(e) => setSocialUrl('facebook', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-5 w-5 flex items-center justify-center text-foreground/70 font-bold">
+                                            T
                                         </div>
-                                    ))}
+                                        <Input
+                                            placeholder="TikTok URL"
+                                            value={getSocialUrl('tiktok')}
+                                            onChange={(e) => setSocialUrl('tiktok', e.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* Extra / custom platforms */}
+                                    {Array.isArray(data.social_media) &&
+                                        data.social_media
+                                            .filter((x: any) => {
+                                                const p = String(x?.platform ?? '').toLowerCase();
+                                                return p && !DEFAULT_SOCIAL_PLATFORMS.includes(p as any);
+                                            })
+                                            .map((social: any) => {
+                                                const pid = String(social.platform ?? '').toLowerCase();
+                                                const label =
+                                                    EXTRA_SOCIAL_PLATFORMS.find((p) => p.id === pid)?.label ??
+                                                    pid.toUpperCase();
+                                                return (
+                                                    <div key={pid} className="flex items-center gap-3">
+                                                        <Badge variant="secondary" className="min-w-[90px] justify-center">
+                                                            {label}
+                                                        </Badge>
+                                                        <Input
+                                                            placeholder={`${label} URL`}
+                                                            value={social.url ?? ''}
+                                                            onChange={(e) => setSocialUrl(pid, e.target.value)}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => removePlatform(pid)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
+                                                );
+                                            })}
+
+                                    {errors.social_media && (
+                                        <p className="text-xs text-red-500 mt-2">{errors.social_media as any}</p>
+                                    )}
                                 </div>
                             </CardContent>
                             <CardFooter className="bg-muted/30 border-t flex justify-between">
-                                <Button variant="outline" size="sm" type="button">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add Another Platform
-                                </Button>
+                                <div className="flex items-center gap-2 w-full justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            className="border rounded-md px-3 py-2 text-sm bg-background"
+                                            value={newPlatform}
+                                            onChange={(e) => setNewPlatform(e.target.value)}
+                                        >
+                                            {EXTRA_SOCIAL_PLATFORMS.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <Button variant="outline" size="sm" type="button" onClick={addPlatform}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Add Platform
+                                        </Button>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                        Default: Facebook, Instagram, TikTok
+                                    </span>
+                                </div>
                             </CardFooter>
                         </Card>
                     </TabsContent>

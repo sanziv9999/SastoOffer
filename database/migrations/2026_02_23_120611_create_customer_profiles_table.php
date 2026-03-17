@@ -21,7 +21,6 @@ return new class extends Migration
             
             // Customer-specific fields
             $table->string('full_name')->nullable();
-            $table->string('profile_pic')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('gender', 20)->nullable();
             $table->string('phone', 20)->nullable()->index();

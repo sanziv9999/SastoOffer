@@ -10,7 +10,6 @@ use App\Http\Controllers\DealController;
 use App\Http\Controllers\VendorProfileController;
 use App\Http\Controllers\VendorAnalyticsController;
 use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
-use App\Http\Controllers\Admin\BusinessSubCategoryCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
 
 // ——— Public (no auth) ———
@@ -78,9 +77,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('/admin/primary-categories', PrimaryCategoryCrudController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('admin.primary-categories');
-    Route::resource('/admin/sub-categories', BusinessSubCategoryCrudController::class)
-        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
-        ->names('admin.sub-categories');
     Route::resource('/admin/offer-types', OfferTypeCrudController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('admin.offer-types');

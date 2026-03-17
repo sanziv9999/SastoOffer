@@ -16,7 +16,7 @@ class VendorProfile extends Model
         'business_name',
         'slug',
         'business_type',
-        'primary_category_id',
+        'category_id',
         'verified_status',
         'verified_at',
         'verified_by_user_id',
@@ -46,9 +46,10 @@ class VendorProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function primaryCategory()
+    public function primaryCategory(): BelongsTo
     {
-        return $this->belongsTo(PrimaryCategory::class);
+        // Backwards-compatible alias; points to unified Category model
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     public function verifiedBy()

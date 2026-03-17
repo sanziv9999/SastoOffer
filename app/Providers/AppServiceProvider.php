@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
-use App\Models\PrimaryCategory;
+use App\Models\Category;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,9 +24,11 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\User::observe(\App\Observers\UserObserver::class);
 
         View::composer('components.navbar', function ($view) {
-            $parentCategories = PrimaryCategory::with(['subCategories' => function ($query) {
-                    $query->active()->orderBy('display_order');
+            // Top-level categories
+            $parentCategories = Category::with(['children' => function ($query) {
+                    $query->where('is_active', true)->orderBy('display_order');
                 }])
+                ->whereNull('parent_id')
                 ->where('is_active', true)
                 ->orderBy('display_order')
                 ->get();

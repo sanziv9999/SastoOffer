@@ -20,7 +20,7 @@ class UpdateVendorProfileRequest extends FormRequest
             'business_name'        => ['sometimes', 'string', 'max:150'],
             'business_type'        => ['sometimes', 'in:service,product,hybrid'],
             'slug'                 => ['nullable', 'string', 'max:180', Rule::unique('vendor_profiles', 'slug')->ignore($vendor?->id)],
-            'primary_category_id'  => ['nullable', 'exists:primary_categories,id'],
+            'category_id'          => ['nullable', 'exists:categories,id'],
             'verified_status'      => ['sometimes', 'in:pending,verified,rejected,suspended'],
             'verified_by_user_id'  => ['nullable', 'exists:users,id'],
             'description'          => ['nullable', 'string'],
