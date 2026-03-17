@@ -65,7 +65,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     </div>
                   </td>
                   <td className="p-4 align-middle">
-                    <div className="font-medium">${Number(deal.price ?? 0).toFixed(2)}</div>
+                    <div className="font-medium">Rs. {Number(deal.price ?? 0).toFixed(2)}</div>
                   </td>
                   <td className="p-4 align-middle">
                     <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'expired' ? 'secondary' : 'outline'}

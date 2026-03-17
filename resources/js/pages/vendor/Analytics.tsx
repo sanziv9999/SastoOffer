@@ -12,9 +12,9 @@ interface VendorAnalyticsProps {
 
 const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
   const displayStats = [
-    { label: 'Total Revenue', value: `$${stats?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: stats?.revenueChange },
+    { label: 'Total Revenue', value: `Rs. ${stats?.totalRevenue?.toFixed(2) || '0.00'}`, icon: DollarSign, change: stats?.revenueChange },
     { label: 'Total Sales', value: (stats?.totalSales || 0).toString(), icon: ShoppingBag, change: stats?.salesChange },
-    { label: 'Avg Order Value', value: `$${stats?.avgOrderValue?.toFixed(2) || '0.00'}`, icon: TrendingUp, change: stats?.aovChange },
+    { label: 'Avg Order Value', value: `Rs. ${stats?.avgOrderValue?.toFixed(2) || '0.00'}`, icon: TrendingUp, change: stats?.aovChange },
     { label: 'Page Views', value: (stats?.pageViews || 0).toLocaleString(), icon: Eye, change: stats?.viewsChange },
     { label: 'Conversion Rate', value: `${stats?.conversionRate || 0}%`, icon: Users, change: stats?.conversionChange },
     { label: 'Active Deals', value: (stats?.activeDealsCount || 0).toString(), icon: BarChart, change: '' },
