@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { formatDistance } from 'date-fns';
-import { MapPin, Clock, Tag, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, Tag } from 'lucide-react';
 import { Deal } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -98,15 +98,6 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
           <span>Ends {timeLeft}</span>
         </div>
         
-        {/* Action Button */}
-        <div className="flex justify-between items-center">
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <Link to={`/deals/deal/${deal.id}`} className="flex items-center justify-center">
-              View Deal
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );

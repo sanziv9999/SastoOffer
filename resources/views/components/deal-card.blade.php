@@ -120,17 +120,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>Ends {{ isset($deal['timeLeft']) ? $deal['timeLeft'] : 'soon' }}</span>
             </div>
-            
-            {{-- Action Button --}}
-            <div class="flex justify-between items-center">
-                <a 
-                    href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full"
-                >
-                    View Deal
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 ml-1"><path d="m9 18 6-6-6-6"/></svg>
-                </a>
-            </div>
         </div>
     </div>
 @endif
