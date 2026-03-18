@@ -37,15 +37,19 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
-        $cartItem = CartItem::updateOrCreate(
-            [
+        $cartItem = CartItem::where('user_id', auth()->id())
+            ->where('deal_offer_type_id', $request->offerPivotId)
+            ->first();
+
+        if ($cartItem) {
+            $cartItem->increment('quantity', $request->quantity);
+        } else {
+            $cartItem = CartItem::create([
                 'user_id' => auth()->id(),
-                'deal_offer_type_id' => $request->offerPivotId
-            ],
-            [
-                'quantity' => DB::raw("quantity + {$request->quantity}")
-            ]
-        );
+                'deal_offer_type_id' => $request->offerPivotId,
+                'quantity' => $request->quantity
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
