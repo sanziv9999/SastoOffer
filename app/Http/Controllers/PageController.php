@@ -20,6 +20,7 @@ class PageController extends Controller
         $query      = $request->query('q', '');
         $category   = $request->query('category', 'all');      // primary category slug or 'all'
         $subSlug    = $request->query('subcategory');          // optional business subcategory slug
+        $district   = trim((string) $request->query('city', $request->query('district', '')));
         $sort       = $request->query('sort', 'relevance');
         $featured   = $request->query('featured') === 'true';
         $type       = $request->query('type', 'all');
@@ -36,7 +37,7 @@ class PageController extends Controller
                 'offerType',
             ])
             ->where('status', 'active')
-            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category) {
+            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category, $district) {
                 $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
                     ->when($featured, fn ($qq) => $qq->where('is_featured', true))
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
@@ -47,6 +48,12 @@ class PageController extends Controller
                         $qq->where(function ($w) use ($category) {
                             $w->whereHas('category.parent', fn ($c) => $c->where('slug', $category))
                                 ->orWhereHas('category', fn ($c) => $c->where('slug', $category)->whereNull('parent_id'));
+                        });
+                    })
+                    ->when($district !== '' && !in_array($district, ['All Cities', 'All Districts'], true), function ($qq) use ($district) {
+                        $needle = mb_strtolower($district);
+                        $qq->whereHas('vendor.defaultAddress', function ($addressQ) use ($needle) {
+                            $addressQ->whereRaw('LOWER(district) = ?', [$needle]);
                         });
                     });
             });
@@ -136,6 +143,7 @@ class PageController extends Controller
             'deals'           => $deals,
             'categories'      => $categories,
             'query'           => $query,
+            'currentDistrict' => $district,
             'currentCategory' => $category,
             'sortBy'          => $sort,
             'isFeatured'      => $featured,

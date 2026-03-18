@@ -2,8 +2,26 @@
     class="bg-background shadow-sm"
     x-data="{
         mobileMenuOpen: false,
-        searchQuery: '',
-        selectedCity: 'All Cities'
+        searchQuery: '{{ addslashes(request('q', '')) }}',
+        selectedCity: '{{ addslashes(request('city', request('district', 'All Districts'))) }}',
+        submitSearch() {
+            const params = new URLSearchParams(window.location.search);
+            const query = this.searchQuery.trim();
+
+            if (query) {
+                params.set('q', query);
+            } else {
+                params.delete('q');
+            }
+
+            if (this.selectedCity && this.selectedCity !== 'All Districts') {
+                params.set('city', this.selectedCity);
+            } else {
+                params.delete('city');
+            }
+
+            window.location.href = '{{ route('search') }}' + (params.toString() ? `?${params.toString()}` : '');
+        }
     }"
 >
     <div class="container mx-auto px-4">
@@ -49,7 +67,7 @@
                             <span x-text="selectedCity"></span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-auto opacity-50"><path d="m6 9 6 6 6-6"></path></svg>
                         </button>
-                        {{-- City Dropdown --}}
+                        {{-- District Dropdown --}}
                         <div 
                             x-show="cityOpen" 
                             @click.outside="cityOpen = false"
@@ -58,7 +76,7 @@
                         >
                             @php
                                 $cities = [
-                                    "All Cities",
+                                    "All Districts",
                                     "Achham",
                                     "Arghakhanchi",
                                     "Baglung",
@@ -141,7 +159,7 @@
                             @foreach($cities as $city)
                                 <button 
                                     class="w-full text-left px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    @click="selectedCity = '{{ $city }}'; cityOpen = false"
+                                    @click="selectedCity = '{{ $city }}'; cityOpen = false; submitSearch();"
                                 >
                                     {{ $city }}
                                 </button>
@@ -322,6 +340,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-primary"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     <select 
                         x-model="selectedCity"
+                        @change="submitSearch()"
                         class="flex-1 h-9 rounded-full bg-muted border-0 text-sm px-3 outline-none"
                     >
                         @foreach($cities as $city)

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { useAuth } from '@/context/AuthContext';
@@ -45,20 +45,43 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState(() => getSearchParamsFromUrl().get('city') || 'All Cities');
+  const [selectedCity, setSelectedCity] = useState(() => getSearchParamsFromUrl().get('city') || 'All Districts');
   
   const menuScrollRef = useRef<HTMLDivElement>(null);
 
+  const applyDistrictToSearch = (nextDistrict: string) => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+
+    if (nextDistrict && nextDistrict !== 'All Districts') {
+      params.set('city', nextDistrict);
+    } else {
+      params.delete('city');
+    }
+
+    const target = `/search${params.toString() ? `?${params.toString()}` : ''}`;
+    router.visit(target, { preserveScroll: true, preserveState: true, replace: true });
+  };
+
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const cityParam = selectedCity && selectedCity !== 'All Cities' ? `&city=${encodeURIComponent(selectedCity)}` : '';
+    const cityParam = selectedCity && selectedCity !== 'All Districts' ? `&city=${encodeURIComponent(selectedCity)}` : '';
     if (searchQuery.trim()) {
       router.visit(`/search?q=${encodeURIComponent(searchQuery)}${cityParam}`);
-    } else if (selectedCity && selectedCity !== 'All Cities') {
+    } else if (selectedCity && selectedCity !== 'All Districts') {
       router.visit(`/search?city=${encodeURIComponent(selectedCity)}`);
     }
     setMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    // If user changes district from dropdown, immediately filter deals.
+    // (Still allows normal text search submit for query-based search.)
+    if (!searchQuery.trim()) {
+      applyDistrictToSearch(selectedCity);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCity]);
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
@@ -109,10 +132,10 @@ const Navbar = () => {
               <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="h-9 border-0 bg-muted/50 rounded-full px-3 text-sm gap-1 w-auto min-w-[120px]">
                   <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  <SelectValue placeholder="City" />
+                  <SelectValue placeholder="District" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] bg-background z-50">
-                  <SelectItem value="All Cities">All Cities</SelectItem>
+                  <SelectItem value="All Districts">All Districts</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
@@ -208,10 +231,10 @@ const Navbar = () => {
               <MapPin className="h-4 w-4 text-primary" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="flex-1 h-9 rounded-full bg-muted border-0">
-                  <SelectValue placeholder="Select city" />
+                  <SelectValue placeholder="Select district" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] bg-background z-50">
-                  <SelectItem value="All Cities">All Cities</SelectItem>
+                  <SelectItem value="All Districts">All Districts</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
