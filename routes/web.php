@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\VendorProfileController;
 use App\Http\Controllers\VendorAnalyticsController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
 
@@ -17,6 +18,8 @@ Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/search', [PageController::class, 'search'])->name('search');
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
+Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+Route::post('/wishlist/toggle/{offerPivotId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
 // Deal detail (public): support both /deals/{id} and /deal/{id}
 // Deal detail (public): now fetched by deal_offer_type (pivot) id.

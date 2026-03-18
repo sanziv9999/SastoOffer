@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from '@/components/Link';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +27,7 @@ const WishlistButton = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-white z-50">
         <DropdownMenuLabel>Your Wishlist</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {wishlistCount === 0 ? (
@@ -36,7 +36,7 @@ const WishlistButton = () => {
           </div>
         ) : (
           <DropdownMenuItem asChild>
-            <Link to="/dashboard/favorites">View Wishlist</Link>
+            <Link href="/wishlist">View Wishlist</Link>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

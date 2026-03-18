@@ -24,7 +24,38 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="font-sans antialiased bg-muted/30">
+<body 
+    class="font-sans antialiased bg-muted/30"
+    x-data="{ 
+        wishlistedIds: {{ auth()->check() ? json_encode(auth()->user()->wishlist()->pluck('deal_offer_type_id')->toArray()) : '[]' }},
+        toggleWishlist(id) {
+            if (!{{ auth()->check() ? 'true' : 'false' }}) {
+                window.location.href = '/login';
+                return;
+            }
+            fetch(`/wishlist/toggle/${id}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    this.wishlistedIds.push(id);
+                } else {
+                    this.wishlistedIds = this.wishlistedIds.filter(i => i !== id);
+                    if (window.location.pathname === '/wishlist') {
+                        // Refresh or remove from DOM if we are on the wishlist page
+                        window.location.reload();
+                    }
+                }
+            });
+        }
+    }"
+>
     <div class="min-h-screen flex flex-col">
         <div class="fixed top-0 left-0 right-0 z-50">
             <x-navbar />
