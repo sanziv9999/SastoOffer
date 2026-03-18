@@ -113,6 +113,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/admin/vendors/{vendorProfile}/verified-status', [VendorProfileController::class, 'updateVerifiedStatus'])->name('admin.vendors.verified-status');
     Route::get('/admin/deals', [AdminController::class, 'deals'])->name('admin.deals');
     Route::get('/admin/deals/pending', [AdminController::class, 'pendingDeals'])->name('admin.deals.pending');
+    Route::get('/admin/deals/{deal}/view', [AdminController::class, 'viewDeal'])->name('admin.deals.view');
+    Route::patch('/admin/deals/{deal}/status', [AdminController::class, 'updateDealStatus'])->name('admin.deals.status');
+    Route::patch('/admin/deals/offers/{dealOfferType}/status', [AdminController::class, 'updateOfferStatus'])->name('admin.deals.offers.status');
     Route::patch('/admin/deals/offers/{dealOfferType}/display-types', [AdminController::class, 'updateOfferDisplayTypes'])->name('admin.deals.offers.display-types');
     Route::post('/admin/deals/{deal}/toggle-featured', [AdminController::class, 'toggleDealFeatured'])->name('admin.deals.toggle-featured');
     Route::patch('/admin/deals/{deal}/flags', [AdminController::class, 'updateDealFlags'])->name('admin.deals.flags');

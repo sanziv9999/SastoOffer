@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, CheckCircle, XCircle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { router } from '@inertiajs/react';
 import AdminPagination from '@/components/AdminPagination';
@@ -40,6 +39,22 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
     );
   };
 
+  const updateDealStatus = (dealId: number, nextStatus: string) => {
+    router.patch(
+      `/admin/deals/${dealId}/status`,
+      { status: nextStatus },
+      { preserveScroll: true, preserveState: true }
+    );
+  };
+
+  const updateOfferStatus = (offerPivotId: number, nextStatus: string) => {
+    router.patch(
+      `/admin/deals/offers/${offerPivotId}/status`,
+      { status: nextStatus },
+      { preserveScroll: true, preserveState: true }
+    );
+  };
+
   const renderTable = (dealsList: any[]) => (
     <div className="rounded-md border">
       <div className="relative w-full overflow-auto">
@@ -50,7 +65,6 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
               <th className="h-12 px-4 text-left align-middle font-medium">Vendor</th>
               <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
               <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-              <th className="h-12 px-4 text-left align-middle font-medium">Expires</th>
               <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
             </tr>
           </thead>
@@ -72,9 +86,17 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
                                   {offer.offerTypeTitle}
                                   <span className="ml-2 text-muted-foreground">#{offer.id}</span>
                                 </div>
-                                <Badge variant={offer.status === 'active' ? 'default' : 'outline'} className="text-[10px]">
-                                  {offer.status}
-                                </Badge>
+                                <select
+                                  value={offer.status || 'active'}
+                                  onChange={(e) => updateOfferStatus(offer.id, e.target.value)}
+                                  className="h-7 rounded border px-2 text-[10px] bg-background"
+                                >
+                                  <option value="draft">Draft</option>
+                                  <option value="pending">Pending</option>
+                                  <option value="active">Active</option>
+                                  <option value="inactive">Inactive</option>
+                                  <option value="expired">Expired</option>
+                                </select>
                               </div>
                               <div className="mt-1 text-xs text-muted-foreground">
                                 {offer.discountedPrice !== null ? `Rs. ${offer.discountedPrice}` : 'N/A'}
@@ -110,16 +132,26 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
                 </td>
                 <td className="p-4 align-middle">{deal.vendorName || 'Unknown'}</td>
                 <td className="p-4 align-middle">
-                  <div className="font-medium">${deal.discountedPrice?.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground line-through">${deal.originalPrice?.toFixed(2)}</div>
+                  <div className="font-medium">
+                    {deal.basePrice !== null && deal.basePrice !== undefined
+                      ? `Rs. ${Number(deal.basePrice).toFixed(2)}`
+                      : 'N/A'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">From deals.base_price</div>
                 </td>
                 <td className="p-4 align-middle">
-                  <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'pending' ? 'destructive' : 'outline'}
-                    className={deal.status === 'active' ? 'bg-green-500' : undefined}>
-                    {deal.status ? deal.status.charAt(0).toUpperCase() + deal.status.slice(1) : 'Unknown'}
-                  </Badge>
+                  <select
+                    value={deal.status || 'draft'}
+                    onChange={(e) => updateDealStatus(deal.id, e.target.value)}
+                    className="h-8 rounded border px-2 text-xs bg-background"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="expired">Expired</option>
+                  </select>
                 </td>
-                <td className="p-4 align-middle">{deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'N/A'}</td>
                 <td className="p-4 align-middle text-right">
                   <div className="flex justify-end gap-2">
                     {deal.status === 'pending' && (
@@ -129,14 +161,14 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
                       </>
                     )}
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={deal.offerPivotId ? `/deals/${deal.offerPivotId}` : `/deals/deal/${deal.id}`}>View</Link>
+                      <Link href={`/admin/deals/${deal.id}/view`}>View</Link>
                     </Button>
                   </div>
                 </td>
               </tr>
             )) : (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">No deals found.</td>
+                <td colSpan={5} className="p-8 text-center text-muted-foreground">No deals found.</td>
               </tr>
             )}
           </tbody>

@@ -89,7 +89,7 @@ const AdminPendingDeals = ({ pendingDeals, filters }: AdminPendingDealsProps) =>
                                                     <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>
                                                     <Button variant="destructive" size="sm"><XCircle className="h-4 w-4 mr-1" />Reject</Button>
                                                     <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={deal.offerPivotId ? `/deals/${deal.offerPivotId}` : `/deals/deal/${deal.id}`}>View</Link>
+                                                        <Link href={`/admin/deals/${deal.id}/view`}>View</Link>
                                                     </Button>
                                                 </div>
                                             </td>

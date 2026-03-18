@@ -101,6 +101,7 @@ class AdminController extends Controller
                     'title' => $deal->title,
                     'status' => $deal->status,
                     'vendorName' => $deal->vendor?->business_name,
+                    'basePrice' => $base,
                     'is_featured' => (bool) $deal->is_featured,
                     'is_deal_of_day' => (bool) $deal->is_deal_of_day,
                     'is_best_seller' => (bool) $deal->is_best_seller,
@@ -169,6 +170,50 @@ class AdminController extends Controller
         return Inertia::render('admin/AdminPendingDeals', [
             'pendingDeals' => $pendingDeals,
             'filters' => ['search' => $search],
+        ]);
+    }
+
+    public function viewDeal(Deal $deal)
+    {
+        $deal->load([
+            'vendor',
+            'category.parent',
+            'images',
+            'offerPivots.offerType',
+            'offerPivots.displayTypes',
+        ]);
+
+        $payload = [
+            'id' => $deal->id,
+            'title' => $deal->title,
+            'status' => $deal->status,
+            'basePrice' => $deal->base_price !== null ? (float) $deal->base_price : null,
+            'vendorName' => $deal->vendor?->business_name,
+            'category' => [
+                'name' => $deal->category?->name,
+                'parentName' => $deal->category?->parent?->name,
+            ],
+            'shortDesc' => $deal->short_description,
+            'description' => $deal->long_description,
+            'image' => $deal->images->first()?->image_url,
+            'offers' => $deal->offerPivots->map(function ($pivot) {
+                return [
+                    'id' => $pivot->id,
+                    'offerTypeTitle' => $pivot->offerType?->display_name ?? $pivot->offerType?->name ?? 'Offer',
+                    'offerTypeName' => $pivot->offerType?->name ?? null,
+                    'status' => $pivot->status,
+                    'originalPrice' => $pivot->original_price !== null ? (float) $pivot->original_price : null,
+                    'finalPrice' => $pivot->final_price !== null ? (float) $pivot->final_price : null,
+                    'currencyCode' => $pivot->currency_code,
+                    'startsAt' => $pivot->starts_at?->toIso8601String(),
+                    'endsAt' => $pivot->ends_at?->toIso8601String(),
+                    'displayTypes' => $pivot->displayTypes->pluck('name')->values()->all(),
+                ];
+            })->values()->all(),
+        ];
+
+        return Inertia::render('admin/AdminDealView', [
+            'deal' => $payload,
         ]);
     }
 
@@ -350,6 +395,40 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Offer display tags updated.');
+    }
+
+    public function updateDealStatus(Request $request, Deal $deal): RedirectResponse
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'status' => ['required', 'in:draft,active,inactive,expired,pending'],
+        ]);
+
+        $deal->status = $data['status'];
+        $deal->save();
+
+        return back()->with('success', 'Deal status updated.');
+    }
+
+    public function updateOfferStatus(Request $request, DealOfferType $dealOfferType): RedirectResponse
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'status' => ['required', 'in:draft,active,inactive,expired,pending'],
+        ]);
+
+        $dealOfferType->status = $data['status'];
+        $dealOfferType->save();
+
+        return back()->with('success', 'Offer status updated.');
     }
 
     protected function setDealDisplayType(Deal $deal, string $displayTypeName, bool $enabled): void

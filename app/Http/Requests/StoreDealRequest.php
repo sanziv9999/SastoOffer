@@ -22,7 +22,7 @@ class StoreDealRequest extends FormRequest
             'long_description'         => ['nullable', 'string'],
             'highlights'                => ['nullable', 'array'],
             'highlights.*'              => ['string'],
-            'status'                    => ['nullable', 'in:draft,active,inactive,expired'],
+            'status'                    => ['nullable', 'in:draft,pending,active,inactive,expired'],
             'total_inventory'           => ['nullable', 'integer', 'min:0'],
             'offer_types'               => ['nullable', 'array'],
             'offer_types.*.original_price' => ['nullable', 'numeric', 'min:0'],
