@@ -84,12 +84,34 @@
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
             <div class="space-y-4 w-full">
-                {{-- Dynamic Min/Max Extent Display --}}
-                <div class="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                    <span>Min: Rs. <span x-text="availableMinPrice"></span></span>
-                    <span>Max: Rs. <span x-text="availableMaxPrice"></span></span>
+                {{-- Price input fields --}}
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input 
+                            type="number" 
+                            x-model.number="minPrice" 
+                            @blur="
+                                if(minPrice === null || minPrice === '') minPrice = availableMinPrice;
+                                if(minPrice < availableMinPrice) minPrice = availableMinPrice;
+                                if(minPrice > availableMaxPrice) minPrice = availableMaxPrice;
+                            "
+                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                    </div>
+                    <div class="text-muted-foreground flex items-center">–</div>
+                    <div class="relative flex-1">
+                        <input 
+                            type="number" 
+                            x-model.number="maxPrice" 
+                            @blur="
+                                if(maxPrice === null || maxPrice === '') maxPrice = availableMaxPrice;
+                                if(maxPrice > availableMaxPrice) maxPrice = availableMaxPrice;
+                                if(maxPrice < availableMinPrice) maxPrice = availableMinPrice;
+                            "
+                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                    </div>
                 </div>
-
 
                 {{-- Dual Slider --}}
                 <div class="relative w-full h-5 mt-2 flex items-center">
@@ -108,7 +130,10 @@
                         :max="availableMaxPrice" 
                         step="1" 
                         x-model.number="minPrice"
-                        @input="if(minPrice > maxPrice) minPrice = maxPrice"
+                        @input="
+                            if(minPrice < availableMinPrice) minPrice = availableMinPrice;
+                            if(minPrice > availableMaxPrice) minPrice = availableMaxPrice;
+                        "
                         class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none 
                             [&::-webkit-slider-thumb]:pointer-events-auto
                             [&::-webkit-slider-thumb]:appearance-none 
@@ -136,7 +161,10 @@
                         :max="availableMaxPrice" 
                         step="1" 
                         x-model.number="maxPrice"
-                        @input="if(maxPrice < minPrice) maxPrice = minPrice"
+                        @input="
+                            if(maxPrice > availableMaxPrice) maxPrice = availableMaxPrice;
+                            if(maxPrice < availableMinPrice) maxPrice = availableMinPrice;
+                        "
                         class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none 
                             [&::-webkit-slider-thumb]:pointer-events-auto
                             [&::-webkit-slider-thumb]:appearance-none 
@@ -232,7 +260,7 @@
             >
                 Apply Filters
             </button>
-            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > 0 || maxPrice < 1000">
+            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                 <button 
                     @click="resetFilters" 
                     class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"

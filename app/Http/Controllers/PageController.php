@@ -94,7 +94,7 @@ class PageController extends Controller
             ];
         });
 
-        $availableMinPrice = (int) floor($mappedDeals->min('discountedPrice') ?? 0);
+        $availableMinPrice = 0;
         $availableMaxPrice = (int) ceil($mappedDeals->max('discountedPrice') ?? 100000);
         
         if ($availableMaxPrice <= $availableMinPrice) {

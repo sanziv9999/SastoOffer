@@ -31,8 +31,12 @@
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
                 if (this.isFeatured) params.set('featured', 'true');
                 if (this.dealType !== 'all') params.set('type', this.dealType);
-                if (this.minPrice > this.availableMinPrice) params.set('minPrice', this.minPrice);
-                if (this.maxPrice < this.availableMaxPrice) params.set('maxPrice', this.maxPrice);
+                
+                let min = Math.min(this.minPrice, this.maxPrice);
+                let max = Math.max(this.minPrice, this.maxPrice);
+                
+                if (min > this.availableMinPrice) params.set('minPrice', min);
+                if (max < this.availableMaxPrice) params.set('maxPrice', max);
                 
                 window.location.search = params.toString();
             },
