@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\OfferRuleCalculator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class DealOfferType extends Pivot
@@ -30,6 +31,12 @@ class DealOfferType extends Pivot
     public function offerType(): BelongsTo
     {
         return $this->belongsTo(OfferType::class);
+    }
+
+    public function displayTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(DisplayType::class, 'deal_offer_display', 'deal_offer_type_id', 'display_as')
+            ->withTimestamps();
     }
 
     public function calculatePrices(array $override = []): self

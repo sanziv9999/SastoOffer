@@ -11,15 +11,14 @@ import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { router } from '@inertiajs/react';
 import AdminPagination from '@/components/AdminPagination';
-import { Star } from 'lucide-react';
-import { Flame, Trophy, Sparkles } from 'lucide-react';
 
 interface AdminDealsProps {
   deals: any;
+  displayTypes: Array<{ id: number; name: string }>;
   filters?: { search?: string; status?: string };
 }
 
-const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
+const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
   const status = filters?.status || 'all';
   const items = deals?.data || [];
@@ -33,8 +32,12 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
     router.get('/admin/deals', { status: s !== 'all' ? s : undefined, search: searchTerm || undefined }, { preserveState: true, replace: true });
   };
 
-  const patchFlags = (dealId: number, payload: Record<string, any>) => {
-    router.patch(`/admin/deals/${dealId}/flags`, payload, { preserveScroll: true });
+  const saveOfferDisplayTypes = (offerPivotId: number, ids: number[]) => {
+    router.patch(
+      `/admin/deals/offers/${offerPivotId}/display-types`,
+      { display_type_ids: ids },
+      { preserveScroll: true, preserveState: true }
+    );
   };
 
   const renderTable = (dealsList: any[]) => (
@@ -60,8 +63,47 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                     <div>
                       <div className="font-medium">{deal.title?.length > 25 ? `${deal.title.substring(0, 25)}...` : deal.title}</div>
                       <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
-                      {deal.offerTypeTitle && (
-                        <div className="text-xs text-muted-foreground">Offer: {deal.offerTypeTitle}</div>
+                      {Array.isArray(deal.offers) && deal.offers.length > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {deal.offers.map((offer: any) => (
+                            <div key={offer.id} className="rounded border p-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-xs font-medium">
+                                  {offer.offerTypeTitle}
+                                  <span className="ml-2 text-muted-foreground">#{offer.id}</span>
+                                </div>
+                                <Badge variant={offer.status === 'active' ? 'default' : 'outline'} className="text-[10px]">
+                                  {offer.status}
+                                </Badge>
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {offer.discountedPrice !== null ? `Rs. ${offer.discountedPrice}` : 'N/A'}
+                                {offer.originalPrice !== null ? ` / Rs. ${offer.originalPrice}` : ''}
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {displayTypes.map((dt) => {
+                                  const selected = (offer.displayTypeIds || []).includes(dt.id);
+                                  const nextIds = selected
+                                    ? (offer.displayTypeIds || []).filter((id: number) => id !== dt.id)
+                                    : [...(offer.displayTypeIds || []), dt.id];
+                                  return (
+                                    <Button
+                                      key={dt.id}
+                                      variant={selected ? 'default' : 'outline'}
+                                      size="sm"
+                                      className="h-6 px-2 text-[10px]"
+                                      onClick={() => saveOfferDisplayTypes(offer.id, nextIds)}
+                                    >
+                                      {dt.name}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground mt-1">No child offers attached</div>
                       )}
                     </div>
                   </div>
@@ -80,46 +122,6 @@ const AdminDeals = ({ deals, filters }: AdminDealsProps) => {
                 <td className="p-4 align-middle">{deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'N/A'}</td>
                 <td className="p-4 align-middle text-right">
                   <div className="flex justify-end gap-2">
-                    <Button
-                      variant={deal.is_featured ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => router.post(`/admin/deals/${deal.id}/toggle-featured`, {}, { preserveScroll: true })}
-                      title="Toggle featured"
-                    >
-                      <Star className="h-4 w-4 mr-1" />
-                      {deal.is_featured ? 'Featured' : 'Feature'}
-                    </Button>
-
-                    <Button
-                      variant={deal.is_deal_of_day ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => patchFlags(deal.id, { is_deal_of_day: !deal.is_deal_of_day })}
-                      title="Deal of the day"
-                    >
-                      <Flame className="h-4 w-4 mr-1" />
-                      {deal.is_deal_of_day ? 'Day' : 'Day'}
-                    </Button>
-
-                    <Button
-                      variant={deal.is_best_seller ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => patchFlags(deal.id, { is_best_seller: !deal.is_best_seller })}
-                      title="Best seller"
-                    >
-                      <Trophy className="h-4 w-4 mr-1" />
-                      {deal.is_best_seller ? 'Best' : 'Best'}
-                    </Button>
-
-                    <Button
-                      variant={deal.is_new_arrival ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => patchFlags(deal.id, { is_new_arrival: !deal.is_new_arrival })}
-                      title="New arrival"
-                    >
-                      <Sparkles className="h-4 w-4 mr-1" />
-                      {deal.is_new_arrival ? 'New' : 'New'}
-                    </Button>
-
                     {deal.status === 'pending' && (
                       <>
                         <Button size="sm" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-4 w-4 mr-1" />Approve</Button>

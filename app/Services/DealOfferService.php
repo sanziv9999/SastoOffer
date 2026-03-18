@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Deal;
+use App\Models\DisplayType;
 use App\Models\OfferType;
 use App\Models\DealOfferType;
 
@@ -30,6 +31,7 @@ class DealOfferService
 
         if ($pivot) {
             $pivot->calculatePrices();
+            $this->syncDisplayTypes($pivot, $data['display_type_names'] ?? ($data['display_as'] ?? null));
         }
 
         return $pivot;
@@ -53,6 +55,9 @@ class DealOfferService
                 'starts_at'      => $data['starts_at'] ?? $pivot->starts_at,
                 'ends_at'        => $data['ends_at'] ?? $pivot->ends_at,
             ]);
+            if (array_key_exists('display_type_names', $data) || array_key_exists('display_as', $data)) {
+                $this->syncDisplayTypes($pivot, $data['display_type_names'] ?? ($data['display_as'] ?? null));
+            }
             $pivot->calculatePrices();
         }
 
@@ -65,5 +70,34 @@ class DealOfferService
     public function removeOfferFromDeal(Deal $deal, OfferType $offerType): void
     {
         $deal->offerTypes()->detach($offerType->id);
+    }
+
+    /**
+     * @param array<string>|string|null $names
+     */
+    protected function syncDisplayTypes(DealOfferType $pivot, array|string|null $names): void
+    {
+        if ($names === null) {
+            return;
+        }
+
+        $resolvedNames = is_array($names) ? $names : [$names];
+        $resolvedNames = array_values(array_unique(array_filter(array_map(
+            fn ($n) => is_string($n) ? trim($n) : '',
+            $resolvedNames
+        ))));
+
+        if (empty($resolvedNames)) {
+            $pivot->displayTypes()->sync([]);
+            return;
+        }
+
+        $ids = [];
+        foreach ($resolvedNames as $name) {
+            $displayType = DisplayType::firstOrCreate(['name' => $name]);
+            $ids[] = $displayType->id;
+        }
+
+        $pivot->displayTypes()->sync($ids);
     }
 }

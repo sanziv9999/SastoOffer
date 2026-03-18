@@ -39,7 +39,6 @@ class PageController extends Controller
             ->where('status', 'active')
             ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category, $district) {
                 $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
-                    ->when($featured, fn ($qq) => $qq->where('is_featured', true))
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
                     ->when(!$subSlug && $category !== 'all', function ($qq) use ($category) {
                         // Top-level category filter should match:
@@ -57,6 +56,10 @@ class PageController extends Controller
                         });
                     });
             });
+
+        if ($featured) {
+            $offerQuery->whereHas('displayTypes', fn ($q) => $q->where('name', 'featured'));
+        }
 
         // Deal type filter should filter offer rows directly (one card per offer).
         if ($type !== 'all') {

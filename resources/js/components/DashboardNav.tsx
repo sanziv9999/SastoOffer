@@ -42,6 +42,7 @@ const adminLinks = [
   // Unified categories entry (handles both primary and sub-categories)
   { icon: Tags, label: 'Categories', path: '/admin/primary-categories' },
   { icon: Tags, label: 'Offer Types', path: '/admin/offer-types' },
+  { icon: Tags, label: 'Display Types', path: '/admin/display-types' },
   { icon: ClipboardList, label: 'Banners', path: '/admin/banners' },
   { icon: Users, label: 'Users', path: '/admin/users' },
   { icon: Store, label: 'Vendors', path: '/admin/vendors' },

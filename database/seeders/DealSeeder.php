@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Deal;
 use App\Models\OfferType;
-use App\Models\DealFeature;
 use App\Services\DealOfferService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -151,17 +150,16 @@ class DealSeeder extends Seeder
                 ]
             );
 
-            DealFeature::updateOrCreate(
-                ['deal_id' => $deal->id],
-                ['is_featured' => $isFeatured]
-            );
-
             // Attach offer via service (calculates prices automatically)
             $offerTypeId = $offerTypesByName[$data['offer_type_name']] ?? null;
 
             if ($offerTypeId) {
                 $offerType = OfferType::find($offerTypeId);
-                $service->attachOfferToDeal($deal, $offerType, $data['pivot']);
+                $pivotData = $data['pivot'];
+                if ($isFeatured) {
+                    $pivotData['display_type_names'] = ['featured'];
+                }
+                $service->attachOfferToDeal($deal, $offerType, $pivotData);
                 $created++;
                 $this->command->info("Created: {$deal->title} (with {$data['offer_type_name']})");
             } else {

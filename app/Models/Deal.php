@@ -6,9 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Deal extends Model
@@ -84,6 +83,16 @@ class Deal extends Model
         return $this->offerTypes()->wherePivot('status', 'active');
     }
 
+    public function offerPivots(): HasMany
+    {
+        return $this->hasMany(DealOfferType::class, 'deal_id');
+    }
+
+    public function activeOfferPivots(): HasMany
+    {
+        return $this->offerPivots()->where('status', 'active');
+    }
+
     /**
      * Polymorphic: multiple images per deal (e.g. cover, gallery).
      */
@@ -97,29 +106,24 @@ class Deal extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function feature(): HasOne
-    {
-        return $this->hasOne(DealFeature::class);
-    }
-
     public function getIsFeaturedAttribute(): bool
     {
-        return (bool) ($this->feature?->is_featured ?? false);
+        return $this->hasDisplayAs('featured');
     }
 
     public function getIsDealOfDayAttribute(): bool
     {
-        return (bool) ($this->feature?->is_deal_of_day ?? false);
+        return $this->hasDisplayAs('deals_of_the_day');
     }
 
     public function getIsBestSellerAttribute(): bool
     {
-        return (bool) ($this->feature?->is_best_seller ?? false);
+        return $this->hasDisplayAs('hot_sell');
     }
 
     public function getIsNewArrivalAttribute(): bool
     {
-        return (bool) ($this->feature?->is_new_arrival ?? false);
+        return $this->hasDisplayAs('new_arrival');
     }
 
     // ─── Accessors ───────────────────────────────────────────
@@ -183,6 +187,13 @@ class Deal extends Model
     public function hasActiveOffers(): bool
     {
         return $this->activeOfferTypes()->exists();
+    }
+
+    protected function hasDisplayAs(string $displayAs): bool
+    {
+        return $this->activeOfferPivots()
+            ->whereHas('displayTypes', fn ($q) => $q->where('name', $displayAs))
+            ->exists();
     }
 
     /**

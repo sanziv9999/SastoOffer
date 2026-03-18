@@ -13,6 +13,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
+use App\Http\Controllers\Admin\DisplayTypeCrudController;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -103,12 +104,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('/admin/offer-types', OfferTypeCrudController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('admin.offer-types');
+    Route::resource('/admin/display-types', DisplayTypeCrudController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('admin.display-types');
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/admin/vendors', [VendorProfileController::class, 'index'])->name('admin.vendors.index');
     Route::get('/admin/vendors/{vendorProfile}', [VendorProfileController::class, 'adminShow'])->name('admin.vendors.show');
     Route::patch('/admin/vendors/{vendorProfile}/verified-status', [VendorProfileController::class, 'updateVerifiedStatus'])->name('admin.vendors.verified-status');
     Route::get('/admin/deals', [AdminController::class, 'deals'])->name('admin.deals');
     Route::get('/admin/deals/pending', [AdminController::class, 'pendingDeals'])->name('admin.deals.pending');
+    Route::patch('/admin/deals/offers/{dealOfferType}/display-types', [AdminController::class, 'updateOfferDisplayTypes'])->name('admin.deals.offers.display-types');
     Route::post('/admin/deals/{deal}/toggle-featured', [AdminController::class, 'toggleDealFeatured'])->name('admin.deals.toggle-featured');
     Route::patch('/admin/deals/{deal}/flags', [AdminController::class, 'updateDealFlags'])->name('admin.deals.flags');
     Route::get('/admin/featured-ranking', [AdminController::class, 'featuredRanking'])->name('admin.featured-ranking');

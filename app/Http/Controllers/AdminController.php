@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Deal;
+use App\Models\DealOfferType;
+use App\Models\DisplayType;
 use App\Models\FeaturedDealRank;
 use App\Models\User;
 use Inertia\Inertia;
@@ -65,7 +67,7 @@ class AdminController extends Controller
         $status = $request->query('status');
 
         $deals = Deal::query()
-            ->with(['vendor', 'offerTypes', 'images', 'feature'])
+            ->with(['vendor', 'images', 'offerPivots.offerType', 'offerPivots.displayTypes'])
             ->when($status && $status !== 'all', fn ($q) => $q->where('status', $status))
             ->when($search !== '', function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%");
@@ -73,8 +75,26 @@ class AdminController extends Controller
             ->latest()
             ->paginate(15)
             ->through(function (Deal $deal) {
-                $offerType = $deal->offerTypes->first();
-                $offer = $offerType?->pivot;
+                $offers = $deal->offerPivots
+                    ->sortByDesc(fn ($p) => $p->status === 'active')
+                    ->values()
+                    ->map(function ($pivot) {
+                        return [
+                            'id' => $pivot->id,
+                            'offerTypeTitle' => $pivot->offerType?->display_name ?? $pivot->offerType?->name ?? 'Offer',
+                            'offerTypeName' => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? null,
+                            'status' => $pivot->status,
+                            'discountedPrice' => $pivot->final_price !== null ? (float) $pivot->final_price : null,
+                            'originalPrice' => $pivot->original_price !== null ? (float) $pivot->original_price : null,
+                            'currencyCode' => $pivot->currency_code,
+                            'endDate' => $pivot->ends_at?->toIso8601String(),
+                            'displayTypeIds' => $pivot->displayTypes->pluck('id')->values()->all(),
+                            'displayTypeNames' => $pivot->displayTypes->pluck('name')->values()->all(),
+                        ];
+                    })
+                    ->all();
+
+                $primaryOffer = $offers[0] ?? null;
                 $base = $deal->base_price !== null ? (float) $deal->base_price : null;
                 return [
                     'id' => $deal->id,
@@ -85,11 +105,12 @@ class AdminController extends Controller
                     'is_deal_of_day' => (bool) $deal->is_deal_of_day,
                     'is_best_seller' => (bool) $deal->is_best_seller,
                     'is_new_arrival' => (bool) $deal->is_new_arrival,
-                    'offerPivotId' => $offer?->id,
-                    'offerTypeTitle' => $offerType?->display_name,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
-                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
-                    'endDate' => $offer?->ends_at?->toIso8601String(),
+                    'offerPivotId' => $primaryOffer['id'] ?? null,
+                    'offerTypeTitle' => $primaryOffer['offerTypeTitle'] ?? null,
+                    'discountedPrice' => $primaryOffer['discountedPrice'] ?? $base,
+                    'originalPrice' => $primaryOffer['originalPrice'] ?? $base,
+                    'endDate' => $primaryOffer['endDate'] ?? null,
+                    'offers' => $offers,
                     'image' => $deal->images->first()?->image_url,
                 ];
             })
@@ -97,6 +118,11 @@ class AdminController extends Controller
 
         return Inertia::render('admin/AdminDeals', [
             'deals' => $deals,
+            'displayTypes' => DisplayType::query()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (DisplayType $dt) => ['id' => $dt->id, 'name' => $dt->name])
+                ->all(),
             'filters' => [
                 'search' => $search,
                 'status' => $status ?? 'all',
@@ -109,7 +135,7 @@ class AdminController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $pendingDeals = Deal::query()
-            ->with(['vendor', 'offerTypes', 'images', 'feature'])
+            ->with(['vendor', 'offerTypes', 'images', 'activeOfferPivots.displayTypes'])
             ->where('status', 'pending')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%");
@@ -151,8 +177,8 @@ class AdminController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $featured = Deal::query()
-            ->with(['vendor', 'offerTypes', 'images', 'feature'])
-            ->whereHas('feature', fn ($q) => $q->where('is_featured', true))
+            ->with(['vendor', 'offerTypes', 'images', 'activeOfferPivots.displayTypes'])
+            ->whereHas('activeOfferPivots.displayTypes', fn ($q) => $q->where('name', 'featured'))
             ->when($search !== '', fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->get()
             ->map(function (Deal $deal) {
@@ -196,8 +222,7 @@ class AdminController extends Controller
 
         DB::transaction(function () use ($deal, $direction) {
             // Ensure the deal is featured
-            $feature = $deal->feature()->lockForUpdate()->first();
-            if (! $feature || ! $feature->is_featured) {
+            if (! $deal->fresh()->is_featured) {
                 abort(422, 'Deal is not featured.');
             }
 
@@ -244,13 +269,17 @@ class AdminController extends Controller
             abort(403);
         }
 
-        $feature = $deal->feature()->firstOrCreate(['deal_id' => $deal->id], ['is_featured' => false]);
-        $feature->is_featured = ! $feature->is_featured;
-        $feature->save();
+        $makeFeatured = ! $deal->fresh()->is_featured;
+        $this->setDealDisplayType($deal, 'featured', $makeFeatured);
 
         // If a deal is un-featured, remove it from the ranking table
-        if (! $feature->is_featured) {
+        if (! $makeFeatured) {
             FeaturedDealRank::where('deal_id', $deal->id)->delete();
+        } else {
+            FeaturedDealRank::firstOrCreate(
+                ['deal_id' => $deal->id],
+                ['rank' => ((int) (FeaturedDealRank::max('rank') ?? 0)) + 1]
+            );
         }
 
         return back()->with('success', 'Featured status updated.');
@@ -270,23 +299,110 @@ class AdminController extends Controller
             'is_new_arrival' => ['nullable', 'boolean'],
         ]);
 
-        $feature = $deal->feature()->firstOrCreate(['deal_id' => $deal->id], [
-            'is_featured' => false,
-            'is_deal_of_day' => false,
-            'is_best_seller' => false,
-            'is_new_arrival' => false,
-            'rank' => null,
-        ]);
+        $map = [
+            'is_featured' => 'featured',
+            'is_deal_of_day' => 'deals_of_the_day',
+            'is_best_seller' => 'hot_sell',
+            'is_new_arrival' => 'new_arrival',
+        ];
 
-        foreach (['is_featured', 'is_deal_of_day', 'is_best_seller', 'is_new_arrival'] as $key) {
+        foreach ($map as $key => $displayAs) {
             if (array_key_exists($key, $data)) {
-                $feature->{$key} = (bool) $data[$key];
+                $this->setDealDisplayType($deal, $displayAs, (bool) $data[$key]);
             }
         }
 
-        $feature->save();
-
         return back()->with('success', 'Deal flags updated.');
+    }
+
+    public function updateOfferDisplayTypes(Request $request, DealOfferType $dealOfferType): RedirectResponse
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('admin')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'display_type_ids' => ['array'],
+            'display_type_ids.*' => ['integer', 'exists:display_types,id'],
+        ]);
+
+        $ids = collect($data['display_type_ids'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $dealOfferType->displayTypes()->sync($ids);
+
+        // Keep featured rank in sync using normalized bridge table.
+        $featuredId = (int) (DisplayType::where('name', 'featured')->value('id') ?? 0);
+        if ($featuredId > 0) {
+            $hasFeatured = DB::table('deal_offer_display as dod')
+                ->join('deal_offer_type as dot', 'dot.id', '=', 'dod.deal_offer_type_id')
+                ->where('dot.deal_id', $dealOfferType->deal_id)
+                ->where('dod.display_as', $featuredId)
+                ->exists();
+
+            if ($hasFeatured) {
+                FeaturedDealRank::firstOrCreate(
+                    ['deal_id' => $dealOfferType->deal_id],
+                    ['rank' => ((int) (FeaturedDealRank::max('rank') ?? 0)) + 1]
+                );
+            } else {
+                FeaturedDealRank::where('deal_id', $dealOfferType->deal_id)->delete();
+            }
+        }
+
+        return back()->with('success', 'Offer display tags updated.');
+    }
+
+    protected function setDealDisplayType(Deal $deal, string $displayTypeName, bool $enabled): void
+    {
+        $displayTypeId = (int) DisplayType::firstOrCreate(['name' => $displayTypeName])->id;
+        $now = now();
+
+        $pivotIds = DB::table('deal_offer_type')
+            ->where('deal_id', $deal->id)
+            ->where('status', 'active')
+            ->pluck('id')
+            ->all();
+
+        if (empty($pivotIds)) {
+            $pivotIds = DB::table('deal_offer_type')
+                ->where('deal_id', $deal->id)
+                ->pluck('id')
+                ->all();
+        }
+
+        if (empty($pivotIds)) {
+            return;
+        }
+
+        if ($enabled) {
+            foreach ($pivotIds as $pivotId) {
+                DB::table('deal_offer_display')->updateOrInsert(
+                    [
+                        'deal_offer_type_id' => $pivotId,
+                        'display_as' => $displayTypeId,
+                    ],
+                    [
+                        'updated_at' => $now,
+                        'created_at' => $now,
+                    ]
+                );
+            }
+        } else {
+            DB::table('deal_offer_display')
+                ->whereIn('deal_offer_type_id', $pivotIds)
+                ->where('display_as', $displayTypeId)
+                ->delete();
+        }
+
+        // Keep ranking table in sync with featured state only.
+        if ($displayTypeName === 'featured' && ! $enabled) {
+            FeaturedDealRank::where('deal_id', $deal->id)->delete();
+        } elseif ($displayTypeName === 'featured' && $enabled) {
+            FeaturedDealRank::firstOrCreate(
+                ['deal_id' => $deal->id],
+                ['rank' => ((int) (FeaturedDealRank::max('rank') ?? 0)) + 1]
+            );
+        }
     }
 
     public function reports()
