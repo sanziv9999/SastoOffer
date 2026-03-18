@@ -198,10 +198,48 @@ class VendorProfileController extends Controller
 
     public function show(VendorProfile $vendorProfile)
     {
-        $vendorProfile->load(['user', 'primaryCategory', 'defaultAddress', 'images']);
-        $addresses = Address::where('user_id', $vendorProfile->user_id)->latest()->get();
+        $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images']);
+        
+        $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
+        $cover = $vendorProfile->images?->firstWhere('attribute_name', 'cover')?->image_url;
 
-        return Inertia::render('VendorProfile', compact('vendorProfile', 'addresses'));
+        // Fetch active deals for this vendor
+        $deals = \App\Models\DealOfferType::whereHas('deal', function ($q) use ($vendorProfile) {
+                $q->where('vendor_id', $vendorProfile->id);
+            })
+            ->where('status', 'active')
+            ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType'])
+            ->latest()
+            ->take(8)
+            ->get();
+
+        // Map deals for the deal-card component
+        $mappedDeals = $deals->map(function ($pivot) {
+            $deal = $pivot->deal;
+            $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
+
+            return [
+                'id'                => $deal?->id,
+                'offerPivotId'      => $pivot->id,
+                'title'             => $deal?->title,
+                'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+                'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
+                'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
+                'discountPercentage'=> $discountPct > 0 ? (int) $discountPct : null,
+                'image'             => $deal?->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+                'featured'          => (bool) ($deal?->is_featured ?? false),
+                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                'cityName'          => $deal?->vendor?->defaultAddress?->municipality ?? 'City',
+                'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+            ];
+        });
+
+        return view('vendor-profile.show', [
+            'vendor' => $vendorProfile,
+            'logo' => $logo,
+            'cover' => $cover,
+            'deals' => $mappedDeals,
+        ]);
     }
 
     public function edit(Request $request)
