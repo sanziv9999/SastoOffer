@@ -35,6 +35,7 @@ class PageController extends Controller
                 'deal.images',
                 'deal.vendor.defaultAddress',
                 'offerType',
+                'displayTypes',
             ])
             ->where('status', 'active')
             ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category, $district) {
@@ -81,6 +82,8 @@ class PageController extends Controller
             $deal = $pivot->deal;
             $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
             $address = $deal?->vendor?->defaultAddress;
+            $isOfferFeatured = $pivot->displayTypes
+                ->contains(fn ($displayType) => mb_strtolower((string) $displayType->name) === 'featured');
             $locationLabel = collect([
                 $address?->district,
                 $address?->tole,
@@ -99,7 +102,7 @@ class PageController extends Controller
                 'discountPercentage'=> $discountPct > 0 ? $discountPct : null,
                 'image'             => $deal?->images?->first()?->image_url
                                        ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
-                'featured'          => (bool) ($deal?->is_featured ?? false),
+                'featured'          => (bool) $isOfferFeatured,
                 'type'              => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? 'offer',
                 'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
                 'locationLabel'     => $locationLabel ?: 'Location',

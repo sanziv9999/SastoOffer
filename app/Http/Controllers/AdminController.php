@@ -373,7 +373,26 @@ class AdminController extends Controller
         ]);
 
         $ids = collect($data['display_type_ids'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
-        $dealOfferType->displayTypes()->sync($ids);
+
+        // Strict per-offer sync (never touches sibling offer rows of same deal).
+        DB::table('deal_offer_display')
+            ->where('deal_offer_type_id', $dealOfferType->id)
+            ->whereNotIn('display_as', $ids ?: [0])
+            ->delete();
+
+        $now = now();
+        foreach ($ids as $displayTypeId) {
+            DB::table('deal_offer_display')->updateOrInsert(
+                [
+                    'deal_offer_type_id' => $dealOfferType->id,
+                    'display_as' => $displayTypeId,
+                ],
+                [
+                    'updated_at' => $now,
+                    'created_at' => $now,
+                ]
+            );
+        }
 
         // Keep featured rank in sync using normalized bridge table.
         $featuredId = (int) (DisplayType::where('name', 'featured')->value('id') ?? 0);
@@ -436,39 +455,37 @@ class AdminController extends Controller
         $displayTypeId = (int) DisplayType::firstOrCreate(['name' => $displayTypeName])->id;
         $now = now();
 
-        $pivotIds = DB::table('deal_offer_type')
+        $targetPivotId = DB::table('deal_offer_type')
             ->where('deal_id', $deal->id)
             ->where('status', 'active')
-            ->pluck('id')
-            ->all();
+            ->orderBy('id')
+            ->value('id');
 
-        if (empty($pivotIds)) {
-            $pivotIds = DB::table('deal_offer_type')
+        if (! $targetPivotId) {
+            $targetPivotId = DB::table('deal_offer_type')
                 ->where('deal_id', $deal->id)
-                ->pluck('id')
-                ->all();
+                ->orderBy('id')
+                ->value('id');
         }
 
-        if (empty($pivotIds)) {
+        if (! $targetPivotId) {
             return;
         }
 
         if ($enabled) {
-            foreach ($pivotIds as $pivotId) {
-                DB::table('deal_offer_display')->updateOrInsert(
-                    [
-                        'deal_offer_type_id' => $pivotId,
-                        'display_as' => $displayTypeId,
-                    ],
-                    [
-                        'updated_at' => $now,
-                        'created_at' => $now,
-                    ]
-                );
-            }
+            DB::table('deal_offer_display')->updateOrInsert(
+                [
+                    'deal_offer_type_id' => $targetPivotId,
+                    'display_as' => $displayTypeId,
+                ],
+                [
+                    'updated_at' => $now,
+                    'created_at' => $now,
+                ]
+            );
         } else {
             DB::table('deal_offer_display')
-                ->whereIn('deal_offer_type_id', $pivotIds)
+                ->where('deal_offer_type_id', $targetPivotId)
                 ->where('display_as', $displayTypeId)
                 ->delete();
         }
