@@ -24,7 +24,7 @@ const VendorProfile = ({ vendorProfile }: { vendorProfile: any }) => {
 
   // Helper to format address from relation if available
   const displayAddress = vendor.default_address 
-    ? `${vendor.default_address.tole}, ${vendor.default_address.municipality}, ${vendor.default_address.district}`
+    ? `${vendor.default_address.district}${vendor.default_address.tole ? `, ${vendor.default_address.tole}` : ''}`
     : 'No address provided';
 
   // Helper to get image URL (logo/cover)

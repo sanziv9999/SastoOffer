@@ -16,6 +16,9 @@ interface DealCardProps {
 const DealCard = ({ deal, featured = false }: DealCardProps) => {
   const location = locations.find(loc => loc.id === deal.locationId);
   const category = categories.find(cat => cat.id === deal.categoryId);
+  const locationLabel = location
+    ? ([ (location as any).district, (location as any).tole ].filter(Boolean).join(', ') || location.city)
+    : null;
   
   const discountPercentage = Math.round(
     ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100
@@ -67,10 +70,10 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
             <Tag className="h-3 w-3 mr-1 text-primary" />
             <span>{category?.name || 'Uncategorized'}</span>
           </div>
-          {location && (
+          {locationLabel && (
             <div className="flex items-center">
               <MapPin className="h-3 w-3 mr-1 text-primary" />
-              <span>{location.city}</span>
+              <span>{locationLabel}</span>
             </div>
           )}
         </div>

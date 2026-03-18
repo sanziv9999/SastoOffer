@@ -23,7 +23,7 @@ const AdminVendorView = ({ vendor }: { vendor: any }) => {
 
   const address = vendor?.default_address;
   const addressLabel = address
-    ? [address.tole, address.municipality, address.district].filter(Boolean).join(', ')
+    ? [address.district, address.tole].filter(Boolean).join(', ')
     : 'N/A';
 
   return (
