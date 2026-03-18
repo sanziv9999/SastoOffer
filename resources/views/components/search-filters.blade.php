@@ -251,23 +251,5 @@
         </div>
     </div>
 
-    {{-- Action Buttons --}}
-    @if(!$isMobile)
-        <div class="flex flex-col gap-2 mt-6">
-            <button 
-                @click="applyFilters" 
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full"
-            >
-                Apply Filters
-            </button>
-            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
-                <button 
-                    @click="resetFilters" 
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"
-                >
-                    Reset Filters
-                </button>
-            </template>
-        </div>
-    @endif
+    {{-- Action Buttons removed for real-time filtering --}}
 </div>

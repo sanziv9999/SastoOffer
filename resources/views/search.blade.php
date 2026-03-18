@@ -24,25 +24,73 @@
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
             
+            init() {
+                // Initialize watchers for real-time filtering
+                this.$watch('selectedCategory', () => this.debouncedApplyFilters());
+                this.$watch('sortBy', () => this.applyFilters());
+                this.$watch('minPrice', () => this.debouncedApplyFilters());
+                this.$watch('maxPrice', () => this.debouncedApplyFilters());
+                this.$watch('dealType', () => this.debouncedApplyFilters());
+                this.$watch('isFeatured', () => this.debouncedApplyFilters());
+                this.$watch('searchQuery', () => this.debouncedApplyFilters());
+            },
+
+            debouncedApplyFilters() {
+                clearTimeout(this.filterTimeout);
+                this.filterTimeout = setTimeout(() => {
+                    this.applyFilters();
+                }, 500);
+            },
+            
             applyFilters() {
-                let params = new URLSearchParams();
+                let params = new URLSearchParams(window.location.search);
+                
                 if (this.searchQuery) params.set('q', this.searchQuery);
+                else params.delete('q');
+
                 if (this.selectedCategory !== 'all') params.set('category', this.selectedCategory);
+                else params.delete('category');
+
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
+                else params.delete('sort');
+
                 if (this.isFeatured) params.set('featured', 'true');
+                else params.delete('featured');
+
                 if (this.dealType !== 'all') params.set('type', this.dealType);
+                else params.delete('type');
                 
                 let min = Math.min(this.minPrice, this.maxPrice);
                 let max = Math.max(this.minPrice, this.maxPrice);
                 
                 if (min > this.availableMinPrice) params.set('minPrice', min);
+                else params.delete('minPrice');
+
                 if (max < this.availableMaxPrice) params.set('maxPrice', max);
+                else params.delete('maxPrice');
                 
-                window.location.search = params.toString();
+                // Keep the city/district if present
+                // (It's already in URLSearchParams if we initialized with window.location.search)
+
+                const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                if (window.location.search !== '?' + params.toString() && window.location.href !== window.location.origin + newUrl) {
+                    window.location.href = newUrl;
+                }
             },
             
             resetFilters() {
-                window.location.href = '{{ route('search') }}';
+                // Keep only search query and city if they exist, or just go to base search
+                const params = new URLSearchParams(window.location.search);
+                const query = params.get('q');
+                const city = params.get('city');
+                const district = params.get('district');
+
+                let nextParams = new URLSearchParams();
+                if (query) nextParams.set('q', query);
+                if (city) nextParams.set('city', city);
+                if (district) nextParams.set('district', district);
+
+                window.location.href = '{{ route('search') }}' + (nextParams.toString() ? '?' + nextParams.toString() : '');
             }
         }"
     >
@@ -231,18 +279,12 @@
                 />
             </div>
             
-            <div class="pt-6 mt-auto flex flex-col sm:flex-row gap-2">
+            <div class="pt-6 mt-auto">
                 <button 
-                    @click="applyFilters(); isOpen = false"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full"
+                    @click="isOpen = false"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-4 py-2 w-full"
                 >
-                    Apply Filters
-                </button>
-                <button 
-                    @click="resetFilters(); isOpen = false"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full"
-                >
-                    Reset Filters
+                    Show <span class="mx-1" x-text="{{ count($deals) }}"></span> Results
                 </button>
             </div>
         </div>
