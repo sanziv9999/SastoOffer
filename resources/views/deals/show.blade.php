@@ -41,18 +41,11 @@
         x-data="{ 
             quantity: 1,
             handleAddToCart() {
-                @if(!auth()->check())
-                    alert('Please log in to purchase this deal');
-                @else
-                    alert('Added to cart: ' + this.quantity + ' × {{ addslashes($deal['title']) }}');
-                @endif
+                this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
             },
-            handleBuyNow() {
-                @if(!auth()->check())
-                    alert('Please log in to purchase this deal');
-                @else
-                    window.location.href = '/checkout/{{ $deal['id'] }}?qty=' + this.quantity;
-                @endif
+            async handleBuyNow() {
+                await this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
+                window.location.href = '/cart'; // Redirect to cart or checkout? User is asking for Groupon style, usually cart first.
             }
         }"
     >

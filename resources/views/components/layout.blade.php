@@ -28,6 +28,44 @@
     class="font-sans antialiased bg-muted/30"
     x-data="{ 
         wishlistedIds: {{ auth()->check() ? json_encode(auth()->user()->wishlist()->pluck('deal_offer_type_id')->toArray()) : '[]' }},
+        cart: {
+            items: [],
+            count: {{ auth()->check() ? auth()->user()->cartItems()->count() : 0 }},
+            total: 0,
+            loading: false,
+            isOpen: false,
+            async fetchSummary() {
+                if (this.loading) return;
+                this.loading = true;
+                const res = await fetch('/cart/summary');
+                const data = await res.json();
+                this.items = data.items;
+                this.total = data.total;
+                this.count = data.count;
+                this.loading = false;
+            },
+            async addItem(pivotId, qty = 1) {
+                if (!{{ auth()->check() ? 'true' : 'false' }}) {
+                    window.location.href = '/login';
+                    return;
+                }
+                const res = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ offerPivotId: pivotId, quantity: qty })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    this.count = data.cartCount;
+                    this.isOpen = true; // Open the mini cart to show it was added
+                    this.fetchSummary();
+                }
+            }
+        },
         toggleWishlist(id) {
             if (!{{ auth()->check() ? 'true' : 'false' }}) {
                 window.location.href = '/login';
@@ -136,9 +174,15 @@
                         ></span>
                     </template>
                 </a>
-                <a href="#" class="flex flex-col items-center py-2 px-4 active:text-primary">
+                <a href="{{ route('cart.index') }}" class="flex flex-col items-center py-2 px-4 active:text-primary relative">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-600"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                     <span class="text-xs mt-1 text-gray-600">Cart</span>
+                    <template x-if="cart.count > 0">
+                        <span 
+                            x-text="cart.count"
+                            class="absolute top-1 right-2 bg-secondary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center"
+                        ></span>
+                    </template>
                 </a>
                 <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="flex flex-col items-center py-2 px-4 active:text-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-600"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>

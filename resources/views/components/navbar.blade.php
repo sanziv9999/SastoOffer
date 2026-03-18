@@ -178,9 +178,90 @@
                                 ></span>
                             </template>
                         </a>
-                        <button class="p-2 hover:bg-muted rounded-full transition-colors relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                        </button>
+                        {{-- Cart Button & Dropdown --}}
+                        <div 
+                            class="relative"
+                            x-on:mouseenter="cart.fetchSummary()"
+                        >
+                            <button 
+                                @click="cart.isOpen = !cart.isOpen"
+                                class="p-2 hover:bg-muted rounded-full transition-colors relative"
+                                title="My Cart"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                                <template x-if="cart.count > 0">
+                                    <span 
+                                        x-text="cart.count"
+                                        class="absolute -top-1 -right-1 bg-secondary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center animate-in zoom-in duration-300"
+                                    ></span>
+                                </template>
+                            </button>
+
+                            {{-- Mini Cart Modal/Dropdown --}}
+                            <div 
+                                x-show="cart.isOpen" 
+                                @click.outside="cart.isOpen = false"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                class="absolute right-0 mt-3 w-80 bg-white border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                                x-cloak
+                            >
+                                <div class="p-4 border-b bg-muted/20">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-bold text-teal-950">Your Cart</h3>
+                                        <span class="text-xs text-muted-foreground" x-text="`${cart.count} items`"></span>
+                                    </div>
+                                </div>
+
+                                <div class="max-h-[350px] overflow-y-auto overflow-x-hidden">
+                                    <template x-if="cart.loading">
+                                        <div class="p-8 text-center">
+                                            <div class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="!cart.loading && cart.items.length === 0">
+                                        <div class="p-10 text-center">
+                                            <div class="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 opacity-50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-muted-foreground"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                                            </div>
+                                            <p class="text-sm font-medium text-muted-foreground">Your cart is empty</p>
+                                        </div>
+                                    </template>
+
+                                    <template x-for="item in cart.items" :key="item.id">
+                                        <div class="p-4 border-b hover:bg-muted/10 flex gap-3 group transition-colors">
+                                            <div class="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0">
+                                                <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="text-sm font-semibold text-foreground line-clamp-1" x-text="item.title"></h4>
+                                                <div class="flex items-center justify-between mt-1">
+                                                    <span class="text-xs text-muted-foreground" x-text="`${item.quantity} × Rs. ${item.discountedPrice}`"></span>
+                                                    <span class="text-sm font-bold text-primary" x-text="`Rs. ${item.quantity * item.discountedPrice}`"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="p-4 bg-muted/5 space-y-3">
+                                    <div class="flex items-center justify-between font-bold text-lg px-2">
+                                        <span>Total</span>
+                                        <span x-text="`Rs. ${cart.total}`"></span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <a href="{{ route('cart.index') }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:ring-1 focus:ring-ring border bg-white hover:bg-muted h-10 px-4">
+                                            View Cart
+                                        </a>
+                                        <a href="/checkout" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:ring-1 focus:ring-ring bg-secondary text-white hover:bg-secondary/90 h-10 px-4 shadow-sm">
+                                            Checkout
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     @auth
