@@ -181,7 +181,7 @@
                         {{-- Cart Button & Dropdown --}}
                         <div 
                             class="relative"
-                            x-on:mouseenter="cart.fetchSummary()"
+                            x-on:mouseenter="if(!cart.isOpen) cart.fetchSummary()"
                         >
                             <button 
                                 @click="cart.isOpen = !cart.isOpen"
@@ -231,17 +231,41 @@
                                     </template>
 
                                     <template x-for="item in cart.items" :key="item.id">
-                                        <div class="p-4 border-b hover:bg-muted/10 flex gap-3 group transition-colors">
+                                        <div class="p-4 border-b hover:bg-muted/10 flex gap-3 group transition-colors relative">
                                             <div class="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0">
                                                 <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
                                             </div>
-                                            <div class="flex-1 min-w-0">
+                                            <div class="flex-1 min-w-0 pr-6">
                                                 <h4 class="text-sm font-semibold text-foreground line-clamp-1" x-text="item.title"></h4>
-                                                <div class="flex items-center justify-between mt-1">
-                                                    <span class="text-xs text-muted-foreground" x-text="`${item.quantity} × Rs. ${item.discountedPrice}`"></span>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    {{-- Mini Quantity Toggle --}}
+                                                    <div class="flex items-center gap-2 bg-muted/40 p-1 rounded-full border border-border/50">
+                                                        <button 
+                                                            @click.stop="cart.updateQty(item.id, item.quantity - 1)"
+                                                            class="h-5 w-5 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-primary hover:text-white transition-all disabled:opacity-30"
+                                                            :disabled="item.quantity <= 1"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path></svg>
+                                                        </button>
+                                                        <span class="text-xs font-bold w-4 text-center" x-text="item.quantity"></span>
+                                                        <button 
+                                                            @click.stop="cart.updateQty(item.id, item.quantity + 1)"
+                                                            class="h-5 w-5 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-primary hover:text-white transition-all"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                                                        </button>
+                                                    </div>
                                                     <span class="text-sm font-bold text-primary" x-text="`Rs. ${item.quantity * item.discountedPrice}`"></span>
                                                 </div>
                                             </div>
+                                            {{-- Remove Button --}}
+                                            <button 
+                                                @click.stop="cart.removeItem(item.id)"
+                                                class="absolute top-4 right-3 text-muted-foreground/40 hover:text-red-500 transition-colors p-1"
+                                                title="Remove Item"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                            </button>
                                         </div>
                                     </template>
                                 </div>

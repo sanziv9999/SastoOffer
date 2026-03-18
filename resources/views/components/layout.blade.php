@@ -36,7 +36,10 @@
             isOpen: false,
             async fetchSummary() {
                 if (this.loading) return;
-                this.loading = true;
+                // Only show loading spinner if we don't have items yet
+                if (this.items.length === 0) {
+                    this.loading = true;
+                }
                 const res = await fetch('/cart/summary');
                 const data = await res.json();
                 this.items = data.items;
@@ -63,6 +66,40 @@
                     this.count = data.cartCount;
                     this.isOpen = true; // Open the mini cart to show it was added
                     this.fetchSummary();
+                }
+            },
+            async removeItem(itemId) {
+                const res = await fetch(`/cart/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    this.items = this.items.filter(i => i.id !== itemId);
+                    this.total = data.cartTotal;
+                    this.count = data.cartCount;
+                }
+            },
+            async updateQty(itemId, newQty) {
+                if (newQty < 1) return;
+                const res = await fetch(`/cart/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: newQty })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const item = this.items.find(i => i.id === itemId);
+                    if (item) item.quantity = newQty;
+                    this.total = data.cartTotal;
+                    this.count = data.cartCount;
                 }
             }
         },
