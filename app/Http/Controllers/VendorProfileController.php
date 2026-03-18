@@ -217,6 +217,11 @@ class VendorProfileController extends Controller
         $mappedDeals = $deals->map(function ($pivot) {
             $deal = $pivot->deal;
             $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
+            $address = $deal?->vendor?->defaultAddress;
+            $locationLabel = collect([
+                $address?->district,
+                $address?->tole,
+            ])->filter()->implode(', ');
 
             return [
                 'id'                => $deal?->id,
@@ -229,7 +234,8 @@ class VendorProfileController extends Controller
                 'image'             => $deal?->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
                 'featured'          => (bool) ($deal?->is_featured ?? false),
                 'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
-                'cityName'          => $deal?->vendor?->defaultAddress?->municipality ?? 'City',
+                'locationLabel'     => $locationLabel ?: 'Location',
+                'cityName'          => $locationLabel ?: 'Location',
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
             ];
         });

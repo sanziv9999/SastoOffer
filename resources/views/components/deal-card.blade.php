@@ -80,10 +80,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1 text-primary"><path d="m15 5 4 4"/><path d="M13 7 8.5 15.5c-.4.7-1.3.9-2 .5s-.9-1.3-.5-2L10.5 5.5l.3-.4c.3-.5.9-.9 1.5-.9h4.5z"/></svg>
                     <span>{{ $deal['categoryName'] ?? 'Uncategorized' }}</span>
                 </div>
-                @if(isset($deal['cityName']) || isset($deal['location']) || (isset($deal['locationId']) && $deal['locationId']))
+                @if(isset($deal['locationLabel']) || isset($deal['cityName']) || isset($deal['location']) || (isset($deal['locationId']) && $deal['locationId']))
                     <div class="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1 text-primary"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <span>{{ $deal['cityName'] ?? $deal['location']['city'] ?? 'City Name' }}</span>
+                        <span>{{ $deal['locationLabel'] ?? $deal['cityName'] ?? (collect([$deal['location']['district'] ?? null, $deal['location']['tole'] ?? null])->filter()->implode(', ')) ?? $deal['location']['city'] ?? 'Location' }}</span>
                     </div>
                 @endif
             </div>

@@ -70,6 +70,11 @@ class PageController extends Controller
         $mappedDeals = $rawOffers->take(60)->map(function (DealOfferType $pivot) {
             $deal = $pivot->deal;
             $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
+            $address = $deal?->vendor?->defaultAddress;
+            $locationLabel = collect([
+                $address?->district,
+                $address?->tole,
+            ])->filter()->implode(', ');
 
             return [
                 // keep deal id for routing
@@ -87,9 +92,13 @@ class PageController extends Controller
                 'featured'          => (bool) ($deal?->is_featured ?? false),
                 'type'              => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? 'offer',
                 'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                'locationLabel'     => $locationLabel ?: 'Location',
                 'location'          => [
-                    'city' => $deal?->vendor?->defaultAddress?->municipality ?? 'City',
+                    'district' => $address?->district,
+                    'tole' => $address?->tole,
+                    'city' => $address?->district ?? 'Location',
                 ],
+                'cityName'          => $locationLabel ?: 'Location',
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
             ];
         });
