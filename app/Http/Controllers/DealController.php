@@ -62,19 +62,39 @@ class DealController extends Controller
                 'vendor' => null,
                 'stats' => null,
                 'deals' => [],
+                'recentOrders' => [],
+                'monthlySales' => [],
             ]);
         }
+
+        $orders = \App\Models\Order::where('vendor_id', $vendor->id)
+            ->with(['user', 'items'])
+            ->get();
+
+        $totalRevenue = (float) $orders->sum('grand_total');
+        $totalSales = $orders->sum(fn ($o) => $o->items->sum('quantity'));
+        $totalOrders = $orders->count();
+        $uniqueCustomers = $orders->pluck('user_id')->unique()->count();
+
+        $vendorReviewCount = $vendor->reviews()->count();
+        $avgVendorRating = round($vendor->reviews()->avg('rating') ?? 0, 1);
+
+        $dealOfferIds = \App\Models\DealOfferType::whereHas('deal', fn ($q) => $q->where('vendor_id', $vendor->id))->pluck('id');
+        $dealReviewCount = \App\Models\Review::where('reviewable_type', \App\Models\DealOfferType::class)
+            ->whereIn('reviewable_id', $dealOfferIds)->count();
+        $totalReviews = $vendorReviewCount + $dealReviewCount;
 
         $deals = Deal::where('vendor_id', $vendor->id)
             ->with(['category', 'offerTypes', 'images'])
             ->latest()
             ->get()
-            ->map(function ($deal) {
+            ->map(function ($deal) use ($orders) {
                 $offer = $deal->offerTypes->first()?->pivot;
                 $base = (float) ($deal->base_price ?? 0);
 
-                // Placeholder: when you implement real purchases, replace quantitySold
-                $quantitySold = 0;
+                $quantitySold = $orders->flatMap(fn ($o) => $o->items)
+                    ->where('deal_id', $deal->id)
+                    ->sum('quantity');
 
                 return [
                     'id'             => $deal->id,
@@ -89,23 +109,43 @@ class DealController extends Controller
                 ];
             });
 
-        // Basic dynamic stats derived from current deal data
-        $totalSales   = $deals->sum('quantitySold');
-        $totalRevenue = $deals->sum(function ($d) {
-            return ($d['quantitySold'] ?? 0) * ($d['discountedPrice'] ?? 0);
-        });
-
         $stats = [
-            'totalRevenue' => $totalRevenue,
-            'totalSales'   => $totalSales,
-            'activeDeals'  => $deals->where('status', 'active')->count(),
-            'totalDeals'   => $deals->count(),
+            'totalRevenue'    => $totalRevenue,
+            'totalSales'      => $totalSales,
+            'totalOrders'     => $totalOrders,
+            'uniqueCustomers' => $uniqueCustomers,
+            'activeDeals'     => $deals->where('status', 'active')->count(),
+            'totalDeals'      => $deals->count(),
+            'totalReviews'    => $totalReviews,
+            'avgRating'       => $avgVendorRating,
         ];
+
+        $recentOrders = $orders->sortByDesc('created_at')->take(5)->values()->map(fn (\App\Models\Order $o) => [
+            'id' => $o->order_number,
+            'customer' => $o->user?->name ?? 'Customer',
+            'total' => (float) $o->grand_total,
+            'status' => $o->status,
+            'itemCount' => $o->items->sum('quantity'),
+            'date' => $o->created_at->toIso8601String(),
+        ]);
+
+        $monthlySales = $orders->groupBy(fn ($o) => $o->created_at->format('Y-m'))
+            ->sortKeys()
+            ->map(fn ($group, $key) => [
+                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
+                'amount' => round((float) $group->sum('grand_total'), 2),
+                'orders' => $group->count(),
+            ])
+            ->values()
+            ->slice(-6)
+            ->values();
 
         return \Inertia\Inertia::render('VendorDashboard', [
             'vendor' => $vendor,
             'stats' => $stats,
             'deals' => $deals,
+            'recentOrders' => $recentOrders,
+            'monthlySales' => $monthlySales,
         ]);
     }
 

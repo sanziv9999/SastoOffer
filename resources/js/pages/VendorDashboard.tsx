@@ -9,7 +9,11 @@ import {
   Plus,
   Package,
   Filter,
-  Search
+  Search,
+  Star,
+  MessageSquare,
+  ArrowUpRight,
+  Clock,
 } from 'lucide-react';
 import {
   Card,
@@ -29,25 +33,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
-import { vendors } from '@/data/mockData';
 import { toast } from 'sonner';
 import { usePage } from '@inertiajs/react';
+
+interface MonthlySale {
+  month: string;
+  amount: number;
+  orders: number;
+}
+
+interface RecentOrder {
+  id: string;
+  customer: string;
+  total: number;
+  status: string;
+  itemCount: number;
+  date: string;
+}
 
 interface VendorDashboardProps {
   vendor?: any;
   stats?: {
     totalRevenue: number;
     totalSales: number;
+    totalOrders: number;
+    uniqueCustomers: number;
     activeDeals: number;
     totalDeals: number;
+    totalReviews: number;
+    avgRating: number;
   };
   deals?: any[];
+  recentOrders?: RecentOrder[];
+  monthlySales?: MonthlySale[];
 }
 
-const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeals }: VendorDashboardProps) => {
+const statusColors: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  paid: 'bg-blue-100 text-blue-700',
+  fulfilled: 'bg-emerald-100 text-emerald-700',
+  cancelled: 'bg-red-100 text-red-700',
+  refunded: 'bg-orange-100 text-orange-700',
+  draft: 'bg-gray-100 text-gray-600',
+  rejected: 'bg-red-100 text-red-700',
+  expired: 'bg-gray-100 text-gray-600',
+};
+
+const VendorDashboard = ({
+  vendor: propVendor,
+  stats: propStats,
+  deals: propDeals,
+  recentOrders = [],
+  monthlySales = [],
+}: VendorDashboardProps) => {
   const { user } = useAuth();
   const { flash } = usePage().props as any;
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,26 +97,22 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    if (flash?.success) {
-      toast.success(flash.success);
-    }
-    if (flash?.error) {
-      toast.error(flash.error);
-    }
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
   }, [flash]);
 
-  // Find vendor profile from props or mock data
-  const vendor = propVendor || vendors.find(v => v.contactEmail === user?.email || v.userId === user?.id) || vendors[0];
-
-  // Get deals for this vendor - prioritize real data from props
+  const vendor = propVendor;
   const vendorDeals = propDeals || [];
 
-  // Default stats if not provided
   const stats = propStats || {
     totalRevenue: 0,
     totalSales: 0,
+    totalOrders: 0,
+    uniqueCustomers: 0,
     activeDeals: vendorDeals.filter(d => d.status === 'active').length,
-    totalDeals: vendorDeals.length
+    totalDeals: vendorDeals.length,
+    totalReviews: 0,
+    avgRating: 0,
   };
 
   const filteredDeals = vendorDeals.filter(deal => {
@@ -84,26 +122,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
     return matchesSearch && matchesStatusDropdown && matchesTab;
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-
-  const monthlySales = [
-    { month: 'Jan', amount: 1200 },
-    { month: 'Feb', amount: 1800 },
-    { month: 'Mar', amount: 1500 },
-    { month: 'Apr', amount: 2200 },
-    { month: 'May', amount: 2800 },
-    { month: 'Jun', amount: 2400 },
-  ];
-  const maxSale = Math.max(...monthlySales.map(s => s.amount));
-
-  const trafficData = [
-    { source: 'Organic Search', value: 45, color: 'bg-blue-500' },
-    { source: 'Direct', value: 25, color: 'bg-green-500' },
-    { source: 'Social Media', value: 20, color: 'bg-purple-500' },
-    { source: 'Referral', value: 10, color: 'bg-orange-500' },
-  ];
+  const maxSale = monthlySales.length > 0 ? Math.max(...monthlySales.map(s => s.amount), 1) : 1;
 
   if (!vendor) {
     return (
@@ -125,7 +144,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Vendor Dashboard</h1>
           <p className="text-muted-foreground">
-            Manage your deals and track your business performance
+            Welcome back, {vendor.business_name || user?.name}
           </p>
         </div>
 
@@ -136,11 +155,8 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
               Create Deal
             </Link>
           </Button>
-
           <Button asChild variant="outline">
-            <Link href="/vendor/settings">
-              Edit Profile
-            </Link>
+            <Link href="/vendor/settings">Edit Profile</Link>
           </Button>
         </div>
       </div>
@@ -149,132 +165,187 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Revenue
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {stats.totalOrders} {stats.totalOrders === 1 ? 'order' : 'orders'} total
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Sales
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Items Sold</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalSales || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalSales}</div>
             <p className="text-xs text-muted-foreground">
-              +5 since yesterday
+              {stats.uniqueCustomers} unique {stats.uniqueCustomers === 1 ? 'customer' : 'customers'}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Deals
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Active Deals</CardTitle>
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeDeals || 0}</div>
+            <div className="text-2xl font-bold">{stats.activeDeals}</div>
             <p className="text-xs text-muted-foreground">
-              {(stats?.totalDeals || 0) - (stats?.activeDeals || 0)} inactive deals
+              {stats.totalDeals - stats.activeDeals} inactive
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Customer Rating
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Reviews</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vendor.averageRating || 'N/A'}</div>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {stats.totalReviews}
+              {stats.avgRating > 0 && (
+                <span className="text-sm font-normal flex items-center gap-0.5 text-yellow-600">
+                  <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                  {stats.avgRating}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Based on recent reviews
+              {stats.avgRating > 0 ? `${stats.avgRating} avg rating` : 'No reviews yet'}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
+      {/* Charts + Recent Orders */}
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Monthly Sales Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Sales</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Monthly Revenue</CardTitle>
             <CardDescription>
-              Your recent sales activity
+              {monthlySales.length > 0
+                ? `Last ${monthlySales.length} months`
+                : 'No sales data yet'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-end justify-between gap-2 px-2 pt-4">
-              {monthlySales.map((data) => (
-                <div key={data.month} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="relative w-full flex items-end justify-center h-[150px]">
-                    <div
-                      className="w-full max-w-[30px] bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40 relative"
-                      style={{ height: `${(data.amount / maxSale) * 100}%` }}
-                    >
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
-                        Rs. {data.amount}
+            {monthlySales.length > 0 ? (
+              <div className="h-[200px] flex items-end justify-between gap-2 px-2 pt-4">
+                {monthlySales.map((data) => (
+                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div className="relative w-full flex items-end justify-center h-[150px]">
+                      <div
+                        className="w-full max-w-[30px] bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40 relative"
+                        style={{ height: `${Math.max((data.amount / maxSale) * 100, 4)}%` }}
+                      >
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap z-10">
+                          Rs. {data.amount.toLocaleString()} ({data.orders})
+                        </div>
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary/20" />
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary/20" />
                     </div>
+                    <span className="text-xs font-bold text-muted-foreground">{data.month}</span>
                   </div>
-                  <span className="text-xs font-bold text-muted-foreground">{data.month}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                Sales data will appear here once you have orders.
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Recent Orders */}
         <Card>
-          <CardHeader>
-            <CardTitle>Traffic Sources</CardTitle>
-            <CardDescription>
-              Where your customers come from
-            </CardDescription>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Recent Orders</CardTitle>
+              <CardDescription>Latest {recentOrders.length} orders</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/vendor/orders" className="text-xs">
+                View All <ArrowUpRight className="ml-1 h-3 w-3" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex flex-col justify-center space-y-4 px-2">
-              {trafficData.map((item) => (
-                <div key={item.source} className="space-y-1">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span>{item.source}</span>
-                    <span className="text-muted-foreground">{item.value}%</span>
+            {recentOrders.length > 0 ? (
+              <div className="space-y-3">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate">{order.customer}</p>
+                        <Badge variant="outline" className={`text-[10px] h-4 border-0 ${statusColors[order.status] || ''}`}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-mono">{order.id}</span>
+                        <span>·</span>
+                        <span>{order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}</span>
+                        <span>·</span>
+                        <Clock className="h-3 w-3" />
+                        <span>{formatDistanceToNow(new Date(order.date), { addSuffix: true })}</span>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold ml-4">Rs. {order.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${item.color} rounded-full`}
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                No orders yet. They'll appear here once customers purchase your deals.
+              </div>
+            )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+          <Link href="/vendor/orders">
+            <ShoppingBag className="h-5 w-5 text-primary" />
+            <span className="text-xs">Orders</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+          <Link href="/vendor/customers">
+            <Users className="h-5 w-5 text-primary" />
+            <span className="text-xs">Customers</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+          <Link href="/vendor/reviews">
+            <Star className="h-5 w-5 text-primary" />
+            <span className="text-xs">Reviews</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+          <Link href="/vendor/analytics">
+            <Banknote className="h-5 w-5 text-primary" />
+            <span className="text-xs">Analytics</span>
+          </Link>
+        </Button>
       </div>
 
       {/* Manage Deals */}
       <Card>
         <CardHeader>
           <CardTitle>Manage Deals</CardTitle>
-          <CardDescription>
-            Create, edit, and monitor your deals
-          </CardDescription>
+          <CardDescription>Create, edit, and monitor your deals</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-            <form onSubmit={handleSearch} className="flex w-full md:w-auto">
+            <form onSubmit={(e) => e.preventDefault()} className="flex w-full md:w-auto">
               <Input
                 placeholder="Search deals..."
                 value={searchTerm}
@@ -297,7 +368,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -312,10 +383,10 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList>
-              <TabsTrigger value="all">All Deals</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="expired">Expired</TabsTrigger>
+              <TabsTrigger value="all">All ({vendorDeals.length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({vendorDeals.filter(d => d.status === 'active').length})</TabsTrigger>
+              <TabsTrigger value="draft">Draft ({vendorDeals.filter(d => d.status === 'draft').length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({vendorDeals.filter(d => d.status === 'pending').length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="space-y-4">
@@ -324,7 +395,7 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                   <div className="relative w-full overflow-auto">
                     <table className="w-full caption-bottom text-sm">
                       <thead className="border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <tr className="border-b transition-colors hover:bg-muted/50">
                           <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
                           <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
                           <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
@@ -339,17 +410,11 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                             <td className="p-4 align-middle">
                               <div className="flex items-center gap-3">
                                 {deal.image && (
-                                  <img
-                                    src={deal.image}
-                                    alt={deal.title}
-                                    className="h-10 w-10 rounded object-cover"
-                                  />
+                                  <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />
                                 )}
                                 <div>
                                   <div className="font-medium">
-                                    {deal.title.length > 30
-                                      ? `${deal.title.substring(0, 30)}...`
-                                      : deal.title}
+                                    {deal.title.length > 30 ? `${deal.title.substring(0, 30)}...` : deal.title}
                                   </div>
                                   <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
                                 </div>
@@ -358,40 +423,24 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                             <td className="p-4 align-middle">
                               <div>
                                 <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
-                                <div className="text-xs text-muted-foreground line-through">
-                                  Rs. {deal.originalPrice?.toFixed(2)}
-                                </div>
+                                <div className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice?.toFixed(2)}</div>
                               </div>
                             </td>
                             <td className="p-4 align-middle">
-                              <Badge
-                                variant={
-                                  deal.status === 'active' ? 'secondary' :
-                                    deal.status === 'pending' ? 'outline' :
-                                      deal.status === 'rejected' ? 'destructive' :
-                                        'outline'
-                                }
-                                className={
-                                  deal.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-none' :
-                                    deal.status === 'pending' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-none' :
-                                      ''
-                                }
-                              >
+                              <Badge variant="outline" className={`border-0 ${statusColors[deal.status] || ''}`}>
                                 {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
                               </Badge>
                             </td>
                             <td className="p-4 align-middle">
                               <div>
                                 <div className="font-medium">{deal.quantitySold || 0} sold</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {deal.maxQuantity ? `of ${deal.maxQuantity}` : ''}
-                                </div>
+                                {deal.maxQuantity ? (
+                                  <div className="text-xs text-muted-foreground">of {deal.maxQuantity}</div>
+                                ) : null}
                               </div>
                             </td>
-                            <td className="p-4 align-middle">
-                              <span>
-                                {deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'Never'}
-                              </span>
+                            <td className="p-4 align-middle text-sm">
+                              {deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'No expiry'}
                             </td>
                             <td className="p-4 align-middle text-right">
                               <div className="flex justify-end gap-2">
@@ -414,14 +463,18 @@ const VendorDashboard = ({ vendor: propVendor, stats: propStats, deals: propDeal
                   <Package className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">No deals found</h3>
                   <p className="text-muted-foreground mb-4">
-                    You haven't created any deals yet. Get started by creating your first deal.
+                    {vendorDeals.length === 0
+                      ? "You haven't created any deals yet. Get started by creating your first deal."
+                      : 'No deals match the current filters.'}
                   </p>
-                  <Button asChild>
-                    <Link href="/vendor/deals/create">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Deal
-                    </Link>
-                  </Button>
+                  {vendorDeals.length === 0 && (
+                    <Button asChild>
+                      <Link href="/vendor/deals/create">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Your First Deal
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               )}
             </TabsContent>
