@@ -79,12 +79,29 @@ class VendorAnalyticsController extends Controller
             ->map(function (\App\Models\Order $order) {
                 return [
                     'id' => $order->order_number,
+                    'orderId' => $order->id,
                     'customer' => $order->user?->name ?? 'Customer',
-                    'deal' => $order->items->pluck('title')->implode(', '),
-                    'quantity' => $order->items->sum('quantity'),
+                    'customerEmail' => $order->user?->email ?? '',
+                    'subtotal' => (float) $order->subtotal,
+                    'discountTotal' => (float) $order->discount_total,
+                    'taxTotal' => (float) $order->tax_total,
                     'total' => (float) $order->grand_total,
+                    'currencyCode' => $order->currency_code,
+                    'paymentMethod' => $order->payment_method,
+                    'paidAt' => $order->paid_at?->toIso8601String(),
+                    'quantity' => $order->items->sum('quantity'),
                     'status' => $order->status,
                     'date' => $order->created_at?->toIso8601String(),
+                    'items' => $order->items->map(fn (\App\Models\OrderItem $item) => [
+                        'id' => $item->id,
+                        'title' => $item->title,
+                        'quantity' => $item->quantity,
+                        'unitPrice' => (float) $item->unit_price,
+                        'originalPrice' => (float) ($item->meta['original_price'] ?? $item->unit_price),
+                        'lineTotal' => (float) $item->line_total,
+                        'image' => $item->meta['deal_image'] ?? '',
+                        'offerType' => $item->meta['offer_type'] ?? 'Offer',
+                    ])->values()->all(),
                 ];
             })
             ->values();

@@ -1,16 +1,18 @@
 import Link from '@/components/Link';
-import { ShoppingBag, Calendar, Tag, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingBag, Calendar, Tag, Package, Clock, CheckCircle, XCircle, CreditCard, Receipt, ChevronDown, ChevronUp, Store, Banknote } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { useState } from 'react';
 
 interface OrderItem {
   id: number;
   title: string;
   quantity: number;
   unitPrice: number;
+  originalPrice: number;
   lineTotal: number;
   image: string;
   offerType: string;
@@ -20,8 +22,13 @@ interface Order {
   id: number;
   orderNumber: string;
   status: string;
-  grandTotal: number;
+  subtotal: number;
   discountTotal: number;
+  taxTotal: number;
+  grandTotal: number;
+  currencyCode: string;
+  paymentMethod: string | null;
+  paidAt: string | null;
   vendorName: string;
   createdAt: string;
   itemCount: number;
@@ -34,7 +41,7 @@ interface MyPurchasesProps {
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-800', icon: <Clock className="h-3 w-3" /> },
-  paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800', icon: <Package className="h-3 w-3" /> },
+  paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800', icon: <CreditCard className="h-3 w-3" /> },
   fulfilled: { label: 'Fulfilled', color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: <XCircle className="h-3 w-3" /> },
   refunded: { label: 'Refunded', color: 'bg-gray-100 text-gray-800', icon: <XCircle className="h-3 w-3" /> },
@@ -45,50 +52,149 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const activeOrders = orders.filter(o => ['pending', 'paid'].includes(o.status));
   const completedOrders = orders.filter(o => ['fulfilled', 'cancelled', 'refunded'].includes(o.status));
   const totalSpent = orders.reduce((sum, o) => sum + o.grandTotal, 0);
+  const totalSaved = orders.reduce((sum, o) => sum + o.discountTotal, 0);
+  const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
+
+  const toggleExpand = (orderId: number) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      next.has(orderId) ? next.delete(orderId) : next.add(orderId);
+      return next;
+    });
+  };
+
+  const hasDiscount = (item: OrderItem) => item.originalPrice > item.unitPrice;
 
   const renderOrderCard = (order: Order) => {
     const cfg = statusConfig[order.status] || statusConfig.pending;
-    const firstImage = order.items?.[0]?.image;
+    const isExpanded = expandedOrders.has(order.id);
 
     return (
-      <div key={order.id} className="border rounded-xl bg-card hover:bg-muted/30 transition-colors overflow-hidden">
-        <div className="flex items-center justify-between gap-4 p-4 border-b bg-muted/20">
-          <div className="min-w-0">
-            <p className="font-mono text-xs text-muted-foreground">{order.orderNumber}</p>
-            <p className="text-sm font-medium text-teal-950 truncate">{order.vendorName}</p>
+      <div key={order.id} className="border rounded-xl bg-card hover:shadow-sm transition-all overflow-hidden">
+        {/* Header */}
+        <div
+          className="flex items-center justify-between gap-4 p-4 border-b bg-muted/20 cursor-pointer"
+          onClick={() => toggleExpand(order.id)}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <p className="font-mono text-xs text-muted-foreground">{order.orderNumber}</p>
+              <span className="text-muted-foreground/40">·</span>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(order.createdAt), 'MMM d, yyyy')}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Store className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-sm font-medium text-teal-950 truncate">{order.vendorName}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 ${cfg.color}`}>
               {cfg.icon}
               {cfg.label}
             </span>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         </div>
-        <div className="divide-y">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 p-3">
-              {item.image ? (
-                <img src={item.image} alt={item.title} className="h-11 w-11 rounded-lg object-cover flex-shrink-0 border" />
-              ) : (
-                <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                  <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+
+        {/* Quick summary when collapsed */}
+        {!isExpanded && (
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/5">
+            <span className="text-xs text-muted-foreground">
+              {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
+              <span className="mx-1.5 text-muted-foreground/40">·</span>
+              {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
+            </span>
+            <span className="font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</span>
+          </div>
+        )}
+
+        {/* Expanded item details */}
+        {isExpanded && (
+          <>
+            <div className="divide-y">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 p-3 px-4">
+                  {item.image ? (
+                    <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover flex-shrink-0 border" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                      <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.title}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{item.offerType}</span>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span>Qty: {item.quantity}</span>
+                    </div>
+                    {hasDiscount(item) && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs line-through text-muted-foreground/60">Rs. {item.originalPrice.toFixed(2)}</span>
+                        <span className="text-xs font-medium text-green-600">Rs. {item.unitPrice.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-teal-950 flex-shrink-0">Rs. {item.lineTotal.toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Financial breakdown */}
+            <div className="px-4 py-3 border-t bg-muted/10 space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Subtotal ({order.itemCount} item{order.itemCount !== 1 ? 's' : ''})</span>
+                <span>Rs. {order.subtotal.toFixed(2)}</span>
+              </div>
+              {order.discountTotal > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-green-600">Savings</span>
+                  <span className="text-green-600 font-medium">- Rs. {order.discountTotal.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.title}</p>
-                <p className="text-xs text-muted-foreground">{item.offerType} &middot; Qty: {item.quantity}</p>
+              {order.taxTotal > 0 && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Tax</span>
+                  <span>Rs. {order.taxTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Shipping</span>
+                <span className="text-primary font-semibold uppercase text-[10px] tracking-wider">Free</span>
               </div>
-              <p className="text-sm font-semibold text-teal-950 flex-shrink-0">Rs. {item.lineTotal.toFixed(2)}</p>
+              <div className="border-t pt-2 mt-2 flex justify-between items-center">
+                <span className="text-sm font-bold text-teal-950">Total</span>
+                <span className="text-base font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</span>
+              </div>
             </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/10">
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
-          </span>
-          <span className="font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</span>
-        </div>
+
+            {/* Meta info footer */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 border-t bg-muted/5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {format(new Date(order.createdAt), 'MMM d, yyyy h:mm a')}
+              </span>
+              {order.paymentMethod && (
+                <span className="flex items-center gap-1">
+                  <Banknote className="h-3 w-3" />
+                  {order.paymentMethod}
+                </span>
+              )}
+              {order.paidAt && (
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  Paid {formatDistanceToNow(new Date(order.paidAt), { addSuffix: true })}
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
     );
   };
@@ -104,10 +210,10 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
-        <p className="text-muted-foreground">Track all your orders</p>
+        <p className="text-muted-foreground">Track all your orders and purchases</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -119,20 +225,29 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeOrders.length}</div>
+            <div className="text-2xl font-bold text-amber-600">{activeOrders.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs. {totalSpent.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Saved</CardTitle>
+            <Tag className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">Rs. {totalSaved.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
