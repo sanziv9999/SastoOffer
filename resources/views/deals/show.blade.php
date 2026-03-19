@@ -124,7 +124,7 @@
                     <div class="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
                         <span>By</span>
                         <a
-                            href="{{ route('vendor-profile.show', $deal['vendor']['id']) }}"
+                            href="{{ route('vendor-profile.show', ['vendorProfile' => $deal['vendor']['slug'] ?? $deal['vendor']['id']]) }}"
                             class="text-primary font-medium hover:underline"
                         >
                             {{ $deal['vendor']['business_name'] }}
@@ -297,7 +297,7 @@
                         </div>
 
                         <a 
-                            href="{{ route('vendor-profile.show', $deal['vendor']['id']) }}" 
+                            href="{{ route('vendor-profile.show', ['vendorProfile' => $deal['vendor']['slug'] ?? $deal['vendor']['id']]) }}" 
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full"
                         >
                             View Vendor Profile

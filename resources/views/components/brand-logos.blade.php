@@ -26,7 +26,7 @@
 
                 @foreach($brands as $brand)
                     <a 
-                        href="{{ route('vendor-profile.show', ['vendorProfile' => $brand['id']]) }}"
+                        href="{{ route('vendor-profile.show', ['vendorProfile' => $brand['slug'] ?? $brand['id']]) }}"
                         class="flex-shrink-0 group/brand"
                     >
                         <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl overflow-hidden border border-border bg-background shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">

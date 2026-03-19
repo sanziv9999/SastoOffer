@@ -29,6 +29,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
     new Date(),
     { addSuffix: true }
   );
+  const dealPath = `/deals/${(deal as any).slug ?? deal.id}`;
   
   return (
     <div 
@@ -54,7 +55,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
       </div>
       
       {/* Image */}
-      <Link to={`/deals/deal/${deal.id}`} className="block relative overflow-hidden h-48">
+      <Link to={dealPath} className="block relative overflow-hidden h-48">
         <img 
           src={deal.image} 
           alt={deal.title} 
@@ -79,7 +80,7 @@ const DealCard = ({ deal, featured = false }: DealCardProps) => {
         </div>
         
         {/* Title */}
-        <Link to={`/deals/deal/${deal.id}`}>
+        <Link to={dealPath}>
           <h3 className="font-semibold text-teal-800 mb-2 line-clamp-2 min-h-[3rem] transition-colors group-hover:text-teal-600">
             {deal.title}
           </h3>

@@ -255,7 +255,7 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
                               size="sm"
                               asChild
                             >
-                              <Link href={`/deal/${deal.id}`}>
+                              <Link href={`/deals/${(deal as any).slug ?? deal.id}`}>
                                 View
                               </Link>
                             </Button>

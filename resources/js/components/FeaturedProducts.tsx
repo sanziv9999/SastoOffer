@@ -42,9 +42,10 @@ const FeaturedProducts = () => {
                 const discountPercentage = Math.round(
                   ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100
                 );
+                const dealPath = `/deals/${(deal as any).slug ?? deal.id}`;
                 
                 return (
-                  <Link key={deal.id} to={`/deals/deal/${deal.id}`} className="block">
+                  <Link key={deal.id} to={dealPath} className="block">
                     <Card className="overflow-hidden h-full hover:shadow-md transition-all duration-200 group border-border">
                       <div className="relative">
                         <img 

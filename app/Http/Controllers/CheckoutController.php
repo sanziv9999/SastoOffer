@@ -65,6 +65,7 @@ class CheckoutController extends Controller
                         'meta' => [
                             'offer_type' => $pivot->offerType?->display_name ?? $pivot->offerType?->name,
                             'original_price' => (float) $pivot->original_price,
+                            'deal_slug' => $deal->slug,
                             'deal_image' => $deal->featuredImageUrl(),
                         ],
                     ]);
@@ -101,7 +102,7 @@ class CheckoutController extends Controller
     public function myOrders()
     {
         $orders = Order::where('user_id', auth()->id())
-            ->with(['items', 'vendor'])
+            ->with(['items.deal', 'vendor'])
             ->latest()
             ->get()
             ->map(function (Order $order) {
@@ -117,12 +118,14 @@ class CheckoutController extends Controller
                     'paymentMethod' => $order->payment_method,
                     'paidAt' => $order->paid_at?->toIso8601String(),
                     'vendorName' => $order->vendor?->business_name ?? 'Unknown Vendor',
+                    'vendorSlug' => $order->vendor?->slug,
                     'createdAt' => $order->created_at->toIso8601String(),
                     'itemCount' => $order->items->sum('quantity'),
                     'items' => $order->items->map(fn (OrderItem $item) => [
                         'id' => $item->id,
                         'dealId' => $item->deal_id,
                         'dealOfferTypeId' => $item->deal_offer_type_id,
+                        'dealSlug' => $item->meta['deal_slug'] ?? $item->deal?->slug,
                         'title' => $item->title,
                         'quantity' => $item->quantity,
                         'unitPrice' => (float) $item->unit_price,

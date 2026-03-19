@@ -190,7 +190,7 @@ const VoucherDetail = ({ purchases, deals, vendors }: VoucherDetailProps) => {
                                 </div>
                             </div>
                             <Button variant="outline" className="w-full" size="sm" asChild>
-                                <Link href={`/vendor-profile/${vendor?.id}`}>View Profile</Link>
+                                <Link href={`/vendor-profile/${vendor?.slug ?? vendor?.id}`}>View Profile</Link>
                             </Button>
                         </CardContent>
                     </Card>

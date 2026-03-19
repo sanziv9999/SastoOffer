@@ -12,6 +12,7 @@ interface OrderItem {
   id: number;
   dealId: number | null;
   dealOfferTypeId: number | null;
+  dealSlug: string | null;
   title: string;
   quantity: number;
   unitPrice: number;
@@ -33,6 +34,7 @@ interface Order {
   paymentMethod: string | null;
   paidAt: string | null;
   vendorName: string;
+  vendorSlug: string | null;
   createdAt: string;
   itemCount: number;
   items: OrderItem[];
@@ -71,13 +73,15 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   };
 
   const hasDiscount = (item: OrderItem) => item.originalPrice > item.unitPrice;
-  const getDealUrl = (item: OrderItem) => (
-    item.dealOfferTypeId
-      ? route('deals.show', item.dealOfferTypeId)
-      : item.dealId
-        ? route('deals.show.by-deal', item.dealId)
-        : null
-  );
+  const getDealUrl = (item: OrderItem) => {
+    const dealKey = item.dealSlug || item.dealId;
+    if (!dealKey) {
+      return null;
+    }
+
+    const base = route('deals.show.by-deal', { deal: dealKey });
+    return item.dealOfferTypeId ? `${base}?offer=${item.dealOfferTypeId}` : base;
+  };
 
   const openItemModal = (item: OrderItem) => {
     setSelectedItem({
@@ -108,7 +112,13 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
             </div>
             <div className="flex items-center gap-1.5">
               <Store className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-sm font-medium text-teal-950 truncate">{order.vendorName}</p>
+              <a
+                href={`/vendor-profile/${order.vendorSlug ?? order.id}`}
+                className="text-sm font-medium text-teal-950 truncate hover:text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {order.vendorName}
+              </a>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

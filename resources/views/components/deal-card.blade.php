@@ -8,10 +8,11 @@
         $discountPercentage = $deal['discountPercentage'];
     }
     $featured = $featured || (isset($deal['featured']) && $deal['featured']);
+    $dealUrl = $deal['url'] ?? route('deals.show.by-deal', ['deal' => $deal['dealSlug'] ?? $deal['id']]);
 @endphp
 
 @if($compact)
-    <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}" class="block h-full group">
+    <a href="{{ $dealUrl }}" class="block h-full group">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden h-full hover:shadow-md transition-all duration-200">
             <div class="relative">
                 <img 
@@ -107,7 +108,7 @@
         </div>
         
         {{-- Image --}}
-        <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}" class="block relative overflow-hidden h-48">
+        <a href="{{ $dealUrl }}" class="block relative overflow-hidden h-48">
             <img 
                 src="{{ $deal['image'] }}" 
                 alt="{{ $deal['title'] }}" 
@@ -143,7 +144,7 @@
             {{-- Search page can render one card per offer, so we don't list multiple offers here. --}}
             
             {{-- Title --}}
-            <a href="{{ route('deals.show', ['dealOfferType' => $deal['offerPivotId'] ?? $deal['id']]) }}">
+            <a href="{{ $dealUrl }}">
                 <h3 class="font-semibold text-teal-800 mb-2 line-clamp-2 min-h-[3rem] transition-colors group-hover:text-teal-600">
                     {{ $deal['title'] }}
                 </h3>

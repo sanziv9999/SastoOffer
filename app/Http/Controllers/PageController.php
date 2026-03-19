@@ -106,6 +106,7 @@ class PageController extends Controller
             return [
                 'id'                => $deal?->id,
                 'offerPivotId'      => $pivot->id,
+                'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
                 'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
                 'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
@@ -124,6 +125,7 @@ class PageController extends Controller
                 ],
                 'cityName'          => $locationLabel ?: 'Location',
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+                'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $pivot->id,
             ];
         });
 

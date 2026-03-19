@@ -18,6 +18,28 @@ use Illuminate\Support\Facades\Storage;
 
 class DealController extends Controller
 {
+    protected function generateUniqueDealSlug(string $title, ?int $ignoreDealId = null): string
+    {
+        $base = Str::slug($title);
+        if ($base === '') {
+            $base = 'deal';
+        }
+
+        $slug = $base;
+        $suffix = 1;
+        while (
+            Deal::query()
+                ->when($ignoreDealId, fn ($q) => $q->where('id', '!=', $ignoreDealId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $suffix++;
+            $slug = "{$base}-{$suffix}";
+        }
+
+        return $slug;
+    }
+
     public function index(Request $request)
     {
         $deals = Deal::query()
@@ -157,7 +179,7 @@ class DealController extends Controller
             'vendor_id' => $vendor->id,
             'category_id' => (int) ($data['categoryId'] ?? 0),
             'title' => $data['title'] ?? 'Untitled Deal',
-            'slug' => Str::slug($data['title'] ?? 'untitled') . '-' . rand(1000, 9999),
+            'slug' => $this->generateUniqueDealSlug((string) ($data['title'] ?? 'untitled')),
             'base_price' => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : null,
             'short_description' => $data['shortDesc'] ?? null,
             'long_description' => $data['description'] ?? null,
@@ -261,8 +283,9 @@ class DealController extends Controller
                     ])->toArray(),
                     'vendor'           => $deal->vendor ? [
                         'id'            => $deal->vendor->id,
+                        'slug'          => $deal->vendor->slug,
                         'business_name' => $deal->vendor->business_name,
-                        'rating'        => 4.8, 
+                        'rating'        => 4.8,
                         'reviewCount'   => 42
                     ] : null,
                     'category'      => $deal->category ? [
@@ -283,20 +306,44 @@ class DealController extends Controller
     /**
      * Public deal view by deal id (legacy): redirects to first active offer pivot.
      */
-    public function showDealByDealId($deal)
+    public function showDealByDealId($deal, Request $request)
     {
-        $dealModel = Deal::find($deal);
+        $dealModel = Deal::query()
+            ->where('slug', $deal)
+            ->orWhere('id', is_numeric($deal) ? (int) $deal : 0)
+            ->first();
+
         if (!$dealModel) {
             return view('deals.show', ['deal' => null]);
         }
 
-        $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-            ->where('status', 'active')
-            ->orderBy('final_price')
-            ->first();
+        if ((string) $deal !== (string) $dealModel->slug) {
+            $canonicalUrl = route('deals.show.by-deal', ['deal' => $dealModel->slug]);
+            if ($request->filled('offer')) {
+                $canonicalUrl .= '?offer=' . $request->query('offer');
+            }
+            return redirect()->to($canonicalUrl);
+        }
+
+        $requestedOfferPivotId = $request->query('offer');
+        $pivot = null;
+        if (is_numeric($requestedOfferPivotId)) {
+            $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                ->where('status', 'active')
+                ->where('id', (int) $requestedOfferPivotId)
+                ->first();
+        }
+
+        if (! $pivot) {
+            $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                ->where('status', 'active')
+                ->orderBy('final_price')
+                ->first();
+        }
 
         if ($pivot) {
-            return redirect()->route('deals.show', ['dealOfferType' => $pivot->id]);
+            // Keep canonical slug URL and render the selected active offer in-place.
+            return $this->showDeal($pivot);
         }
 
         // No offers: show deal with base price fallback (no pivot context)
@@ -455,7 +502,7 @@ class DealController extends Controller
         $deal->update([
             'category_id'              => (int) ($data['categoryId'] ?? $deal->category_id),
             'title'                    => $data['title'] ?? $deal->title,
-            'slug'                     => Str::slug($data['title'] ?? $deal->title) . '-' . $deal->id,
+            'slug'                     => $this->generateUniqueDealSlug((string) ($data['title'] ?? $deal->title), $deal->id),
             'base_price'               => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : $deal->base_price,
             'short_description'        => $data['shortDesc'] ?? $deal->short_description,
             'long_description'         => $data['description'] ?? $deal->long_description,
@@ -687,7 +734,7 @@ class DealController extends Controller
 
         $this->syncDealOffers($deal, $offerTypesInput);
 
-        return redirect()->route('deals.show', $deal)->with('success', 'Deal updated successfully.');
+        return redirect()->route('deals.show.by-deal', ['deal' => $deal->slug])->with('success', 'Deal updated successfully.');
     }
 
     protected function syncDealOffers(Deal $deal, array $offerTypesInput): void

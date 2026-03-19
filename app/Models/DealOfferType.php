@@ -179,7 +179,7 @@ class DealOfferType extends Pivot
             ],
             'cityName'          => $locationLabel ?: 'Location',
             'timeLeft'          => optional($this->ends_at)?->diffForHumans() ?? 'soon',
-            'url'               => route('deals.show', $this->id)
+            'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $this->id,
         ];
     }
 }

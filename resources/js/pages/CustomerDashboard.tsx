@@ -58,6 +58,11 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
     return deals?.find((deal: any) => deal.id === dealId);
   };
 
+  const getDealHref = (dealLike?: any, fallbackId?: string | number) => {
+    const key = dealLike?.slug ?? dealLike?.dealSlug ?? fallbackId;
+    return key ? `/deals/${key}` : '/search';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -199,7 +204,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                     </div>
                   </div>
                   <Button asChild className="w-full" size="sm">
-                    <Link href={`/deals/deal/${deal.id}`}>
+                    <Link href={getDealHref(deal, deal.id)}>
                       View Deal
                     </Link>
                   </Button>
@@ -330,7 +335,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                                 </Link>
                               </Button>
                               <Button variant="outline" size="sm" asChild>
-                                <Link href={`/deal/${purchase.dealId}`}>
+                                <Link href={getDealHref(purchaseDeal, purchase.dealId)}>
                                   Deal Page
                                 </Link>
                               </Button>

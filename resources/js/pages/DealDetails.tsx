@@ -161,7 +161,7 @@ const DealDetails = () => {
             <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
               <span>By</span>
               <a
-                href={`/vendor-profile/${deal.vendor.id}`}
+                href={`/vendor-profile/${deal.vendor.slug ?? deal.vendor.id}`}
                 className="text-primary font-medium hover:underline"
               >
                 {deal.vendor.business_name}
@@ -329,7 +329,7 @@ const DealDetails = () => {
               </div>
 
               <Button asChild variant="outline" className="w-full">
-                <a href={`/vendor-profile/${deal.vendor.id}`}>
+                <a href={`/vendor-profile/${deal.vendor.slug ?? deal.vendor.id}`}>
                   <MapPin className="mr-2 h-4 w-4" />
                   View Profile
                 </a>

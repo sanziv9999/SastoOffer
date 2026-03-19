@@ -74,7 +74,7 @@ class VendorAnalyticsController extends Controller
         }
 
         $orders = \App\Models\Order::where('vendor_id', $vendor->id)
-            ->with(['user', 'items'])
+            ->with(['user', 'items.deal'])
             ->latest()
             ->get()
             ->map(function (\App\Models\Order $order) {
@@ -97,6 +97,7 @@ class VendorAnalyticsController extends Controller
                         'id' => $item->id,
                         'dealId' => $item->deal_id,
                         'dealOfferTypeId' => $item->deal_offer_type_id,
+                        'dealSlug' => $item->meta['deal_slug'] ?? $item->deal?->slug,
                         'title' => $item->title,
                         'quantity' => $item->quantity,
                         'unitPrice' => (float) $item->unit_price,

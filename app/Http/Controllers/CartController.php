@@ -128,12 +128,13 @@ class CartController extends Controller
             'offerPivotId' => $pivot->id,
             'title' => $deal->title,
             'dealId' => $deal->id,
+            'dealSlug' => $deal->slug,
             'quantity' => $item->quantity,
             'discountedPrice' => (float)$pivot->final_price,
             'originalPrice' => (float)$pivot->original_price,
             'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'),
             'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer',
-            'url' => route('deals.show', $pivot->id)
+            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]) . '?offer=' . $pivot->id,
         ];
     }
 }

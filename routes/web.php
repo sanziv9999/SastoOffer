@@ -35,18 +35,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/order/{order}/confirmation', [CheckoutController::class, 'confirmation'])->name('order.confirmation');
 });
 
-// Deal detail (public): support both /deals/{id} and /deal/{id}
-// Deal detail (public): now fetched by deal_offer_type (pivot) id.
-Route::get('/deals/{dealOfferType}', [DealController::class, 'showDeal'])->name('deals.show');
+// Public deal detail routes.
+// - Canonical slug URL: /deals/{deal-slug}
+// - Offer-specific URL (kept for compatibility): /deals/offer/{pivot-id}
+Route::get('/deals/offer/{dealOfferType}', [DealController::class, 'showDeal'])->name('deals.show');
+Route::get('/deals/{deal}', [DealController::class, 'showDealByDealId'])->name('deals.show.by-deal');
 
-// Legacy: deal-id based URLs redirect to the first active offer (if any).
-Route::get('/deals/deal/{deal}', [DealController::class, 'showDealByDealId'])->name('deals.show.by-deal');
+// Legacy: /deals/deal/{deal} redirects/handles old id URLs.
+Route::get('/deals/deal/{deal}', [DealController::class, 'showDealByDealId']);
 Route::get('/deal/{id}', function ($id) {
     return redirect()->route('deals.show.by-deal', ['deal' => $id]);
 })->name('deal.show.redirect');
 
-// Vendor profile (public)
-Route::get('/vendor-profile/{vendorProfile:id}', [VendorProfileController::class, 'show'])->name('vendor-profile.show');
+// Vendor profile (public – canonical slug URL)
+Route::get('/vendor-profile/{vendorProfile}', [VendorProfileController::class, 'show'])->name('vendor-profile.show');
 
 // ——— Auth (guest) ———
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');

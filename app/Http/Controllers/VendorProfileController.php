@@ -205,6 +205,11 @@ class VendorProfileController extends Controller
 
     public function show(VendorProfile $vendorProfile)
     {
+        $rawParam = request()->segment(2);
+        if ($vendorProfile->slug && $rawParam !== $vendorProfile->slug) {
+            return redirect()->route('vendor-profile.show', ['vendorProfile' => $vendorProfile->slug], 301);
+        }
+
         $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images']);
         
         $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
@@ -233,6 +238,7 @@ class VendorProfileController extends Controller
             return [
                 'id'                => $deal?->id,
                 'offerPivotId'      => $pivot->id,
+                'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
                 'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
                 'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
@@ -244,6 +250,7 @@ class VendorProfileController extends Controller
                 'locationLabel'     => $locationLabel ?: 'Location',
                 'cityName'          => $locationLabel ?: 'Location',
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+                'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $pivot->id,
             ];
         });
 

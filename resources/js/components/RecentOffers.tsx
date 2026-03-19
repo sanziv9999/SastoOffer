@@ -125,6 +125,7 @@ const RecentOffers = () => {
                 new Date(),
                 { addSuffix: true }
               );
+              const dealPath = `/deals/${(deal as any).slug ?? deal.id}`;
               
               return (
                 <Card key={deal.id} className="overflow-hidden flex-shrink-0 w-[280px] hover:shadow-md transition-shadow group">
@@ -145,7 +146,7 @@ const RecentOffers = () => {
                     </div>
                   </div>
                   <CardContent className="p-4">
-                    <Link to={`/deals/deal/${deal.id}`}>
+                    <Link to={dealPath}>
                       <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2 hover:text-primary transition-colors">
                         {deal.title}
                       </h3>

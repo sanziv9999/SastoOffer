@@ -131,7 +131,7 @@ const AppShell = () => {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/deal/:id" element={<DealDetails />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/vendor-profile/:id" element={<VendorProfile />} />
+                <Route path="/vendor-profile/:slug" element={<VendorProfile />} />
             </Route>
 
             {/* Dashboard routes with DashboardLayout (Sidebar) */}

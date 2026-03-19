@@ -47,6 +47,11 @@ const UserDashboard = () => {
     return deals.find(deal => deal.id === dealId);
   };
 
+  const getDealHref = (dealLike?: any, fallbackId?: string | number) => {
+    const key = dealLike?.slug ?? dealLike?.dealSlug ?? fallbackId;
+    return key ? `/deals/${key}` : '/search';
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would filter from the backend
@@ -245,7 +250,7 @@ const UserDashboard = () => {
                               size="sm"
                               asChild
                             >
-                              <Link href={`/deals/${purchase.dealId}`}>
+                              <Link href={getDealHref(purchaseDeal, purchase.dealId)}>
                                 View Deal
                               </Link>
                             </Button>
@@ -316,7 +321,7 @@ const UserDashboard = () => {
                             Show QR Code
                           </Button>
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/deals/${purchase.dealId}`}>
+                            <Link href={getDealHref(purchaseDeal, purchase.dealId)}>
                               Details
                             </Link>
                           </Button>
@@ -425,7 +430,7 @@ const UserDashboard = () => {
                                 size="sm"
                                 asChild
                               >
-                                <Link href={`/deals/${purchase.dealId}`}>
+                                <Link href={getDealHref(purchaseDeal, purchase.dealId)}>
                                   View Deal
                                 </Link>
                               </Button>
