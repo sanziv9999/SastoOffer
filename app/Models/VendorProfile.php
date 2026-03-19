@@ -91,4 +91,46 @@ class VendorProfile extends Model
     {
         return $this->verified_status === 'suspended';
     }
+
+    public function hasCompletedBusinessDetails(): bool
+    {
+        $requiredProfileFields = [
+            'business_name',
+            'business_type',
+            'category_id',
+            'description',
+            'public_email',
+            'public_phone',
+        ];
+
+        foreach ($requiredProfileFields as $field) {
+            $value = $this->{$field} ?? null;
+            if ($value === null || trim((string) $value) === '') {
+                return false;
+            }
+        }
+
+        $address = $this->relationLoaded('defaultAddress')
+            ? $this->defaultAddress
+            : $this->defaultAddress()->first();
+
+        if (! $address) {
+            return false;
+        }
+
+        $requiredAddressFields = ['province', 'district', 'municipality', 'ward_no', 'tole'];
+        foreach ($requiredAddressFields as $field) {
+            $value = $address->{$field} ?? null;
+            if ($value === null || trim((string) $value) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function hasUnlockedVendorMenus(): bool
+    {
+        return $this->hasCompletedBusinessDetails() && $this->isVerified();
+    }
 }

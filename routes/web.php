@@ -69,30 +69,32 @@ Route::middleware(['auth'])->group(function () {
 
 // ——— Vendor (auth) ———
 Route::middleware(['auth'])->group(function () {
-    Route::get('/vendor/dashboard', [DealController::class, 'dashboard'])->name('vendor.dashboard');
-    Route::get('/vendor', [DealController::class, 'dashboard']);
-    Route::get('/vendor/create-deal', [DealController::class, 'create'])->name('vendor.create-deal');
-    Route::get('/vendor/deals', [DealController::class, 'manageDeals'])->name('vendor.deals.index');
-    Route::get('/vendor/deals/create', [DealController::class, 'create'])->name('vendor.deals.create');
-    Route::post('/vendor/deals', [DealController::class, 'store'])->name('vendor.deals.store');
-    Route::get('/vendor/deals/{deal}', [DealController::class, 'viewDeal'])->name('vendor.deals.view');
-    Route::get('/vendor/deals/{deal}/edit', [DealController::class, 'editDeal'])->name('vendor.deals.edit');
-    Route::put('/vendor/deals/{deal}', [DealController::class, 'updateDeal'])->name('vendor.deals.update');
-    Route::get('/vendor/deals/{deal}/offers', [DealController::class, 'offers'])->name('vendor.deals.offers');
-    Route::post('/vendor/deals/{deal}/offers', [DealController::class, 'attachOffer'])->name('vendor.deals.offers.attach');
-    Route::put('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'updateOffer'])->name('vendor.deals.offers.update');
-    Route::delete('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'removeOffer'])->name('vendor.deals.offers.remove');
+    Route::middleware(['vendor.approved'])->group(function () {
+        Route::get('/vendor/dashboard', [DealController::class, 'dashboard'])->name('vendor.dashboard');
+        Route::get('/vendor', [DealController::class, 'dashboard']);
+        Route::get('/vendor/create-deal', [DealController::class, 'create'])->name('vendor.create-deal');
+        Route::get('/vendor/deals', [DealController::class, 'manageDeals'])->name('vendor.deals.index');
+        Route::get('/vendor/deals/create', [DealController::class, 'create'])->name('vendor.deals.create');
+        Route::post('/vendor/deals', [DealController::class, 'store'])->name('vendor.deals.store');
+        Route::get('/vendor/deals/{deal}', [DealController::class, 'viewDeal'])->name('vendor.deals.view');
+        Route::get('/vendor/deals/{deal}/edit', [DealController::class, 'editDeal'])->name('vendor.deals.edit');
+        Route::put('/vendor/deals/{deal}', [DealController::class, 'updateDeal'])->name('vendor.deals.update');
+        Route::get('/vendor/deals/{deal}/offers', [DealController::class, 'offers'])->name('vendor.deals.offers');
+        Route::post('/vendor/deals/{deal}/offers', [DealController::class, 'attachOffer'])->name('vendor.deals.offers.attach');
+        Route::put('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'updateOffer'])->name('vendor.deals.offers.update');
+        Route::delete('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'removeOffer'])->name('vendor.deals.offers.remove');
+
+        Route::get('/vendor/analytics', [VendorAnalyticsController::class, 'index'])->name('vendor.analytics');
+        Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
+        Route::get('/vendor/customers', [VendorAnalyticsController::class, 'customers'])->name('vendor.customers');
+        Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
+        Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');
+        Route::get('/vendor/reviews', [VendorAnalyticsController::class, 'reviews'])->name('vendor.reviews');
+    });
 
     Route::get('/vendor/settings', [VendorProfileController::class, 'edit'])->name('vendor.settings');
     Route::put('/vendor/settings', [VendorProfileController::class, 'updateSettings'])->name('vendor.settings.update');
     Route::put('/vendor-profiles/{vendorProfile}', [VendorProfileController::class, 'update'])->name('vendor-profiles.update');
-
-    Route::get('/vendor/analytics', [VendorAnalyticsController::class, 'index'])->name('vendor.analytics');
-    Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
-    Route::get('/vendor/customers', [VendorAnalyticsController::class, 'customers'])->name('vendor.customers');
-    Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
-    Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');
-    Route::get('/vendor/reviews', [VendorAnalyticsController::class, 'reviews'])->name('vendor.reviews');
 });
 
 // ——— Admin (auth) ———

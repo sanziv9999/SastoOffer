@@ -13,7 +13,8 @@ import {
   Tags,
   Shield,
   UserCheck,
-  ClipboardList
+  ClipboardList,
+  Lock
 } from 'lucide-react';
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar';
 import { cn } from '@/lib/utils';
@@ -65,11 +66,14 @@ const DashboardNav = () => {
   // Use browser URL; Inertia visits update window.location but not react-router history
   const url = typeof window !== 'undefined' ? window.location.pathname : '/';
   let user = authUser;
+  let vendorAccess: any = null;
 
   if (isInertia) {
     const page = usePage<any>();
     user = page.props.auth?.user || authUser;
+    vendorAccess = page.props.auth?.vendor_access ?? null;
   }
+  const vendorMenusLocked = user?.role === 'vendor' && !(vendorAccess?.is_unlocked ?? false);
 
   const isActive = (path: string) => {
     // Standardize URL and path to ignore query strings, hashes, and trailing slashes
@@ -95,6 +99,27 @@ const DashboardNav = () => {
         <SidebarMenu>
           {links.map((link) => {
             const active = isActive(link.path);
+            const isDisabled = label === 'Vendor' && vendorMenusLocked && link.path !== '/vendor/settings';
+
+            if (isDisabled) {
+              return (
+                <SidebarMenuItem key={link.path}>
+                  <SidebarMenuButton
+                    className="cursor-not-allowed opacity-55"
+                    title="Complete business details and wait for admin verification."
+                  >
+                    <span className="flex items-center justify-between w-full">
+                      <span className="flex items-center">
+                        <link.icon className="h-4 w-4 mr-2" />
+                        <span>{link.label}</span>
+                      </span>
+                      <Lock className="h-3.5 w-3.5" />
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+
             return (
               <SidebarMenuItem key={link.path}>
                 <SidebarMenuButton asChild className={cn(
@@ -121,6 +146,15 @@ const DashboardNav = () => {
 
   return (
     <>
+      {user?.role === 'vendor' && vendorMenusLocked && (
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <div className="mx-2 mb-2 rounded-md border border-amber-300/40 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Complete business details in Business Settings and wait for admin verification to unlock vendor menus.
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
       {user?.role === 'vendor' && renderLinks(vendorLinks, 'Vendor')}
       {user?.role === 'customer' && renderLinks(userLinks, 'Customer')}
       {user?.role === 'admin' && renderLinks(adminLinks, 'Admin')}

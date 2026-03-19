@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\VendorProfile;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,15 +36,38 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $authUser = $request->user();
+        $role = $authUser?->getRoleNames()->first() ?? 'customer';
+        $vendorAccess = null;
+
+        if ($authUser && $role === 'vendor') {
+            $vendorProfile = VendorProfile::query()
+                ->with('defaultAddress')
+                ->where('user_id', $authUser->id)
+                ->first();
+
+            $isComplete = (bool) ($vendorProfile?->hasCompletedBusinessDetails() ?? false);
+            $isVerified = (bool) ($vendorProfile?->isVerified() ?? false);
+
+            $vendorAccess = [
+                'has_profile' => (bool) $vendorProfile,
+                'is_complete' => $isComplete,
+                'is_verified' => $isVerified,
+                'is_unlocked' => $isComplete && $isVerified,
+                'verified_status' => $vendorProfile?->verified_status,
+            ];
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->getRoleNames()->first() ?? 'customer',
+                'user' => $authUser ? [
+                    'id' => $authUser->id,
+                    'name' => $authUser->name,
+                    'email' => $authUser->email,
+                    'role' => $role,
                 ] : null,
+                'vendor_access' => $vendorAccess,
             ],
             'categories' => \App\Models\Category::where('is_active', true)
                 ->orderBy('name')

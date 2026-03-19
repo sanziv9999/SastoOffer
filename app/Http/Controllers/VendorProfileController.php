@@ -96,6 +96,7 @@ class VendorProfileController extends Controller
 
         $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
         $cover = $vendorProfile->images?->firstWhere('attribute_name', 'cover')?->image_url;
+        $profileComplete = $vendorProfile->hasCompletedBusinessDetails();
 
         return Inertia::render('admin/AdminVendorView', [
             'vendor' => [
@@ -120,8 +121,12 @@ class VendorProfileController extends Controller
                     'email' => $vendorProfile->verifiedBy->email,
                 ] : null,
                 'created_at' => $vendorProfile->created_at?->toIso8601String(),
+                'updated_at' => $vendorProfile->updated_at?->toIso8601String(),
                 'logo' => $logo,
                 'cover' => $cover,
+                'business_hours' => $vendorProfile->business_hours,
+                'social_media' => $vendorProfile->social_media,
+                'is_profile_complete' => $profileComplete,
                 'category' => $vendorProfile->primaryCategory ? [
                     'id' => $vendorProfile->primaryCategory->id,
                     'name' => $vendorProfile->primaryCategory->name,
@@ -131,6 +136,8 @@ class VendorProfileController extends Controller
                     ] : null,
                 ] : null,
                 'default_address' => $vendorProfile->defaultAddress ? [
+                    'id' => $vendorProfile->defaultAddress->id,
+                    'label' => $vendorProfile->defaultAddress->label,
                     'province' => $vendorProfile->defaultAddress->province,
                     'district' => $vendorProfile->defaultAddress->district,
                     'municipality' => $vendorProfile->defaultAddress->municipality,
@@ -330,6 +337,18 @@ class VendorProfileController extends Controller
                 'attribute_name' => 'cover',
                 'image_url' => '/storage/' . $path,
             ]);
+        }
+
+        // If profile is complete and not yet verified, keep it in pending queue for admin review.
+        $vendorProfile->loadMissing('defaultAddress');
+        if (
+            $vendorProfile->hasCompletedBusinessDetails()
+            && in_array($vendorProfile->verified_status, ['pending', 'rejected'], true)
+        ) {
+            $vendorProfile->verified_status = 'pending';
+            $vendorProfile->verified_at = null;
+            $vendorProfile->verified_by_user_id = null;
+            $vendorProfile->save();
         }
 
         return redirect()->back()->with('success', 'Vendor profile updated successfully.');

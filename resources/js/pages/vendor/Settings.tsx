@@ -52,6 +52,31 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
     vendorProfile: any, 
     primaryCategories: any[]
 }) => {
+    const verificationStatus = String(vendorProfile?.verified_status || 'pending').toLowerCase();
+    const verificationMeta: Record<string, { label: string; badgeClass: string; note: string }> = {
+        verified: {
+            label: 'Verified',
+            badgeClass: 'bg-green-600 text-white hover:bg-green-600',
+            note: 'Your profile is approved. All vendor menus are unlocked.',
+        },
+        pending: {
+            label: 'Pending Verification',
+            badgeClass: 'bg-amber-500 text-white hover:bg-amber-500',
+            note: 'Your business details were submitted and are waiting for admin verification.',
+        },
+        rejected: {
+            label: 'Rejected',
+            badgeClass: 'bg-red-600 text-white hover:bg-red-600',
+            note: 'Admin rejected verification. Update details and save again to resubmit for review.',
+        },
+        suspended: {
+            label: 'Suspended',
+            badgeClass: 'bg-gray-700 text-white hover:bg-gray-700',
+            note: 'Your vendor account is suspended. Contact admin to reactivate access.',
+        },
+    };
+    const currentVerification = verificationMeta[verificationStatus] || verificationMeta.pending;
+
     const DEFAULT_SOCIAL_PLATFORMS = useMemo(
         () => (['instagram', 'facebook', 'tiktok'] as const),
         []
@@ -336,6 +361,18 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                     <Save className="ml-2 h-4 w-4" />
                 </Button>
             </div>
+
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-medium">Verification Status</p>
+                            <p className="text-sm text-muted-foreground">{currentVerification.note}</p>
+                        </div>
+                        <Badge className={currentVerification.badgeClass}>{currentVerification.label}</Badge>
+                    </div>
+                </CardContent>
+            </Card>
 
             <Tabs defaultValue="general" className="space-y-4">
                 <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
