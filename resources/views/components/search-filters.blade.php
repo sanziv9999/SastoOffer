@@ -14,23 +14,6 @@
         if (typeof searchQuery === 'undefined') searchQuery = '';
     "
 >
-    @if(!$isMobile)
-        <div class="mb-4">
-            <h3 class="font-medium mb-2">Search</h3>
-            <form @submit.prevent="applyFilters" class="flex">
-                <input 
-                    type="search" 
-                    x-model="searchQuery"
-                    placeholder="Search deals..." 
-                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 rounded-r-none"
-                />
-                <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 w-9 rounded-l-none shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-                </button>
-            </form>
-        </div>
-        <div class="shrink-0 bg-border h-[1px] w-full my-4"></div>
-    @endif
 
     {{-- Categories --}}
     <div x-data="{ open: true }" class="border-b">
