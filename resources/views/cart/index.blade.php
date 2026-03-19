@@ -137,31 +137,29 @@
                 </div>
             </template>
 
+            {{-- Empty Shopping Cart View --}}
             <template x-if="cart.items.length === 0">
-                <div class="flex min-h-[500px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted p-12 text-center bg-muted/10">
-                    <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-md mb-8 -rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-12 w-12 text-muted-foreground opacity-40"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                <div class="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted p-12 text-center bg-muted/10">
+                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-md mb-6 rotate-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-muted-foreground opacity-40"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
                     </div>
-                    <h2 class="text-3xl font-extrabold text-teal-950 mb-4">Your cart is currently empty</h2>
-                    <p class="mb-10 text-muted-foreground text-lg max-w-md mx-auto leading-relaxed">
-                        Looks like you haven't added any deals to your cart yet. Start exploring or check your wishlist!
+                    <h2 class="text-2xl font-bold text-teal-950 mb-3">Your cart is empty</h2>
+                    <p class="mb-8 text-muted-foreground text-sm max-w-md mx-auto">
+                        Looks like you haven't added anything to your cart yet. Browse our amazing deals and start saving today!
                     </p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <a 
-                            href="{{ route('search') }}"
-                            class="inline-flex items-center justify-center rounded-full text-base font-bold transition-all bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 h-14 px-10 hover:-translate-y-1 active:scale-95"
-                        >
-                            START SHOPPING
-                        </a>
-                        <a 
-                            href="{{ route('wishlist.index') }}"
-                            class="inline-flex items-center justify-center rounded-full text-base font-bold transition-all border-2 border-border bg-white shadow-sm hover:bg-muted h-14 px-10 active:scale-95"
-                        >
-                            VIEW WISHLIST
-                        </a>
-                    </div>
+                    <a 
+                        href="{{ route('search') }}"
+                        class="inline-flex items-center justify-center rounded-full text-sm font-bold transition-all bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 h-12 px-8 active:scale-95"
+                    >
+                        BROWSE DEALS
+                    </a>
                 </div>
             </template>
+        </div>
+
+        {{-- Featured Recommendations --}}
+        <div class="mt-20">
+            <x-featured-products :featuredDeals="$featuredDeals" />
         </div>
     </div>
 </x-layout>

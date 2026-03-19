@@ -62,6 +62,12 @@
                     </a>
                 </div>
             </div>
+
         @endif
+
+        {{-- Featured Recommendations --}}
+        <div class="mt-20">
+            <x-featured-products :featuredDeals="$featuredDeals" />
+        </div>
     </div>
 </x-layout>

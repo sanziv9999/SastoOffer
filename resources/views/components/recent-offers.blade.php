@@ -1,3 +1,6 @@
+@props(['recentOffers' => []])
+
+@if(count($recentOffers) > 0)
 <section class="py-8 bg-gray-50">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center mb-6">
@@ -23,41 +26,10 @@
                 class="flex gap-4 py-2 overflow-x-auto scrollbar-hide scroll-smooth cursor-grab" 
                 style="scrollbar-width: none; ms-overflow-style: none;"
             >
-                @php
-                    $recentDeals = [
-                        [
-                            'id' => '1',
-                            'title' => '50% Off Luxury 5-Course Dinner for Two',
-                            'originalPrice' => 200,
-                            'discountedPrice' => 100,
-                            'discountPercentage' => 50,
-                            'image' => 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format',
-                            'timeAgo' => '2 hours ago'
-                        ],
-                        [
-                            'id' => '2',
-                            'title' => 'Luxury Spa Day Package - 30% Off',
-                            'originalPrice' => 300,
-                            'discountedPrice' => 210,
-                            'discountPercentage' => 30,
-                            'image' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&auto=format',
-                            'timeAgo' => '5 hours ago'
-                        ],
-                        [
-                            'id' => '3',
-                            'title' => 'Guided Mountain Hiking Tour - BOGO',
-                            'originalPrice' => 150,
-                            'discountedPrice' => 75,
-                            'discountPercentage' => 50,
-                            'image' => 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&auto=format',
-                            'timeAgo' => '1 day ago'
-                        ],
-                        // ... more deals to fill
-                    ];
-                @endphp
-
-                @foreach($recentDeals as $deal)
-                    <x-deal-card :deal="$deal" class="flex-shrink-0 w-[280px]" />
+                @foreach($recentOffers as $deal)
+                    <div class="flex-shrink-0 w-[280px]">
+                        <x-deal-card :deal="$deal" />
+                    </div>
                 @endforeach
             </div>
             
@@ -78,3 +50,4 @@
         </div>
     </div>
 </section>
+@endif

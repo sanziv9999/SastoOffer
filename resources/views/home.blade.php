@@ -6,13 +6,13 @@
         <x-sliding-banner />
 
         {{-- Featured Deals Grid --}}
-        <x-featured-products />
+        <x-featured-products :featuredDeals="$featuredDeals" />
 
         {{-- Popular Categories / Multi Ads --}}
         <x-multi-ads-banner />
 
         {{-- Recent Offers Horizontal Scroll --}}
-        <x-recent-offers />
+        <x-recent-offers :recentOffers="$recentOffers" />
 
         {{-- Popular Brands --}}
         <x-brand-logos />

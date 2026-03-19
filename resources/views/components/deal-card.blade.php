@@ -7,6 +7,7 @@
     if (isset($deal['discountPercentage'])) {
         $discountPercentage = $deal['discountPercentage'];
     }
+    $featured = $featured || (isset($deal['featured']) && $deal['featured']);
 @endphp
 
 @if($compact)

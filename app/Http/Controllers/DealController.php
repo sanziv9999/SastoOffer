@@ -196,6 +196,31 @@ class DealController extends Controller
 
             $selectedPivot = $dealOfferType;
             $base = $deal->base_price !== null ? (float) $deal->base_price : null;
+
+            // Fetch Similar Deals (same category)
+            $similarDeals = DealOfferType::where('status', 'active')
+                ->where('id', '!=', $selectedPivot->id)
+                ->whereHas('deal', function($q) use ($deal) {
+                    $q->where('category_id', $deal->category_id);
+                })
+                ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+                ->take(8)
+                ->get();
+
+            // If not enough similar deals, pad with featured deals
+            if ($similarDeals->count() < 4) {
+                $featuredPadding = DealOfferType::where('status', 'active')
+                    ->where('id', '!=', $selectedPivot->id)
+                    ->whereNotIn('id', $similarDeals->pluck('id'))
+                    ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
+                    ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+                    ->take(8 - $similarDeals->count())
+                    ->get();
+                $similarDeals = $similarDeals->concat($featuredPadding);
+            }
+
+            $mappedSimilarDeals = $similarDeals->map(fn($offer) => $offer->toCardData());
+
             return view('deals.show', [
                 'deal' => [
                     'id'               => $deal->id,
@@ -245,6 +270,7 @@ class DealController extends Controller
                         'name' => $deal->category->name,
                     ] : null,
                 ],
+                'similarDeals' => $mappedSimilarDeals
             ]);
         } catch (\Exception $e) {
             // Log the exception for debugging

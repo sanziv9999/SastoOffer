@@ -20,9 +20,17 @@ class CartController extends Controller
         $mappedItems = $cartItems->map(fn($item) => $this->mapCartItem($item));
         $total = $mappedItems->sum(fn($i) => $i['discountedPrice'] * $i['quantity']);
 
+        $featuredDeals = DealOfferType::where('status', 'active')
+            ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
+            ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+            ->take(8)
+            ->get()
+            ->map(fn($offer) => $offer->toCardData());
+
         return view('cart.index', [
             'items' => $mappedItems,
-            'total' => $total
+            'total' => $total,
+            'featuredDeals' => $featuredDeals
         ]);
     }
 

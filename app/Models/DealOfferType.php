@@ -140,4 +140,48 @@ class DealOfferType extends Pivot
         }
         return [];
     }
+
+    /**
+     * Map this offer pivot row to a format compatible with x-deal-card.
+     */
+    public function toCardData(): array
+    {
+        $deal = $this->deal;
+        $discountPct = (float) ($this->savings_percent ?? $this->discount_percent ?? 0);
+        $address = $deal?->vendor?->defaultAddress;
+        
+        $isOfferFeatured = $this->displayTypes
+            ->contains(fn ($displayType) => mb_strtolower((string) $displayType->name) === 'featured');
+
+        $locationLabel = collect([
+            $address?->district,
+            $address?->tole,
+        ])->filter()->implode(', ');
+
+        return [
+            'id'                => $deal?->id,
+            'offerPivotId'      => $this->id,
+            'title'             => $deal?->title,
+            'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
+            'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+            'originalPrice'     => $this->original_price !== null ? (float) $this->original_price : 0,
+            'discountedPrice'   => $this->final_price !== null ? (float) $this->final_price : 0,
+            'discountPercentage'=> $discountPct > 0 ? round($discountPct) : null,
+            'image'             => $deal?->images->where('attribute_name', 'feature_photo')->first()?->image_url 
+                                   ?? $deal->images->first()?->image_url 
+                                   ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+            'featured'          => (bool) $isOfferFeatured,
+            'type'              => $this->offerType?->name ?? $this->offerType?->slug ?? 'offer',
+            'offerTypeTitle'    => $this->offerType?->display_name ?? null,
+            'locationLabel'     => $locationLabel ?: 'Location',
+            'location'          => [
+                'district' => $address?->district,
+                'tole' => $address?->tole,
+                'city' => $address?->district ?? 'Location',
+            ],
+            'cityName'          => $locationLabel ?: 'Location',
+            'timeLeft'          => optional($this->ends_at)?->diffForHumans() ?? 'soon',
+            'url'               => route('deals.show', $this->id)
+        ];
+    }
 }

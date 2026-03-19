@@ -20,40 +20,24 @@ class WishlistController extends Controller
 
         // Fetch real saved deals for the authenticated user
         $pivots = \App\Models\Wishlist::where('user_id', $user->id)
-            ->with(['dealOfferType.deal.category.parent', 'dealOfferType.deal.images', 'dealOfferType.deal.vendor.defaultAddress', 'dealOfferType.offerType'])
+            ->with(['dealOfferType.deal.category.parent', 'dealOfferType.deal.images', 'dealOfferType.deal.vendor.defaultAddress', 'dealOfferType.offerType', 'dealOfferType.displayTypes'])
             ->latest()
             ->get()
             ->pluck('dealOfferType')
             ->filter();
 
-        $mappedDeals = $pivots->map(function ($pivot) {
-            $deal = $pivot->deal;
-            $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
-            $address = $deal?->vendor?->defaultAddress;
-            $locationLabel = collect([
-                $address?->district,
-                $address?->tole,
-            ])->filter()->implode(', ');
+        $mappedDeals = $pivots->map(fn($pivot) => $pivot->toCardData());
 
-            return [
-                'id'                => $deal?->id,
-                'offerPivotId'      => $pivot->id,
-                'title'             => $deal?->title,
-                'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
-                'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
-                'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
-                'discountPercentage'=> $discountPct > 0 ? (int) $discountPct : null,
-                'image'             => $deal?->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
-                'featured'          => (bool) ($deal?->is_featured ?? false),
-                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
-                'locationLabel'     => $locationLabel ?: 'Location',
-                'cityName'          => $locationLabel ?: 'Location',
-                'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
-            ];
-        });
+        $featuredDeals = DealOfferType::where('status', 'active')
+            ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
+            ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+            ->take(8)
+            ->get()
+            ->map(fn($offer) => $offer->toCardData());
 
         return view('wishlist', [
-            'deals' => $mappedDeals
+            'deals' => $mappedDeals,
+            'featuredDeals' => $featuredDeals
         ]);
     }
 

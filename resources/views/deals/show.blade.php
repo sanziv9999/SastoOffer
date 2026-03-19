@@ -308,30 +308,23 @@
         </div>
 
         {{-- Similar Deals --}}
-        <div class="mt-20">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-bold">Similar Deals</h2>
-                <a href="/" class="text-primary hover:underline text-sm font-medium flex items-center">
-                    View all
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
-                </a>
+        @if(count($similarDeals) > 0)
+            <div class="mt-20">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold">Similar Deals</h2>
+                    <a href="{{ route('search', ['category' => $deal['category']['name'] ?? '']) }}" class="text-primary hover:underline text-sm font-medium flex items-center">
+                        View all
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    @foreach($similarDeals as $item)
+                        <x-deal-card :deal="$item" :compact="true" />
+                    @endforeach
+                </div>
             </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {{-- This would normally be dynamic, using a component for consistency --}}
-                @foreach(range(1, 4) as $index)
-                    @php
-                        // Just using mock data from elsewhere for demo if needed, 
-                        // but normally we'd pass $similarDeals
-                        $mockItem = [
-                            'id' => '1', 'title' => 'Related Product title goes here', 'image' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-                            'originalPrice' => 200, 'discountedPrice' => 100, 'categoryName' => 'Dining', 'timeLeft' => '2 days'
-                        ];
-                    @endphp
-                    <x-deal-card :deal="$mockItem" :compact="true" />
-                @endforeach
-            </div>
-        </div>
+        @endif
     </div>
     @endif
 </x-layout>
