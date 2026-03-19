@@ -25,7 +25,18 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const [formData, setFormData] = useState({ name: '', email: '', role: 'user' });
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'customer' });
+
+  const normalizeRole = (role?: string) => {
+    const raw = String(role || '').toLowerCase();
+    if (raw === 'user') return 'customer';
+    return raw || 'customer';
+  };
+
+  const roleLabel = (role?: string) => {
+    const normalized = normalizeRole(role);
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
 
   const filteredUsers = users?.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,24 +54,24 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
       id: Math.random().toString(36).substr(2, 9),
       name: formData.name,
       email: formData.email,
-      role: formData.role,
+      role: normalizeRole(formData.role),
       createdAt: new Date().toISOString()
     };
     setUsers([newUser, ...users]);
     setIsAddUserOpen(false);
-    setFormData({ name: '', email: '', role: 'user' });
+    setFormData({ name: '', email: '', role: 'customer' });
     toast.success('User added successfully');
   };
 
   const openEditModal = (user: any) => {
     setCurrentUser(user);
-    setFormData({ name: user.name, email: user.email, role: user.role });
+    setFormData({ name: user.name, email: user.email, role: normalizeRole(user.role) });
     setIsEditUserOpen(true);
   };
 
   const handleEditUser = () => {
     if (!currentUser) return;
-    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...formData } : u));
+    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...formData, role: normalizeRole(formData.role) } : u));
     setIsEditUserOpen(false);
     setCurrentUser(null);
     toast.success('User updated successfully');
@@ -102,7 +113,7 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
               <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="customer">Customer</SelectItem>
                   <SelectItem value="vendor">Vendor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -135,7 +146,7 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
               <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="customer">Customer</SelectItem>
                   <SelectItem value="vendor">Vendor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -190,8 +201,8 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
                       </td>
                       <td className="p-4 align-middle">{u.email}</td>
                       <td className="p-4 align-middle">
-                        <Badge variant={u.role === 'admin' ? 'default' : u.role === 'vendor' ? 'secondary' : 'outline'}>
-                          {u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'User'}
+                        <Badge variant={normalizeRole(u.role) === 'admin' ? 'default' : normalizeRole(u.role) === 'vendor' ? 'secondary' : 'outline'}>
+                          {roleLabel(u.role)}
                         </Badge>
                       </td>
                       <td className="p-4 align-middle">{(u.created_at || u.createdAt) ? new Date(u.created_at || u.createdAt).toLocaleDateString() : 'N/A'}</td>
