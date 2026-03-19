@@ -139,9 +139,62 @@ class VendorAnalyticsController extends Controller
 
     public function customers(Request $request)
     {
-        // Placeholder: no real customer table yet, return empty list
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            return \Inertia\Inertia::render('vendor/Customers', [
+                'customers' => [],
+            ]);
+        }
+
+        $orders = Order::where('vendor_id', $vendor->id)
+            ->with(['user.defaultAddress', 'items'])
+            ->latest()
+            ->get();
+
+        $customers = $orders
+            ->filter(fn (Order $order) => $order->user !== null)
+            ->groupBy('user_id')
+            ->map(function ($customerOrders) {
+                /** @var \Illuminate\Support\Collection<int, \App\Models\Order> $customerOrders */
+                $firstOrder = $customerOrders->first();
+                $customer = $firstOrder?->user;
+
+                if (! $customer) {
+                    return null;
+                }
+
+                $totalSpent = (float) $customerOrders->sum(fn (Order $order) => (float) $order->grand_total);
+                $totalOrders = $customerOrders->count();
+                $lastOrderAt = $customerOrders->max('created_at');
+
+                $distinctDeals = $customerOrders
+                    ->flatMap(fn (Order $order) => $order->items->pluck('deal_id'))
+                    ->filter()
+                    ->unique()
+                    ->count();
+
+                return [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'email' => $customer->email,
+                    'city' => $customer->defaultAddress?->district ?: 'N/A',
+                    'totalOrders' => $totalOrders,
+                    'totalSpent' => $totalSpent,
+                    'dealsPurchased' => $distinctDeals,
+                    // "Active" = purchased within the last 90 days.
+                    'status' => $lastOrderAt && $lastOrderAt->gte(now()->subDays(90)) ? 'active' : 'inactive',
+                    'rating' => null,
+                    'lastOrderAt' => $lastOrderAt?->toIso8601String(),
+                ];
+            })
+            ->filter()
+            ->sortByDesc('lastOrderAt')
+            ->values();
+
         return \Inertia\Inertia::render('vendor/Customers', [
-            'customers' => [],
+            'customers' => $customers,
         ]);
     }
 

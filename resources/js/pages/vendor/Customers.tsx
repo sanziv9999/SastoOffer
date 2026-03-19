@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Mail, Phone, MapPin, Star } from 'lucide-react';
+import { Search, Mail, MapPin } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface CustomersProps {
@@ -16,7 +15,8 @@ const Customers = ({ customers }: CustomersProps) => {
 
   const filtered = (customers || []).filter((c: any) =>
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -67,7 +67,7 @@ const Customers = ({ customers }: CustomersProps) => {
                   <th className="h-10 px-4 text-left font-medium hidden md:table-cell">Contact</th>
                   <th className="h-10 px-4 text-left font-medium">Orders</th>
                   <th className="h-10 px-4 text-left font-medium">Spent</th>
-                  <th className="h-10 px-4 text-left font-medium hidden sm:table-cell">Rating</th>
+                  <th className="h-10 px-4 text-left font-medium hidden sm:table-cell">Deals</th>
                   <th className="h-10 px-4 text-left font-medium">Status</th>
                 </tr>
               </thead>
@@ -86,9 +86,7 @@ const Customers = ({ customers }: CustomersProps) => {
                     </td>
                     <td className="p-4 font-medium">{customer.totalOrders || 0}</td>
                     <td className="p-4 font-medium">Rs. {customer.totalSpent?.toFixed(2) || '0.00'}</td>
-                    <td className="p-4 hidden sm:table-cell">
-                      <div className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />{customer.rating || 'N/A'}</div>
-                    </td>
+                    <td className="p-4 hidden sm:table-cell font-medium">{customer.dealsPurchased || 0}</td>
                     <td className="p-4">
                       <Badge variant={customer.status === 'active' ? 'default' : 'secondary'} className={customer.status === 'active' ? 'bg-green-500' : ''}>
                         {customer.status}
