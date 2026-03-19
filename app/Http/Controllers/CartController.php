@@ -126,7 +126,8 @@ class CartController extends Controller
             'image' => $deal->images->where('attribute_name', 'feature_photo')->first()?->image_url 
                        ?? $deal->images->first()?->image_url 
                        ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200',
-            'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer'
+            'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer',
+            'url' => route('deals.show', $pivot->id)
         ];
     }
 }

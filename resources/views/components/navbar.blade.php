@@ -232,11 +232,11 @@
 
                                     <template x-for="item in cart.items" :key="item.id">
                                         <div class="p-4 border-b hover:bg-muted/10 flex gap-3 group transition-colors relative">
-                                            <div class="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0">
+                                            <a :href="item.url" class="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0">
                                                 <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
-                                            </div>
+                                            </a>
                                             <div class="flex-1 min-w-0 pr-6">
-                                                <h4 class="text-sm font-semibold text-foreground line-clamp-1" x-text="item.title"></h4>
+                                                <a :href="item.url" class="text-sm font-semibold text-foreground line-clamp-1 hover:text-primary transition-colors" x-text="item.title"></a>
                                                 <div class="flex items-center justify-between mt-2">
                                                     {{-- Mini Quantity Toggle --}}
                                                     <div class="flex items-center gap-2 bg-muted/40 p-1 rounded-full border border-border/50">

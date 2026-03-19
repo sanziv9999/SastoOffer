@@ -45,13 +45,13 @@
                                 class="bg-white rounded-2xl border p-4 sm:p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row gap-6 relative"
                                 :class="updating === item.id ? 'opacity-50 pointer-events-none' : ''"
                             >
-                                <div class="h-24 w-full sm:w-32 bg-muted rounded-xl overflow-hidden shrink-0 shadow-inner">
+                                <a :href="item.url" class="h-24 w-full sm:w-32 bg-muted rounded-xl overflow-hidden shrink-0 shadow-inner">
                                     <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
-                                </div>
+                                </a>
                                 <div class="flex-1 flex flex-col justify-between">
                                     <div class="flex justify-between items-start gap-4">
                                         <div>
-                                            <h3 class="text-lg font-bold text-teal-950 hover:text-primary transition-colors cursor-pointer" x-text="item.title"></h3>
+                                            <a :href="item.url" class="text-lg font-bold text-teal-950 hover:text-primary transition-colors cursor-pointer" x-text="item.title"></a>
                                             <p class="text-sm text-primary font-medium mt-1" x-text="item.typeLabel"></p>
                                         </div>
                                         <button @click="wrappedRemoveItem(item.id)" class="text-muted-foreground/40 hover:text-red-500 transition-colors p-1">
