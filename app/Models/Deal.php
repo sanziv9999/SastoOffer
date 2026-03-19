@@ -128,6 +128,17 @@ class Deal extends Model
         return $this->hasDisplayAs('new_arrival');
     }
 
+    /**
+     * Featured image URL (prefers feature_photo, then first by sort_order).
+     * Works on an already-loaded images relation to avoid extra queries.
+     */
+    public function featuredImageUrl(string $fallback = ''): string
+    {
+        $images = $this->relationLoaded('images') ? $this->images : $this->images()->get();
+        $feature = $images->firstWhere('attribute_name', 'feature_photo') ?? $images->first();
+        return $feature?->image_url ?? $fallback;
+    }
+
     // ─── Accessors ───────────────────────────────────────────
 
     /**

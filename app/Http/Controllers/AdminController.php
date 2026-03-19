@@ -112,7 +112,7 @@ class AdminController extends Controller
                     'originalPrice' => $primaryOffer['originalPrice'] ?? $base,
                     'endDate' => $primaryOffer['endDate'] ?? null,
                     'offers' => $offers,
-                    'image' => $deal->images->first()?->image_url,
+                    'image' => $deal->featuredImageUrl(),
                 ];
             })
             ->withQueryString();
@@ -162,7 +162,7 @@ class AdminController extends Controller
                     'originalPrice' => $offer ? (float) $offer->original_price : $base,
                     'createdAt' => $deal->created_at?->toIso8601String(),
                     'type' => $offerType?->name ?? $offerType?->slug,
-                    'image' => $deal->images->first()?->image_url,
+                    'image' => $deal->featuredImageUrl(),
                 ];
             })
             ->withQueryString();
@@ -195,7 +195,7 @@ class AdminController extends Controller
             ],
             'shortDesc' => $deal->short_description,
             'description' => $deal->long_description,
-            'image' => $deal->images->first()?->image_url,
+            'image' => $deal->featuredImageUrl(),
             'offers' => $deal->offerPivots->map(function ($pivot) {
                 return [
                     'id' => $pivot->id,
@@ -240,7 +240,7 @@ class AdminController extends Controller
                     'offerTypeTitle' => $offerType?->display_name,
                     'discountedPrice' => $offer ? (float) $offer->final_price : $base,
                     'originalPrice' => $offer ? (float) $offer->original_price : $base,
-                    'image' => $deal->images->first()?->image_url,
+                    'image' => $deal->featuredImageUrl(),
                 ];
             })
             ->sortBy(fn ($d) => $d['rank'] ?? 999999)

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage, router } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ type LocalDealImage = {
 
 const CreateDeal = () => {
   const { categories } = usePage().props as any;
-  const { data, setData, post, processing, transform } = useForm({
+  const { data, setData, processing } = useForm({
     title: '',
     shortDesc: '',
     description: '',
@@ -52,10 +52,8 @@ const CreateDeal = () => {
     locationAddress: '',
     redemptionInstructions: '',
     termsConditions: '',
-    images: [] as File[],
-    image_order: '',
-    featured_image_key: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const [tagInput, setTagInput] = useState('');
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
@@ -163,23 +161,34 @@ const CreateDeal = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
 
     const orderedImages = [...dealImages];
-    const newFiles = orderedImages.map((img) => img.file);
-    const imageOrder = orderedImages.map((_, index) => `new:${index}`);
+    const imageOrder = orderedImages.map((_, i) => `new:${i}`);
     const featuredIndex = orderedImages.findIndex((img) => img.id === featuredImageId);
     const featuredKey = featuredIndex >= 0 ? `new:${featuredIndex}` : (imageOrder[0] ?? '');
 
-    transform((form) => ({
-      ...form,
-      images: newFiles,
-      image_order: JSON.stringify(imageOrder),
-      featured_image_key: featuredKey,
-    }));
+    const fd = new FormData();
+    fd.append('title', data.title);
+    fd.append('shortDesc', data.shortDesc);
+    fd.append('description', data.description);
+    fd.append('categoryId', String(data.categoryId));
+    data.tags.forEach((t, i) => fd.append(`tags[${i}]`, t));
+    fd.append('basePrice', String(data.basePrice));
+    fd.append('maxQuantity', String(data.maxQuantity));
+    fd.append('status', data.status);
+    fd.append('locationAddress', data.locationAddress ?? '');
+    fd.append('redemptionInstructions', data.redemptionInstructions ?? '');
+    fd.append('termsConditions', data.termsConditions ?? '');
+    orderedImages.forEach((img, i) => fd.append(`images[${i}]`, img.file));
+    fd.append('image_order', JSON.stringify(imageOrder));
+    fd.append('featured_image_key', featuredKey);
 
-    post('/vendor/deals', {
+    router.post('/vendor/deals', fd, {
       forceFormData: true,
       onSuccess: () => toast.success('Deal created and published successfully!'),
+      onFinish: () => setSubmitting(false),
     });
   };
 
@@ -397,8 +406,8 @@ const CreateDeal = () => {
 
         <div className="flex justify-end gap-3 pb-8">
           <Button type="button" variant="outline" asChild><Link href="/vendor/deals">Cancel</Link></Button>
-          <Button type="submit" size="lg" disabled={processing} className="px-8 shadow-lg shadow-primary/20">
-            {processing ? (
+          <Button type="submit" size="lg" disabled={submitting} className="px-8 shadow-lg shadow-primary/20">
+            {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Sending...

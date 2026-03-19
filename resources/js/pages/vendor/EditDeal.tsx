@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage, router } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ type DealImageItem = {
 const EditDeal = () => {
   const { categories, deal: existingDeal } = usePage().props as any;
 
-  const { data, setData, put, processing, transform } = useForm({
+  const { data, setData } = useForm({
     title: existingDeal?.title || '',
     shortDesc: existingDeal?.shortDesc || '',
     description: existingDeal?.description || '',
@@ -45,10 +45,8 @@ const EditDeal = () => {
     maxQuantity: existingDeal?.maxQuantity || '',
     status: existingDeal?.status || 'active',
     requestFeatured: existingDeal?.requestFeatured || false,
-    images: [] as File[],
-    image_order: '',
-    featured_image_key: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
   // Existing images from DB
   const existingImages: any[] = existingDeal?.images || [];
@@ -169,6 +167,9 @@ const EditDeal = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+
     const ordered = [...dealImages].slice(0, 8);
     const orderKeys: string[] = [];
     const newFiles: File[] = [];
@@ -195,16 +196,25 @@ const EditDeal = () => {
       featuredKey = orderKeys[0] ?? '';
     }
 
-    transform((form) => ({
-      ...form,
-      images: newFiles,
-      image_order: JSON.stringify(orderKeys),
-      featured_image_key: featuredKey,
-    }));
+    const fd = new FormData();
+    fd.append('_method', 'PUT');
+    fd.append('title', data.title);
+    fd.append('shortDesc', data.shortDesc);
+    fd.append('description', data.description);
+    fd.append('categoryId', String(data.categoryId));
+    data.tags.forEach((t, i) => fd.append(`tags[${i}]`, t));
+    fd.append('basePrice', String(data.basePrice));
+    fd.append('maxQuantity', String(data.maxQuantity));
+    fd.append('status', data.status);
+    fd.append('requestFeatured', data.requestFeatured ? '1' : '0');
+    newFiles.forEach((file, i) => fd.append(`images[${i}]`, file));
+    fd.append('image_order', JSON.stringify(orderKeys));
+    fd.append('featured_image_key', featuredKey);
 
-    put(`/vendor/deals/${existingDeal.id}`, {
+    router.post(`/vendor/deals/${existingDeal.id}`, fd, {
       forceFormData: true,
       onSuccess: () => toast.success('Deal updated successfully!'),
+      onFinish: () => setSubmitting(false),
     });
   };
 
@@ -439,8 +449,8 @@ const EditDeal = () => {
 
         <div className="flex justify-end gap-3 pb-8">
           <Button type="button" variant="outline" asChild><Link href="/vendor/deals">Cancel</Link></Button>
-          <Button type="submit" size="lg" disabled={processing} className="px-8 shadow-lg shadow-primary/20">
-            {processing ? (
+          <Button type="submit" size="lg" disabled={submitting} className="px-8 shadow-lg shadow-primary/20">
+            {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

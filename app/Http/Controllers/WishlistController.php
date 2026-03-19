@@ -37,7 +37,7 @@ class WishlistController extends Controller
 
         return view('wishlist', [
             'deals' => $mappedDeals,
-            'featuredDeals' => $featuredDeals
+            'featuredDeals' => $featuredDeals,
         ]);
     }
 

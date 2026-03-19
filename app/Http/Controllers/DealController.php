@@ -63,7 +63,7 @@ class DealController extends Controller
                     'quantitySold'   => $quantitySold,
                     'maxQuantity'    => $deal->total_inventory,
                     'endDate'        => $offer?->ends_at?->toIso8601String(),
-                    'image'          => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                    'image'          => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
                 ];
             });
 
@@ -112,7 +112,7 @@ class DealController extends Controller
                     'quantitySold' => 0,
                     'maxQuantity' => $deal->total_inventory,
                     'endDate' => null,
-                    'image' => $deal->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+                    'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
                 ];
             });
 

@@ -238,7 +238,7 @@ class VendorProfileController extends Controller
                 'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
                 'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
                 'discountPercentage'=> $discountPct > 0 ? (int) $discountPct : null,
-                'image'             => $deal?->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+                'image'             => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
                 'featured'          => (bool) ($deal?->is_featured ?? false),
                 'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
                 'locationLabel'     => $locationLabel ?: 'Location',

@@ -92,7 +92,40 @@ class PageController extends Controller
             default        => $rawOffers->sortByDesc(fn ($p) => optional($p->deal)->created_at)->values(),
         };
 
-        $mappedDeals = $rawOffers->take(60)->map(fn(DealOfferType $pivot) => $pivot->toCardData());
+        $mappedDeals = $rawOffers->take(60)->map(function (DealOfferType $pivot) {
+            $deal = $pivot->deal;
+            $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
+            $address = $deal?->vendor?->defaultAddress;
+            $isOfferFeatured = $pivot->displayTypes
+                ->contains(fn ($displayType) => mb_strtolower((string) $displayType->name) === 'featured');
+            $locationLabel = collect([
+                $address?->district,
+                $address?->tole,
+            ])->filter()->implode(', ');
+
+            return [
+                'id'                => $deal?->id,
+                'offerPivotId'      => $pivot->id,
+                'title'             => $deal?->title,
+                'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
+                'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+                'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
+                'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
+                'discountPercentage'=> $discountPct > 0 ? $discountPct : null,
+                'image'             => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
+                'featured'          => (bool) $isOfferFeatured,
+                'type'              => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? 'offer',
+                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                'locationLabel'     => $locationLabel ?: 'Location',
+                'location'          => [
+                    'district' => $address?->district,
+                    'tole' => $address?->tole,
+                    'city' => $address?->district ?? 'Location',
+                ],
+                'cityName'          => $locationLabel ?: 'Location',
+                'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+            ];
+        });
 
         $availableMinPrice = 0;
         $availableMaxPrice = (int) ceil($mappedDeals->max('discountedPrice') ?? 100000);
