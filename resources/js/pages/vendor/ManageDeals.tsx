@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Package } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
@@ -48,7 +47,6 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                 <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Expires</th>
                 <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
               </tr>
             </thead>
@@ -74,9 +72,6 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     </Badge>
                   </td>
                   <td className="p-4 align-middle">{deal.quantitySold || 0} sold</td>
-                  <td className="p-4 align-middle">
-                    {deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'N/A'}
-                  </td>
                   <td className="p-4 align-middle text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" asChild>
