@@ -7,7 +7,6 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -39,13 +38,16 @@ class CheckoutController extends Controller
                 $order = Order::create([
                     'user_id' => $user->id,
                     'vendor_id' => $vendorId ?: null,
-                    'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+                    'order_number' => 'TMP-' . uniqid('', true),
                     'status' => 'pending',
                     'currency_code' => 'NPR',
                     'subtotal' => $subtotal,
                     'discount_total' => $discountTotal,
                     'tax_total' => 0,
                     'grand_total' => $subtotal,
+                ]);
+                $order->update([
+                    'order_number' => 'ORD-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
                 ]);
 
                 foreach ($items as $cartItem) {
@@ -119,6 +121,8 @@ class CheckoutController extends Controller
                     'itemCount' => $order->items->sum('quantity'),
                     'items' => $order->items->map(fn (OrderItem $item) => [
                         'id' => $item->id,
+                        'dealId' => $item->deal_id,
+                        'dealOfferTypeId' => $item->deal_offer_type_id,
                         'title' => $item->title,
                         'quantity' => $item->quantity,
                         'unitPrice' => (float) $item->unit_price,

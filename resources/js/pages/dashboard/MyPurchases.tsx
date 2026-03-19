@@ -1,14 +1,17 @@
-import Link from '@/components/Link';
 import { ShoppingBag, Calendar, Tag, Package, Clock, CheckCircle, XCircle, CreditCard, Receipt, ChevronDown, ChevronUp, Store, Banknote } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState } from 'react';
 
 interface OrderItem {
   id: number;
+  dealId: number | null;
+  dealOfferTypeId: number | null;
   title: string;
   quantity: number;
   unitPrice: number;
@@ -39,6 +42,8 @@ interface MyPurchasesProps {
   purchases: Order[];
 }
 
+type SelectedOrderItem = OrderItem & { dealUrl: string | null };
+
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-800', icon: <Clock className="h-3 w-3" /> },
   paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800', icon: <CreditCard className="h-3 w-3" /> },
@@ -54,6 +59,8 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const totalSpent = orders.reduce((sum, o) => sum + o.grandTotal, 0);
   const totalSaved = orders.reduce((sum, o) => sum + o.discountTotal, 0);
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<SelectedOrderItem | null>(null);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
 
   const toggleExpand = (orderId: number) => {
     setExpandedOrders(prev => {
@@ -64,6 +71,21 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   };
 
   const hasDiscount = (item: OrderItem) => item.originalPrice > item.unitPrice;
+  const getDealUrl = (item: OrderItem) => (
+    item.dealOfferTypeId
+      ? route('deals.show', item.dealOfferTypeId)
+      : item.dealId
+        ? route('deals.show.by-deal', item.dealId)
+        : null
+  );
+
+  const openItemModal = (item: OrderItem) => {
+    setSelectedItem({
+      ...item,
+      dealUrl: getDealUrl(item),
+    });
+    setIsItemModalOpen(true);
+  };
 
   const renderOrderCard = (order: Order) => {
     const cfg = statusConfig[order.status] || statusConfig.pending;
@@ -121,14 +143,30 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 p-3 px-4">
                   {item.image ? (
-                    <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover flex-shrink-0 border" />
+                    <button
+                      type="button"
+                      onClick={() => openItemModal(item)}
+                      className="flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover border hover:opacity-90 transition-opacity" />
+                    </button>
                   ) : (
-                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openItemModal(item)}
+                      className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
+                    >
                       <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                    </div>
+                    </button>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.title}</p>
+                    <button
+                      type="button"
+                      onClick={() => openItemModal(item)}
+                      className="text-sm font-medium truncate block hover:text-primary transition-colors text-left max-w-full"
+                    >
+                      {item.title}
+                    </button>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{item.offerType}</span>
                       <span className="text-muted-foreground/40">·</span>
@@ -269,6 +307,64 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
           {completedOrders.length > 0 ? completedOrders.map(renderOrderCard) : renderEmpty('No completed orders yet.')}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="pr-8">{selectedItem?.title ?? 'Deal details'}</DialogTitle>
+            <DialogDescription>
+              Offer: {selectedItem?.offerType ?? 'Offer'} · Quantity: {selectedItem?.quantity ?? 0}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedItem?.image ? (
+              <img
+                src={selectedItem.image}
+                alt={selectedItem.title}
+                className="w-full h-48 object-cover rounded-lg border"
+              />
+            ) : (
+              <div className="w-full h-48 rounded-lg bg-muted flex items-center justify-center border">
+                <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+
+            <div className="rounded-lg border p-3 space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Unit Price</span>
+                <span className="font-medium">Rs. {selectedItem?.unitPrice?.toFixed(2) ?? '0.00'}</span>
+              </div>
+              {selectedItem && selectedItem.originalPrice > selectedItem.unitPrice && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Original Price</span>
+                  <span className="line-through text-muted-foreground">Rs. {selectedItem.originalPrice.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Line Total</span>
+                <span className="font-semibold">Rs. {selectedItem?.lineTotal?.toFixed(2) ?? '0.00'}</span>
+              </div>
+            </div>
+
+            {selectedItem?.dealUrl ? (
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setIsItemModalOpen(false);
+                  window.location.href = selectedItem.dealUrl!;
+                }}
+              >
+                Open Full Deal Page
+              </Button>
+            ) : (
+              <Button className="w-full" disabled>
+                Deal page not available
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

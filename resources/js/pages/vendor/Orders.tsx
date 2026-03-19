@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +11,8 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 
 interface OrderItemDetail {
   id: number;
+  dealId: number | null;
+  dealOfferTypeId: number | null;
   title: string;
   quantity: number;
   unitPrice: number;
@@ -126,7 +129,17 @@ const Orders = ({ orders }: OrdersProps) => {
           <div className="divide-y">
             {order.items?.map((item) => (
               <div key={item.id} className="flex items-center gap-3 px-5 py-3">
-                {item.image ? (
+                {item.dealId ? (
+                  <Link href={route('vendor.deals.view', item.dealId)} className="flex-shrink-0">
+                    {item.image ? (
+                      <img src={item.image} alt={item.title} className="h-10 w-10 rounded-lg object-cover border hover:opacity-90 transition-opacity" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </Link>
+                ) : item.image ? (
                   <img src={item.image} alt={item.title} className="h-10 w-10 rounded-lg object-cover flex-shrink-0 border" />
                 ) : (
                   <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
@@ -134,7 +147,13 @@ const Orders = ({ orders }: OrdersProps) => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.title}</p>
+                  {item.dealId ? (
+                    <Link href={route('vendor.deals.view', item.dealId)} className="text-sm font-medium truncate block hover:text-primary transition-colors">
+                      {item.title}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium truncate">{item.title}</p>
+                  )}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{item.offerType}</span>
                     <span className="text-muted-foreground/40">·</span>

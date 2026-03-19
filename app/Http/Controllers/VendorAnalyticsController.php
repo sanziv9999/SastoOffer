@@ -94,6 +94,8 @@ class VendorAnalyticsController extends Controller
                     'date' => $order->created_at?->toIso8601String(),
                     'items' => $order->items->map(fn (\App\Models\OrderItem $item) => [
                         'id' => $item->id,
+                        'dealId' => $item->deal_id,
+                        'dealOfferTypeId' => $item->deal_offer_type_id,
                         'title' => $item->title,
                         'quantity' => $item->quantity,
                         'unitPrice' => (float) $item->unit_price,
