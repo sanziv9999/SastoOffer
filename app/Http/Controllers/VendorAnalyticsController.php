@@ -65,23 +65,29 @@ class VendorAnalyticsController extends Controller
 
     public function orders(Request $request)
     {
-        // Placeholder: derive simple orders from deals until real orders exist
-        $deals = $this->getVendorDeals();
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
 
-        $orders = $deals->flatMap(function ($deal) {
-            if (($deal['quantitySold'] ?? 0) <= 0) {
-                return [];
-            }
+        if (!$vendor) {
+            return \Inertia\Inertia::render('vendor/Orders', ['orders' => []]);
+        }
 
-            return [[
-                'id'       => 'DEAL-' . $deal['id'],
-                'customer' => 'Customer',
-                'deal'     => $deal['title'],
-                'quantity' => $deal['quantitySold'],
-                'total'    => ($deal['quantitySold'] ?? 0) * ($deal['discountedPrice'] ?? 0),
-                'status'   => 'completed',
-            ]];
-        })->values();
+        $orders = \App\Models\Order::where('vendor_id', $vendor->id)
+            ->with(['user', 'items'])
+            ->latest()
+            ->get()
+            ->map(function (\App\Models\Order $order) {
+                return [
+                    'id' => $order->order_number,
+                    'customer' => $order->user?->name ?? 'Customer',
+                    'deal' => $order->items->pluck('title')->implode(', '),
+                    'quantity' => $order->items->sum('quantity'),
+                    'total' => (float) $order->grand_total,
+                    'status' => $order->status,
+                    'date' => $order->created_at?->toIso8601String(),
+                ];
+            })
+            ->values();
 
         return \Inertia\Inertia::render('vendor/Orders', [
             'orders' => $orders,

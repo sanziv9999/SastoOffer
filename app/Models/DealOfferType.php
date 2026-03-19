@@ -167,9 +167,7 @@ class DealOfferType extends Pivot
             'originalPrice'     => $this->original_price !== null ? (float) $this->original_price : 0,
             'discountedPrice'   => $this->final_price !== null ? (float) $this->final_price : 0,
             'discountPercentage'=> $discountPct > 0 ? round($discountPct) : null,
-            'image'             => $deal?->images->where('attribute_name', 'feature_photo')->first()?->image_url 
-                                   ?? $deal->images->first()?->image_url 
-                                   ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop',
+            'image'             => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
             'featured'          => (bool) $isOfferFeatured,
             'type'              => $this->offerType?->name ?? $this->offerType?->slug ?? 'offer',
             'offerTypeTitle'    => $this->offerType?->display_name ?? null,

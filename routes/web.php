@@ -14,12 +14,13 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
 use App\Http\Controllers\Admin\DisplayTypeCrudController;
+use App\Http\Controllers\CheckoutController;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/search', [PageController::class, 'search'])->name('search');
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
-Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
+Route::get('/checkout', fn () => redirect()->route('cart.index'))->name('checkout');
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
 Route::post('/wishlist/toggle/{offerPivotId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
@@ -30,7 +31,8 @@ Route::get('/cart/summary', [CartController::class, 'getSummary'])->name('cart.s
 Route::middleware(['auth'])->group(function () {
     Route::put('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
-    Route::get('/checkout', function() { return redirect()->route('cart.index'); })->name('checkout');
+    Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.place');
+    Route::get('/order/{order}/confirmation', [CheckoutController::class, 'confirmation'])->name('order.confirmation');
 });
 
 // Deal detail (public): support both /deals/{id} and /deal/{id}
@@ -57,7 +59,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
-    Route::get('/dashboard/purchases', [DashboardController::class, 'purchases'])->name('dashboard.purchases');
+    Route::get('/dashboard/purchases', [CheckoutController::class, 'myOrders'])->name('dashboard.purchases');
     Route::get('/dashboard/purchases/{id}', [DashboardController::class, 'voucherDetail'])->name('dashboard.purchases.voucher');
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])->name('dashboard.reviews');
     Route::get('/dashboard/reviews/edit/{id}', [DashboardController::class, 'editReview'])->name('dashboard.reviews.edit');

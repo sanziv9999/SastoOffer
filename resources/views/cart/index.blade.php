@@ -116,16 +116,19 @@
                                 </div>
                             </div>
 
-                            <a 
-                                href="{{ route('checkout') }}"
-                                class="group relative inline-flex w-full items-center justify-center rounded-xl bg-teal-950 text-white text-sm font-semibold shadow-lg hover:bg-teal-900 h-12 px-6 transition-all hover:translate-y-[-1px] active:translate-y-[1px] overflow-hidden"
-                            >
-                                <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                <span class="relative flex items-center gap-2">
-                                    PROCEED TO CHECKOUT
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="m9 18 6-6-6-6"></path></svg>
-                                </span>
-                            </a>
+                            <form method="POST" action="{{ route('checkout.place') }}">
+                                @csrf
+                                <button 
+                                    type="submit"
+                                    class="group relative inline-flex w-full items-center justify-center rounded-xl bg-teal-950 text-white text-sm font-semibold shadow-lg hover:bg-teal-900 h-12 px-6 transition-all hover:translate-y-[-1px] active:translate-y-[1px] overflow-hidden"
+                                >
+                                    <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                    <span class="relative flex items-center gap-2">
+                                        PROCEED TO CHECKOUT
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="m9 18 6-6-6-6"></path></svg>
+                                    </span>
+                                </button>
+                            </form>
                             
                             <div class="mt-6 flex flex-col items-center">
                                 <p class="text-center text-xs text-muted-foreground opacity-60">
