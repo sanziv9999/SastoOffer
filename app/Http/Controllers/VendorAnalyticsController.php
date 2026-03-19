@@ -233,9 +233,66 @@ class VendorAnalyticsController extends Controller
 
     public function reviews(Request $request)
     {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            return \Inertia\Inertia::render('vendor/Reviews', ['reviews' => [], 'deals' => []]);
+        }
+
+        $vendorReviews = \App\Models\Review::where('reviewable_type', \App\Models\VendorProfile::class)
+            ->where('reviewable_id', $vendor->id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        $dealOfferIds = \App\Models\DealOfferType::whereHas('deal', fn ($q) => $q->where('vendor_id', $vendor->id))
+            ->pluck('id');
+
+        $dealReviews = \App\Models\Review::where('reviewable_type', \App\Models\DealOfferType::class)
+            ->whereIn('reviewable_id', $dealOfferIds)
+            ->with(['user', 'reviewable.deal'])
+            ->latest()
+            ->get();
+
+        $allReviews = $vendorReviews->concat($dealReviews)
+            ->sortByDesc('created_at')
+            ->values()
+            ->map(function (\App\Models\Review $r) {
+                $dealTitle = null;
+                $dealId = null;
+
+                if ($r->reviewable_type === \App\Models\DealOfferType::class) {
+                    $dealTitle = $r->reviewable?->deal?->title ?? 'Unknown Deal';
+                    $dealId = $r->reviewable?->deal_id;
+                } else {
+                    $dealTitle = 'Vendor Profile';
+                }
+
+                return [
+                    'id' => (string) $r->id,
+                    'customerName' => $r->user?->name ?? 'Anonymous',
+                    'rating' => $r->rating,
+                    'comment' => $r->comment,
+                    'dealId' => $dealId ? (string) $dealId : null,
+                    'dealTitle' => $dealTitle,
+                    'type' => $r->reviewable_type === \App\Models\VendorProfile::class ? 'vendor' : 'deal',
+                    'createdAt' => $r->created_at->toIso8601String(),
+                    'merchantReply' => $r->vendor_reply ? [
+                        'comment' => $r->vendor_reply,
+                        'createdAt' => $r->vendor_replied_at?->toIso8601String(),
+                    ] : null,
+                ];
+            });
+
+        $deals = \App\Models\Deal::where('vendor_id', $vendor->id)
+            ->select('id', 'title')
+            ->get()
+            ->map(fn ($d) => ['id' => (string) $d->id, 'title' => $d->title]);
+
         return \Inertia\Inertia::render('vendor/Reviews', [
-            'reviews' => [],
-            'deals' => [],
+            'reviews' => $allReviews,
+            'deals' => $deals,
         ]);
     }
 }

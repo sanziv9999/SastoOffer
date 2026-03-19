@@ -254,11 +254,32 @@ class VendorProfileController extends Controller
             ];
         });
 
+        $vendorReviews = $vendorProfile->reviews()
+            ->with('user')
+            ->latest()
+            ->get()
+            ->map(fn (\App\Models\Review $r) => [
+                'id' => $r->id,
+                'userName' => $r->user?->name ?? 'Anonymous',
+                'rating' => $r->rating,
+                'comment' => $r->comment,
+                'vendorReply' => $r->vendor_reply,
+                'vendorRepliedAt' => $r->vendor_replied_at?->toIso8601String(),
+                'createdAt' => $r->created_at->toIso8601String(),
+                'isOwn' => auth()->check() && (int) $r->user_id === (int) auth()->id(),
+            ]);
+
+        $userVendorReview = auth()->check()
+            ? $vendorProfile->reviews()->where('user_id', auth()->id())->first()?->only(['id', 'rating', 'comment'])
+            : null;
+
         return view('vendor-profile.show', [
             'vendor' => $vendorProfile,
             'logo' => $logo,
             'cover' => $cover,
             'deals' => $mappedDeals,
+            'reviews' => $vendorReviews,
+            'userReview' => $userVendorReview,
         ]);
     }
 

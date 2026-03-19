@@ -82,6 +82,11 @@ class VendorProfile extends Model
         return $this->morphMany(Image::class, 'imageable');
     }
 
+    public function reviews(): MorphMany
+    {
+        return $this->morphMany(Review::class, 'reviewable');
+    }
+
     // ─── Helpers ──────────────────────────────────────────────
 
     public function isVerified(): bool

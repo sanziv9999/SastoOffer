@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     Star,
     Reply,
@@ -7,7 +8,9 @@ import {
     Filter,
     CheckCircle2,
     ThumbsUp,
-    Search
+    Search,
+    Store,
+    ShoppingBag,
 } from 'lucide-react';
 import {
     Card,
@@ -48,9 +51,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
     const [replyText, setReplyText] = useState('');
     const [reviews, setReviews] = useState(initialReviews || []);
 
-    const getDealTitle = (dealId: string) => {
-        return deals?.find(d => d.id === dealId)?.title || 'Unknown Deal';
-    };
+    const [submittingReply, setSubmittingReply] = useState(false);
 
     const handleReply = (reviewId: string) => {
         setReplyingTo(reviewId);
@@ -58,19 +59,21 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
     };
 
     const submitReply = (reviewId: string) => {
-        setReviews(reviews.map((r: any) =>
-            r.id === reviewId
-                ? {
-                    ...r,
-                    merchantReply: {
-                        comment: replyText,
-                        createdAt: new Date().toISOString()
-                    }
-                }
-                : r
-        ));
-        setReplyingTo(null);
-        setReplyText('');
+        if (!replyText.trim() || submittingReply) return;
+        setSubmittingReply(true);
+        router.post(`/vendor/reviews/${reviewId}/reply`, { vendor_reply: replyText }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setReviews(reviews.map((r: any) =>
+                    r.id === reviewId
+                        ? { ...r, merchantReply: { comment: replyText, createdAt: new Date().toISOString() } }
+                        : r
+                ));
+                setReplyingTo(null);
+                setReplyText('');
+            },
+            onFinish: () => setSubmittingReply(false),
+        });
     };
 
     const filteredReviews = reviews
@@ -205,11 +208,19 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                 </div>
                             </CardHeader>
                             <CardContent className="pb-3 text-sm">
-                                <div className="mb-2">
-                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Deal: </span>
-                                    <span className="font-medium text-primary hover:underline cursor-pointer">
-                                        {getDealTitle(review.dealId)}
+                                <div className="mb-2 flex items-center gap-1.5">
+                                    {review.type === 'vendor'
+                                        ? <Store className="h-3 w-3 text-muted-foreground" />
+                                        : <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                                    }
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        {review.type === 'vendor' ? 'Vendor Review' : 'Deal:'}
                                     </span>
+                                    {review.type !== 'vendor' && (
+                                        <span className="font-medium text-primary text-xs">
+                                            {review.dealTitle || 'Unknown Deal'}
+                                        </span>
+                                    )}
                                 </div>
                                 <p className="leading-relaxed whitespace-pre-line border-l-4 border-muted pl-4 py-1">
                                     {review.comment}
@@ -244,8 +255,10 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                             onChange={(e) => setReplyText(e.target.value)}
                                         />
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>Cancel</Button>
-                                            <Button size="sm" onClick={() => submitReply(review.id)}>Post Response</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} disabled={submittingReply}>Cancel</Button>
+                                            <Button size="sm" onClick={() => submitReply(review.id)} disabled={submittingReply || !replyText.trim()}>
+                                                {submittingReply ? 'Posting...' : 'Post Response'}
+                                            </Button>
                                         </div>
                                     </div>
                                 )}

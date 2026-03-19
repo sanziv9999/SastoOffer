@@ -285,14 +285,31 @@ class DealController extends Controller
                         'id'            => $deal->vendor->id,
                         'slug'          => $deal->vendor->slug,
                         'business_name' => $deal->vendor->business_name,
-                        'rating'        => 4.8,
-                        'reviewCount'   => 42
+                        'rating'        => round($deal->vendor->reviews()->avg('rating') ?? 0, 1),
+                        'reviewCount'   => $deal->vendor->reviews()->count(),
                     ] : null,
                     'category'      => $deal->category ? [
                         'id'   => $deal->category->id,
                         'name' => $deal->category->name,
                     ] : null,
                 ],
+                'reviews' => $selectedPivot->reviews()
+                    ->with('user')
+                    ->latest()
+                    ->get()
+                    ->map(fn (\App\Models\Review $r) => [
+                        'id' => $r->id,
+                        'userName' => $r->user?->name ?? 'Anonymous',
+                        'rating' => $r->rating,
+                        'comment' => $r->comment,
+                        'vendorReply' => $r->vendor_reply,
+                        'vendorRepliedAt' => $r->vendor_replied_at?->toIso8601String(),
+                        'createdAt' => $r->created_at->toIso8601String(),
+                        'isOwn' => auth()->check() && (int) $r->user_id === (int) auth()->id(),
+                    ]),
+                'userReview' => auth()->check()
+                    ? $selectedPivot->reviews()->where('user_id', auth()->id())->first()?->only(['id', 'rating', 'comment'])
+                    : null,
                 'similarDeals' => $mappedSimilarDeals
             ]);
         } catch (\Exception $e) {

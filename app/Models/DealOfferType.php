@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\OfferRuleCalculator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class DealOfferType extends Pivot
@@ -31,6 +32,11 @@ class DealOfferType extends Pivot
     public function offerType(): BelongsTo
     {
         return $this->belongsTo(OfferType::class);
+    }
+
+    public function reviews(): MorphMany
+    {
+        return $this->morphMany(Review::class, 'reviewable');
     }
 
     public function displayTypes(): BelongsToMany

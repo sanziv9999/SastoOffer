@@ -211,6 +211,146 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Vendor Reviews Section --}}
+            @php
+                $reviewsList = $reviews ?? collect();
+                $avgRating = $reviewsList->count() > 0 ? round($reviewsList->avg('rating'), 1) : 0;
+                $ratingCounts = [];
+                for ($i = 5; $i >= 1; $i--) { $ratingCounts[$i] = $reviewsList->where('rating', $i)->count(); }
+            @endphp
+            <div class="mt-12" id="vendor-reviews">
+                <h2 class="text-2xl font-bold mb-6">Vendor Reviews</h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    {{-- Summary --}}
+                    <div class="bg-card rounded-xl border p-6 text-center">
+                        <div class="text-4xl font-bold text-primary mb-1">{{ $avgRating > 0 ? $avgRating : '-' }}</div>
+                        <div class="flex justify-center gap-0.5 mb-2">
+                            @for($i = 1; $i <= 5; $i++)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="{{ $i <= round($avgRating) ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="h-4 w-4 {{ $i <= round($avgRating) ? 'text-yellow-500' : 'text-gray-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            @endfor
+                        </div>
+                        <p class="text-sm text-muted-foreground">Based on {{ $reviewsList->count() }} {{ Str::plural('review', $reviewsList->count()) }}</p>
+
+                        <div class="mt-4 space-y-1.5">
+                            @for($i = 5; $i >= 1; $i--)
+                                @php $pct = $reviewsList->count() > 0 ? round(($ratingCounts[$i] / $reviewsList->count()) * 100) : 0; @endphp
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="w-3 font-medium">{{ $i }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" class="h-3 w-3 text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <div class="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                        <div class="h-full bg-yellow-500 rounded-full" style="width:{{ $pct }}%"></div>
+                                    </div>
+                                    <span class="w-6 text-right text-muted-foreground">{{ $ratingCounts[$i] }}</span>
+                                </div>
+                            @endfor
+                        </div>
+                    </div>
+
+                    {{-- Write Review Form --}}
+                    <div class="lg:col-span-2 bg-card rounded-xl border p-6">
+                        @auth
+                            @if($userReview ?? false)
+                                <h3 class="font-semibold mb-3 text-lg">Update Your Review</h3>
+                                <form method="POST" action="{{ route('reviews.update', $userReview['id']) }}" x-data="{ rating: {{ $userReview['rating'] }}, hoveredStar: 0 }">
+                                    @csrf
+                                    @method('PUT')
+                            @else
+                                <h3 class="font-semibold mb-3 text-lg">Rate This Vendor</h3>
+                                <form method="POST" action="{{ route('reviews.store') }}" x-data="{ rating: 0, hoveredStar: 0 }">
+                                    @csrf
+                                    <input type="hidden" name="reviewable_type" value="vendor">
+                                    <input type="hidden" name="reviewable_id" value="{{ $vendor->id }}">
+                            @endif
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2">Rating</label>
+                                    <div class="flex gap-1">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <button type="button"
+                                                @click="rating = {{ $i }}"
+                                                @mouseenter="hoveredStar = {{ $i }}"
+                                                @mouseleave="hoveredStar = 0"
+                                                class="focus:outline-none transition-transform hover:scale-110">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                                    :fill="{{ $i }} <= (hoveredStar || rating) ? 'currentColor' : 'none'"
+                                                    stroke="currentColor" stroke-width="2"
+                                                    :class="{{ $i }} <= (hoveredStar || rating) ? 'text-yellow-500' : 'text-gray-300'"
+                                                    class="h-7 w-7 cursor-pointer"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            </button>
+                                        @endfor
+                                    </div>
+                                    <input type="hidden" name="rating" :value="rating">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2">Comment</label>
+                                    <textarea name="comment" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="How was your experience with this vendor?">{{ ($userReview['comment'] ?? '') }}</textarea>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+                                        {{ ($userReview ?? false) ? 'Update Review' : 'Submit Review' }}
+                                    </button>
+                                    @if($userReview ?? false)
+                                        <form method="POST" action="{{ route('reviews.destroy', $userReview['id']) }}" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('Delete your review?')" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-destructive">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </form>
+                        @else
+                            <div class="text-center py-8">
+                                <p class="text-muted-foreground mb-3">Please log in to review this vendor.</p>
+                                <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">Log In</a>
+                            </div>
+                        @endauth
+                    </div>
+                </div>
+
+                {{-- Review Cards --}}
+                @if($reviewsList->count() > 0)
+                    <div class="space-y-4">
+                        @foreach($reviewsList as $rv)
+                            <div class="bg-card rounded-xl border p-5">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-sm text-muted-foreground">{{ strtoupper(substr($rv['userName'], 0, 1)) }}</div>
+                                        <div>
+                                            <p class="font-medium text-sm">{{ $rv['userName'] }}</p>
+                                            <div class="flex items-center gap-1">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="{{ $i <= $rv['rating'] ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" class="h-3 w-3 {{ $i <= $rv['rating'] ? 'text-yellow-500' : 'text-gray-300' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-muted-foreground">{{ \Carbon\Carbon::parse($rv['createdAt'])->diffForHumans() }}</span>
+                                </div>
+                                @if($rv['comment'])
+                                    <p class="text-sm text-foreground/80 leading-relaxed mt-2">{{ $rv['comment'] }}</p>
+                                @endif
+                                @if($rv['vendorReply'])
+                                    <div class="mt-3 bg-primary/5 border border-primary/10 rounded-lg p-3">
+                                        <p class="text-xs font-semibold text-primary mb-1">Vendor Reply</p>
+                                        <p class="text-sm italic">"{{ $rv['vendorReply'] }}"</p>
+                                        @if($rv['vendorRepliedAt'])
+                                            <span class="text-[10px] text-muted-foreground mt-1 block">{{ \Carbon\Carbon::parse($rv['vendorRepliedAt'])->diffForHumans() }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="py-12 text-center border-2 border-dashed rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto mb-3 text-muted-foreground/30"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <p class="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </x-layout>

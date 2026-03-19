@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
 use App\Http\Controllers\Admin\DisplayTypeCrudController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ReviewController;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -69,6 +70,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/dashboard/settings/address', [DashboardController::class, 'saveAddress'])->name('dashboard.settings.address');
     Route::post('/dashboard/profile', [CustomerProfileController::class, 'update'])->name('dashboard.profile.update');
     Route::post('/dashboard/profile/avatar', [CustomerProfileController::class, 'updateAvatar'])->name('dashboard.profile.avatar');
+
+    // Reviews (any authenticated user)
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
 // ——— Vendor (auth) ———
@@ -95,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
         Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');
         Route::get('/vendor/reviews', [VendorAnalyticsController::class, 'reviews'])->name('vendor.reviews');
+        Route::post('/vendor/reviews/{review}/reply', [ReviewController::class, 'vendorReply'])->name('vendor.reviews.reply');
     });
 
     Route::get('/vendor/settings', [VendorProfileController::class, 'edit'])->name('vendor.settings');
