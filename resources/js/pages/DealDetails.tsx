@@ -49,8 +49,14 @@ const DealDetails = () => {
         ? Math.round((savingsAmount / originalPrice) * 100)
         : 0;
 
-  const featureImage = deal.images?.find((img: any) => img.attribute_name === 'feature_photo');
-  const galleryImages = deal.images?.filter((img: any) => img.attribute_name === 'gallery') ?? [];
+  const sortedImages = [...(deal.images || [])].sort(
+    (a: any, b: any) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+  );
+  const featureImage =
+    sortedImages.find((img: any) => img.attribute_name === 'feature_photo') ||
+    sortedImages[0] ||
+    null;
+  const galleryImages = sortedImages.filter((img: any) => img.id !== featureImage?.id);
 
   const offers = Array.isArray(deal.offers) ? deal.offers : [];
   const [selectedOfferId, setSelectedOfferId] = useState<number | null>(offers?.[0]?.id ?? null);

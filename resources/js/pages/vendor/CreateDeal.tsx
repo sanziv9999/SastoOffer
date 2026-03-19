@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, Upload, X, ImagePlus, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Tag, Info
+  Tag, Info, Star, GripVertical
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -32,9 +32,15 @@ const DEAL_TYPE_TAGS: Record<string, string[]> = {
   flash: ['flash-sale', 'limited-time', 'urgent', 'today-only'],
 };
 
+type LocalDealImage = {
+  id: string;
+  file: File;
+  preview: string;
+};
+
 const CreateDeal = () => {
   const { categories } = usePage().props as any;
-  const { data, setData, post, processing } = useForm({
+  const { data, setData, post, processing, transform } = useForm({
     title: '',
     shortDesc: '',
     description: '',
@@ -46,49 +52,66 @@ const CreateDeal = () => {
     locationAddress: '',
     redemptionInstructions: '',
     termsConditions: '',
-    featurePhoto: null as File | null,
-    gallery: [] as File[],
+    images: [] as File[],
+    image_order: '',
+    featured_image_key: '',
   });
 
   const [tagInput, setTagInput] = useState('');
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
-  const [featurePreview, setFeaturePreview] = useState<string | null>(null);
-  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [dealImages, setDealImages] = useState<LocalDealImage[]>([]);
+  const [featuredImageId, setFeaturedImageId] = useState<string | null>(null);
+  const [draggingImageId, setDraggingImageId] = useState<string | null>(null);
 
-  const featureInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const imagesInputRef = useRef<HTMLInputElement>(null);
   const shortEditorRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Offers are managed in the next step (Offers screen).
 
-  const handleFeaturePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setData('featurePhoto', file);
-      const reader = new FileReader();
-      reader.onloadend = () => setFeaturePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGalleryPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDealImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      setData('gallery', [...data.gallery, ...newFiles].slice(0, 8));
+    if (!files) return;
 
-      newFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => setGalleryPreviews(prev => [...prev, reader.result as string].slice(0, 8));
-        reader.readAsDataURL(file);
-      });
+    const available = Math.max(0, 8 - dealImages.length);
+    if (available <= 0) return;
+
+    const incoming = Array.from(files).slice(0, available).map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    const next = [...dealImages, ...incoming];
+    setDealImages(next);
+    if (!featuredImageId && next.length > 0) {
+      setFeaturedImageId(next[0].id);
+    }
+
+    e.target.value = '';
+  };
+
+  const removeImage = (id: string) => {
+    const target = dealImages.find((img) => img.id === id);
+    if (target?.preview) {
+      URL.revokeObjectURL(target.preview);
+    }
+    const next = dealImages.filter((img) => img.id !== id);
+    setDealImages(next);
+    if (featuredImageId === id) {
+      setFeaturedImageId(next[0]?.id ?? null);
     }
   };
 
-  const removeGalleryImage = (index: number) => {
-    setData('gallery', data.gallery.filter((_, i) => i !== index));
-    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
+  const moveImage = (dragId: string, dropId: string) => {
+    if (dragId === dropId) return;
+    const from = dealImages.findIndex((img) => img.id === dragId);
+    const to = dealImages.findIndex((img) => img.id === dropId);
+    if (from < 0 || to < 0) return;
+    const next = [...dealImages];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setDealImages(next);
   };
 
   const generateAITags = useCallback(async () => {
@@ -140,6 +163,20 @@ const CreateDeal = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const orderedImages = [...dealImages];
+    const newFiles = orderedImages.map((img) => img.file);
+    const imageOrder = orderedImages.map((_, index) => `new:${index}`);
+    const featuredIndex = orderedImages.findIndex((img) => img.id === featuredImageId);
+    const featuredKey = featuredIndex >= 0 ? `new:${featuredIndex}` : (imageOrder[0] ?? '');
+
+    transform((form) => ({
+      ...form,
+      images: newFiles,
+      image_order: JSON.stringify(imageOrder),
+      featured_image_key: featuredKey,
+    }));
+
     post('/vendor/deals', {
       forceFormData: true,
       onSuccess: () => toast.success('Deal created and published successfully!'),
@@ -163,52 +200,82 @@ const CreateDeal = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><ImagePlus className="h-5 w-5 text-primary" /> Photos</CardTitle>
-            <CardDescription>Add a cover photo and up to 8 gallery images</CardDescription>
+            <CardDescription>
+              Add up to 8 images, drag to reorder, and star one as featured.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <Label className="mb-2 block text-sm font-medium">Feature Photo *</Label>
-              <input ref={featureInputRef} type="file" accept="image/*" className="hidden" onChange={handleFeaturePhoto} />
-              {featurePreview ? (
-                <div className="relative w-full max-w-md rounded-xl overflow-hidden border group">
-                  <img src={featurePreview} alt="Feature" className="w-full h-52 object-cover" />
-                  <button type="button" onClick={() => { setData('featurePhoto', null); setFeaturePreview(null); }}
-                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => featureInputRef.current?.click()}
-                  className="w-full max-w-md h-44 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                  <Upload className="h-8 w-8" />
-                  <span className="text-sm font-medium">Click to upload feature photo</span>
-                </button>
-              )}
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Gallery (up to 8 images)</Label>
-              <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryPhotos} />
+              <Label className="mb-2 block text-sm font-medium">Deal Images (max 8)</Label>
+              <input
+                ref={imagesInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleDealImages}
+              />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {galleryPreviews.map((img, i) => (
-                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden border group">
-                    <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeGalleryImage(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X className="h-3 w-3" />
-                    </button>
+                {dealImages.map((img, index) => (
+                  <div
+                    key={img.id}
+                    draggable
+                    onDragStart={() => setDraggingImageId(img.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (draggingImageId) moveImage(draggingImageId, img.id);
+                      setDraggingImageId(null);
+                    }}
+                    className="relative aspect-square rounded-lg overflow-hidden border group bg-muted"
+                  >
+                    <img src={img.preview} alt={`Deal ${index + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-1 left-1 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setFeaturedImageId(img.id)}
+                        className={`rounded-full p-1 ${featuredImageId === img.id ? 'bg-amber-500 text-white' : 'bg-black/60 text-white'}`}
+                        title="Mark as featured"
+                      >
+                        <Star className="h-3.5 w-3.5" fill={featuredImageId === img.id ? 'currentColor' : 'none'} />
+                      </button>
+                      <span className="rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                        #{index + 1}
+                      </span>
+                    </div>
+                    <div className="absolute top-1 right-1 flex items-center gap-1">
+                      <span className="rounded-full bg-black/60 p-1 text-white" title="Drag to reorder">
+                        <GripVertical className="h-3.5 w-3.5" />
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(img.id)}
+                        className="rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove image"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {featuredImageId === img.id && (
+                      <div className="absolute bottom-1 left-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        Featured
+                      </div>
+                    )}
                   </div>
                 ))}
-                {galleryPreviews.length < 8 && (
-                  <button type="button" onClick={() => galleryInputRef.current?.click()}
-                    className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                    <ImagePlus className="h-5 w-5" />
-                    <span className="text-xs">Add</span>
+                {dealImages.length < 8 && (
+                  <button
+                    type="button"
+                    onClick={() => imagesInputRef.current?.click()}
+                    className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <Upload className="h-5 w-5" />
+                    <span className="text-xs">Add Images</span>
                   </button>
                 )}
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Featured image is the starred one. If no star is selected, first image becomes featured.
+              </p>
             </div>
           </CardContent>
         </Card>

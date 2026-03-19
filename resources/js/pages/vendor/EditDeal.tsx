@@ -13,7 +13,7 @@ import {
   ArrowLeft, X, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
   Tag, Info, Save,
-  Upload, ImagePlus
+  Upload, ImagePlus, Star, GripVertical
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -25,10 +25,17 @@ const SUGGESTED_TAGS_MAP: Record<string, string[]> = {
   entertainment: ['movies', 'concert', 'event', 'tickets', 'show', 'fun', 'nightlife', 'experience', 'activity', 'theme-park'],
 };
 
+type DealImageItem = {
+  id: string;
+  preview: string;
+  existingId?: number;
+  file?: File;
+};
+
 const EditDeal = () => {
   const { categories, deal: existingDeal } = usePage().props as any;
 
-  const { data, setData, put, processing } = useForm({
+  const { data, setData, put, processing, transform } = useForm({
     title: existingDeal?.title || '',
     shortDesc: existingDeal?.shortDesc || '',
     description: existingDeal?.description || '',
@@ -38,28 +45,31 @@ const EditDeal = () => {
     maxQuantity: existingDeal?.maxQuantity || '',
     status: existingDeal?.status || 'active',
     requestFeatured: existingDeal?.requestFeatured || false,
-    featurePhoto: null as File | null,
-    gallery: [] as File[],
-    keptGalleryIds: [] as number[],
+    images: [] as File[],
+    image_order: '',
+    featured_image_key: '',
   });
 
   // Existing images from DB
   const existingImages: any[] = existingDeal?.images || [];
-  const existingFeature = existingImages.find((img: any) => img.attribute_name === 'feature_photo');
-  const existingGallery = existingImages.filter((img: any) => img.attribute_name === 'gallery');
+  const sortedExisting = [...existingImages].sort(
+    (a: any, b: any) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+  );
+  const [dealImages, setDealImages] = useState<DealImageItem[]>(
+    sortedExisting.map((img: any) => ({
+      id: `existing:${img.id}`,
+      existingId: img.id,
+      preview: img.image_url,
+    }))
+  );
+  const [featuredImageId, setFeaturedImageId] = useState<string | null>(() => {
+    const explicit = sortedExisting.find((img: any) => img.attribute_name === 'feature_photo');
+    if (explicit) return `existing:${explicit.id}`;
+    return sortedExisting[0] ? `existing:${sortedExisting[0].id}` : null;
+  });
+  const [draggingImageId, setDraggingImageId] = useState<string | null>(null);
 
-  // New upload previews
-  const [featurePreview, setFeaturePreview] = useState<string | null>(null);
-  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
-  // Track which existing gallery images the user wants to keep (by id) in form data
-  useEffect(() => {
-    const ids = existingGallery.map((img: any) => img.id);
-    setData('keptGalleryIds', ids);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existingDeal?.id]);
-
-  const featureInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const imagesInputRef = useRef<HTMLInputElement>(null);
 
   const [tagInput, setTagInput] = useState('');
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
@@ -110,41 +120,88 @@ const EditDeal = () => {
     }
   };
 
-  const handleFeaturePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setData('featurePhoto', file);
-      const reader = new FileReader();
-      reader.onloadend = () => setFeaturePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGalleryPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDealImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      const combined = [...data.gallery, ...newFiles].slice(0, 8 - (data.keptGalleryIds?.length ?? 0));
-      setData('gallery', combined);
-      newFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => setGalleryPreviews(prev => [...prev, reader.result as string].slice(0, 8));
-        reader.readAsDataURL(file);
-      });
+    if (!files) return;
+
+    const available = Math.max(0, 8 - dealImages.length);
+    if (available <= 0) return;
+
+    const incoming: DealImageItem[] = Array.from(files)
+      .slice(0, available)
+      .map((file) => ({
+        id: `new:${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+
+    const next = [...dealImages, ...incoming];
+    setDealImages(next);
+    if (!featuredImageId && next.length > 0) {
+      setFeaturedImageId(next[0].id);
+    }
+
+    e.target.value = '';
+  };
+
+  const removeImage = (id: string) => {
+    const target = dealImages.find((img) => img.id === id);
+    if (target?.file && target.preview) {
+      URL.revokeObjectURL(target.preview);
+    }
+    const next = dealImages.filter((img) => img.id !== id);
+    setDealImages(next);
+    if (featuredImageId === id) {
+      setFeaturedImageId(next[0]?.id ?? null);
     }
   };
 
-  const removeNewGalleryImage = (index: number) => {
-    setData('gallery', data.gallery.filter((_: File, i: number) => i !== index));
-    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeExistingGalleryImage = (id: number) => {
-    setData('keptGalleryIds', (data.keptGalleryIds ?? []).filter((kept: number) => kept !== id));
+  const moveImage = (dragId: string, dropId: string) => {
+    if (dragId === dropId) return;
+    const from = dealImages.findIndex((img) => img.id === dragId);
+    const to = dealImages.findIndex((img) => img.id === dropId);
+    if (from < 0 || to < 0) return;
+    const next = [...dealImages];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setDealImages(next);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const ordered = [...dealImages].slice(0, 8);
+    const orderKeys: string[] = [];
+    const newFiles: File[] = [];
+    let newIdx = 0;
+    let featuredKey = '';
+
+    ordered.forEach((img) => {
+      let key = '';
+      if (img.existingId) {
+        key = `existing:${img.existingId}`;
+      } else if (img.file) {
+        key = `new:${newIdx}`;
+        newFiles.push(img.file);
+        newIdx += 1;
+      }
+      if (!key) return;
+      orderKeys.push(key);
+      if (img.id === featuredImageId) {
+        featuredKey = key;
+      }
+    });
+
+    if (!featuredKey) {
+      featuredKey = orderKeys[0] ?? '';
+    }
+
+    transform((form) => ({
+      ...form,
+      images: newFiles,
+      image_order: JSON.stringify(orderKeys),
+      featured_image_key: featuredKey,
+    }));
+
     put(`/vendor/deals/${existingDeal.id}`, {
       forceFormData: true,
       onSuccess: () => toast.success('Deal updated successfully!'),
@@ -171,86 +228,83 @@ const EditDeal = () => {
             <CardTitle className="flex items-center gap-2"><ImagePlus className="h-5 w-5 text-primary" /> Photos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Feature Photo */}
             <div>
-              <Label className="mb-2 block text-sm font-medium">Feature Photo</Label>
-              <input ref={featureInputRef} type="file" accept="image/*" className="hidden" onChange={handleFeaturePhoto} />
-              {featurePreview ? (
-                <div className="relative w-full max-w-md rounded-xl overflow-hidden border group">
-                  <img src={featurePreview} alt="Feature" className="w-full h-52 object-cover" />
-                  <button type="button"
-                    onClick={() => { setData('featurePhoto', null); setFeaturePreview(null); }}
-                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <X className="h-4 w-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-2">
-                    <span className="text-xs bg-black/60 text-white px-2 py-0.5 rounded">New image</span>
-                  </div>
-                </div>
-              ) : existingFeature ? (
-                <div className="relative w-full max-w-md rounded-xl overflow-hidden border group">
-                  <img src={existingFeature.image_url} alt="Feature" className="w-full h-52 object-cover" />
-                  <button type="button"
-                    onClick={() => featureInputRef.current?.click()}
-                    className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="text-white font-medium text-sm bg-black/60 px-3 py-1.5 rounded-lg">
-                      <Upload className="h-4 w-4 inline mr-1" />Change Photo
-                    </span>
-                  </button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => featureInputRef.current?.click()}
-                  className="w-full max-w-md h-44 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                  <Upload className="h-8 w-8" />
-                  <span className="text-sm font-medium">Click to upload feature photo</span>
-                </button>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Gallery */}
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Gallery (up to 8 images)</Label>
-              <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryPhotos} />
+              <Label className="mb-2 block text-sm font-medium">Deal Images (max 8)</Label>
+              <input
+                ref={imagesInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleDealImages}
+              />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {/* Existing gallery images */}
-                {existingGallery
-                  .filter((img: any) => (data.keptGalleryIds ?? []).includes(img.id))
-                  .map((img: any) => (
-                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border group">
-                      <img src={img.image_url} alt="Gallery" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removeExistingGalleryImage(img.id)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                {dealImages.map((img, index) => (
+                  <div
+                    key={img.id}
+                    draggable
+                    onDragStart={() => setDraggingImageId(img.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (draggingImageId) moveImage(draggingImageId, img.id);
+                      setDraggingImageId(null);
+                    }}
+                    className="relative aspect-square rounded-lg overflow-hidden border group bg-muted"
+                  >
+                    <img src={img.preview} alt={`Deal ${index + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-1 left-1 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setFeaturedImageId(img.id)}
+                        className={`rounded-full p-1 ${featuredImageId === img.id ? 'bg-amber-500 text-white' : 'bg-black/60 text-white'}`}
+                        title="Mark as featured"
+                      >
+                        <Star className="h-3.5 w-3.5" fill={featuredImageId === img.id ? 'currentColor' : 'none'} />
+                      </button>
+                      <span className="rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                        #{index + 1}
+                      </span>
+                    </div>
+                    <div className="absolute top-1 right-1 flex items-center gap-1">
+                      <span className="rounded-full bg-black/60 p-1 text-white" title="Drag to reorder">
+                        <GripVertical className="h-3.5 w-3.5" />
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(img.id)}
+                        className="rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove image"
+                      >
                         <X className="h-3 w-3" />
                       </button>
-                      <div className="absolute bottom-1 left-1">
-                        <span className="text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">Saved</span>
+                    </div>
+                    {featuredImageId === img.id && (
+                      <div className="absolute bottom-1 left-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        Featured
                       </div>
-                    </div>
-                  ))}
-                {/* New images */}
-                {galleryPreviews.map((img, i) => (
-                  <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden border group">
-                    <img src={img} alt={`New ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeNewGalleryImage(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X className="h-3 w-3" />
-                    </button>
-                    <div className="absolute bottom-1 left-1">
-                      <span className="text-[10px] bg-primary/80 text-white px-1.5 py-0.5 rounded">New</span>
-                    </div>
+                    )}
+                    {img.existingId ? (
+                      <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                        Saved
+                      </div>
+                    ) : (
+                      <div className="absolute bottom-1 right-1 rounded bg-primary/80 px-1.5 py-0.5 text-[10px] text-white">
+                        New
+                      </div>
+                    )}
                   </div>
                 ))}
-                {/* Add more button */}
-                {(((data.keptGalleryIds ?? []).length + galleryPreviews.length) < 8) && (
-                  <button type="button" onClick={() => galleryInputRef.current?.click()}
+                {dealImages.length < 8 && (
+                  <button type="button" onClick={() => imagesInputRef.current?.click()}
                     className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
                     <ImagePlus className="h-5 w-5" />
-                    <span className="text-xs">Add</span>
+                    <span className="text-xs">Add Images</span>
                   </button>
                 )}
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Reorder by drag-and-drop. Featured image is starred; otherwise first image is featured.
+              </p>
             </div>
           </CardContent>
         </Card>

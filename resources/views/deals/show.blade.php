@@ -5,8 +5,11 @@
         $savingsAmount = $originalPrice > 0 ? $originalPrice - $discountedPrice : 0;
         $discountPct = $deal['discountPercent'] ?? ($originalPrice > 0 ? round(($savingsAmount / $originalPrice) * 100) : 0);
 
-        $featureImage = collect($deal['images'])->firstWhere('attribute_name', 'feature_photo');
-        $galleryImages = collect($deal['images'])->filter(fn($img) => $img['attribute_name'] === 'gallery');
+        $sortedImages = collect($deal['images'] ?? [])
+            ->sortBy(fn ($img) => (int) ($img['sort_order'] ?? 0))
+            ->values();
+        $featureImage = $sortedImages->firstWhere('attribute_name', 'feature_photo') ?? $sortedImages->first();
+        $galleryImages = $sortedImages->filter(fn($img) => ($img['id'] ?? null) !== ($featureImage['id'] ?? null));
 
         $endsAt = isset($deal['ends_at']) ? new \DateTime($deal['ends_at']) : null;
         $isExpired = $endsAt && new \DateTime() > $endsAt;

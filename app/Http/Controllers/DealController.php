@@ -14,6 +14,7 @@ use App\Http\Requests\UpdateDealRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DealController extends Controller
 {
@@ -148,8 +149,7 @@ class DealController extends Controller
         \Illuminate\Support\Facades\Log::info('Deal Creation Request:', [
             'data' => array_keys($data),
             'files' => array_keys($request->allFiles()),
-            'has_featurePhoto' => $request->hasFile('featurePhoto'),
-            'has_gallery' => $request->hasFile('gallery'),
+            'has_images' => $request->hasFile('images'),
         ]);
 
         // Map React fields to DB fields (core deal only; offers added separately)
@@ -168,37 +168,7 @@ class DealController extends Controller
 
 
         $deal = Deal::create($dealData);
-
-        // Handle Feature Photo
-        $featurePhoto = $request->file('featurePhoto');
-        if ($featurePhoto instanceof \Illuminate\Http\UploadedFile && $featurePhoto->isValid()) {
-            $path = $featurePhoto->store('deals/covers', 'public');
-            \Illuminate\Support\Facades\Log::info('Feature photo stored:', ['path' => $path]);
-            $deal->images()->create([
-                'attribute_name' => 'feature_photo',
-                'image_url' => '/storage/' . $path,
-                'sort_order' => 0,
-            ]);
-        }
-
-        // Handle Gallery Photos
-        $galleryFiles = $request->file('gallery');
-        if (is_array($galleryFiles) && count($galleryFiles) > 0) {
-            $validGallery = array_values(array_filter(
-                $galleryFiles,
-                fn ($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
-            ));
-            \Illuminate\Support\Facades\Log::info('Processing gallery photos:', ['count' => count($validGallery)]);
-            foreach ($validGallery as $index => $file) {
-                $path = $file->store('deals/gallery', 'public');
-                \Illuminate\Support\Facades\Log::info('Gallery photo stored:', ['path' => $path]);
-                $deal->images()->create([
-                    'attribute_name' => 'gallery',
-                    'image_url' => '/storage/' . $path,
-                    'sort_order' => $index + 1,
-                ]);
-            }
-        }
+        $this->syncDealImagesFromRequest($request, $deal, false);
 
         return redirect()
             ->route('vendor.deals.offers', $deal)
@@ -262,6 +232,7 @@ class DealController extends Controller
                         'id'             => $img->id,
                         'image_url'      => $img->image_url,
                         'attribute_name' => $img->attribute_name,
+                    'sort_order'     => $img->sort_order,
                     ])->toArray(),
                     'vendor'           => $deal->vendor ? [
                         'id'            => $deal->vendor->id,
@@ -323,6 +294,7 @@ class DealController extends Controller
                     'id' => $img->id,
                     'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
+                    'sort_order' => $img->sort_order,
                 ])->toArray(),
                 'vendor' => $dealModel->vendor ? [
                     'id' => $dealModel->vendor->id,
@@ -372,6 +344,7 @@ class DealController extends Controller
                     'id'             => $img->id,
                     'image_url'      => $img->image_url,
                     'attribute_name' => $img->attribute_name,
+                    'sort_order'     => $img->sort_order,
                 ]),
             ],
             'categories' => $categories,
@@ -412,6 +385,7 @@ class DealController extends Controller
                     'id' => $img->id,
                     'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
+                    'sort_order' => $img->sort_order,
                 ])->values()->toArray(),
                 'offers' => $deal->offerTypes->map(function ($ot) {
                     $pct = (float) ($ot->pivot?->savings_percent ?? $ot->pivot?->discount_percent ?? 0);
@@ -478,52 +452,7 @@ class DealController extends Controller
             }
         }
 
-        // Handle Feature Photo replacement
-        $featurePhoto = $request->file('featurePhoto');
-        if ($featurePhoto instanceof \Illuminate\Http\UploadedFile && $featurePhoto->isValid()) {
-            $deal->images()->where('attribute_name', 'feature_photo')->delete();
-            $path = $featurePhoto->store('deals/covers', 'public');
-            $deal->images()->create([
-                'attribute_name' => 'feature_photo',
-                'image_url'      => '/storage/' . $path,
-                'sort_order'     => 0,
-            ]);
-        }
-
-        // Handle Gallery: delete removed images
-        $keptIds = $request->input('keptGalleryIds', []);
-        if (is_string($keptIds)) {
-            // Support both JSON-encoded and comma-separated formats
-            $decoded = json_decode($keptIds, true);
-            if (is_array($decoded)) {
-                $keptIds = $decoded;
-            } else {
-                $keptIds = array_filter(array_map('intval', explode(',', $keptIds)));
-            }
-        }
-        $keptIds = array_map('intval', (array) $keptIds);
-
-        $deal->images()
-            ->where('attribute_name', 'gallery')
-            ->whereNotIn('id', $keptIds)
-            ->delete();
-
-        // Append new gallery photos
-        $galleryFiles = $request->file('gallery');
-        if (is_array($galleryFiles) && count($galleryFiles) > 0) {
-            $validGallery = array_values(array_filter(
-                $galleryFiles,
-                fn ($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
-            ));
-            foreach ($validGallery as $index => $file) {
-                $path = $file->store('deals/gallery', 'public');
-                $deal->images()->create([
-                    'attribute_name' => 'gallery',
-                    'image_url'      => '/storage/' . $path,
-                    'sort_order'     => $index + 1,
-                ]);
-            }
-        }
+        $this->syncDealImagesFromRequest($request, $deal, true);
 
         return redirect()->route('vendor.deals.index')->with('success', 'Deal updated successfully!');
     }
@@ -779,5 +708,123 @@ class DealController extends Controller
         $deal->delete();
 
         return redirect()->route('deals.index')->with('success', 'Deal deleted successfully.');
+    }
+
+    protected function syncDealImagesFromRequest(Request $request, Deal $deal, bool $isUpdate): void
+    {
+        $maxImages = 8;
+
+        $uploadedFiles = array_values(array_filter(
+            (array) $request->file('images', []),
+            fn ($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
+        ));
+
+        $existingImages = $deal->images()->orderBy('sort_order')->orderBy('id')->get();
+        $existingKeys = $existingImages->map(fn ($img) => 'existing:' . $img->id)->values()->all();
+        $uploadedKeys = array_map(fn ($idx) => 'new:' . $idx, array_keys($uploadedFiles));
+
+        $order = $this->normalizeImageOrder(
+            $request->input('image_order'),
+            $existingKeys,
+            $uploadedKeys,
+            $maxImages
+        );
+
+        if (empty($order)) {
+            $order = array_slice(array_merge($existingKeys, $uploadedKeys), 0, $maxImages);
+        }
+
+        $featuredKey = (string) ($request->input('featured_image_key') ?? '');
+        if ($featuredKey === '' || ! in_array($featuredKey, $order, true)) {
+            $featuredKey = $order[0] ?? '';
+        }
+
+        $existingById = $existingImages->keyBy('id');
+        $keepExistingIds = [];
+        $uploadedUrlByKey = [];
+
+        foreach ($uploadedFiles as $idx => $file) {
+            $path = $file->store('deals/gallery', 'public');
+            $uploadedUrlByKey['new:' . $idx] = '/storage/' . $path;
+        }
+
+        foreach ($order as $position => $key) {
+            $isFeatured = $featuredKey !== '' && $key === $featuredKey;
+            $attributeName = $isFeatured ? 'feature_photo' : 'gallery';
+
+            if (str_starts_with($key, 'existing:')) {
+                $id = (int) str_replace('existing:', '', $key);
+                $img = $existingById->get($id);
+                if (! $img) {
+                    continue;
+                }
+
+                $keepExistingIds[] = $id;
+                $img->attribute_name = $attributeName;
+                $img->sort_order = $position;
+                $img->save();
+                continue;
+            }
+
+            if (isset($uploadedUrlByKey[$key])) {
+                $deal->images()->create([
+                    'attribute_name' => $attributeName,
+                    'image_url' => $uploadedUrlByKey[$key],
+                    'sort_order' => $position,
+                ]);
+            }
+        }
+
+        if ($isUpdate) {
+            $toDelete = $existingImages->filter(fn ($img) => ! in_array($img->id, $keepExistingIds, true));
+            foreach ($toDelete as $img) {
+                if (! empty($img->image_url) && str_starts_with($img->image_url, '/storage/')) {
+                    $storagePath = substr($img->image_url, strlen('/storage/'));
+                    Storage::disk('public')->delete($storagePath);
+                }
+                $img->delete();
+            }
+        }
+    }
+
+    protected function normalizeImageOrder(
+        mixed $rawOrder,
+        array $existingKeys,
+        array $uploadedKeys,
+        int $maxImages
+    ): array {
+        $allowed = array_fill_keys(array_merge($existingKeys, $uploadedKeys), true);
+        $order = [];
+
+        if (is_string($rawOrder) && $rawOrder !== '') {
+            $decoded = json_decode($rawOrder, true);
+            if (is_array($decoded)) {
+                $rawOrder = $decoded;
+            }
+        }
+
+        if (is_array($rawOrder)) {
+            foreach ($rawOrder as $entry) {
+                $key = is_string($entry) ? $entry : '';
+                if ($key === '' || ! isset($allowed[$key]) || in_array($key, $order, true)) {
+                    continue;
+                }
+                $order[] = $key;
+                if (count($order) >= $maxImages) {
+                    break;
+                }
+            }
+        }
+
+        foreach (array_merge($existingKeys, $uploadedKeys) as $fallbackKey) {
+            if (! in_array($fallbackKey, $order, true)) {
+                $order[] = $fallbackKey;
+            }
+            if (count($order) >= $maxImages) {
+                break;
+            }
+        }
+
+        return array_slice($order, 0, $maxImages);
     }
 }

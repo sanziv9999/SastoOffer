@@ -98,7 +98,9 @@ class Deal extends Model
      */
     public function images(): MorphMany
     {
-        return $this->morphMany(Image::class, 'imageable');
+        return $this->morphMany(Image::class, 'imageable')
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
 
     public function orderItems(): HasMany

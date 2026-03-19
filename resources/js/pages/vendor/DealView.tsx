@@ -9,8 +9,14 @@ import { Separator } from '@/components/ui/separator';
 const DealView = () => {
   const { deal } = usePage().props as any;
 
-  const feature = (deal?.images || []).find((i: any) => i.attribute_name === 'feature_photo');
-  const gallery = (deal?.images || []).filter((i: any) => i.attribute_name === 'gallery');
+  const allImages = [...(deal?.images || [])].sort(
+    (a: any, b: any) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+  );
+  const feature =
+    allImages.find((i: any) => i.attribute_name === 'feature_photo') ||
+    allImages[0] ||
+    null;
+  const gallery = allImages.filter((i: any) => i.id !== feature?.id);
 
   return (
     <div className="space-y-6">
