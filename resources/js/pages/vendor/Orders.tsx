@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingBag, Mail, Calendar, Banknote, Receipt, Tag } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { router } from '@inertiajs/react';
 
 interface OrderItemDetail {
   id: number;
@@ -44,10 +45,13 @@ interface OrdersProps {
   orders: VendorOrder[];
 }
 
+type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'cancelled' | 'refunded';
+
 const Orders = ({ orders }: OrdersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [localOrders, setLocalOrders] = useState<VendorOrder[]>(orders || []);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -57,17 +61,38 @@ const Orders = ({ orders }: OrdersProps) => {
     });
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: string) => {
-    setLocalOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    toast.success(`Order ${orderId} updated to ${newStatus}`);
+  const updateOrderStatus = (order: VendorOrder, newStatus: OrderStatus) => {
+    const previousOrders = [...localOrders];
+    setUpdatingOrderId(order.orderId);
+    setLocalOrders(prev => prev.map(o => o.orderId === order.orderId ? { ...o, status: newStatus } : o));
+
+    router.patch(
+      route('vendor.orders.status', order.orderId),
+      { status: newStatus },
+      {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          toast.success(`Order ${order.id} updated to ${newStatus}`);
+        },
+        onError: () => {
+          setLocalOrders(previousOrders);
+          toast.error('Could not update order status. Please try again.');
+        },
+        onFinish: () => {
+          setUpdatingOrderId(null);
+        },
+      }
+    );
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending': return <Clock className="h-3.5 w-3.5" />;
-      case 'processing': return <Package className="h-3.5 w-3.5" />;
-      case 'completed': return <CheckCircle className="h-3.5 w-3.5" />;
+      case 'paid': return <Package className="h-3.5 w-3.5" />;
+      case 'fulfilled': return <CheckCircle className="h-3.5 w-3.5" />;
       case 'cancelled': return <XCircle className="h-3.5 w-3.5" />;
+      case 'refunded': return <XCircle className="h-3.5 w-3.5" />;
       default: return null;
     }
   };
@@ -75,9 +100,10 @@ const Orders = ({ orders }: OrdersProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500 text-white hover:bg-yellow-600 focus:bg-yellow-600';
-      case 'processing': return 'bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600';
-      case 'completed': return 'bg-green-500 text-white hover:bg-green-600 focus:bg-green-600';
+      case 'paid': return 'bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600';
+      case 'fulfilled': return 'bg-green-500 text-white hover:bg-green-600 focus:bg-green-600';
       case 'cancelled': return 'bg-red-500 text-white hover:bg-red-600 focus:bg-red-600';
+      case 'refunded': return 'bg-slate-500 text-white hover:bg-slate-600 focus:bg-slate-600';
       default: return '';
     }
   };
@@ -94,7 +120,7 @@ const Orders = ({ orders }: OrdersProps) => {
     return filteredOrders;
   };
 
-  const totalRevenue = localOrders?.filter(o => o.status === 'completed').reduce((s, o) => s + o.total, 0) || 0;
+  const totalRevenue = localOrders?.filter(o => o.status === 'fulfilled').reduce((s, o) => s + o.total, 0) || 0;
   const totalDiscount = localOrders?.reduce((s, o) => s + (o.discountTotal || 0), 0) || 0;
 
   const renderExpandedRow = (order: VendorOrder) => (
@@ -252,9 +278,12 @@ const Orders = ({ orders }: OrdersProps) => {
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <Select
                       value={order.status}
-                      onValueChange={(value) => updateOrderStatus(order.id, value)}
+                      onValueChange={(value) => updateOrderStatus(order, value as OrderStatus)}
                     >
-                      <SelectTrigger className={`w-[130px] h-8 rounded-full border-none shadow-none text-xs font-medium px-2.5 ${getStatusColor(order.status)}`}>
+                      <SelectTrigger
+                        disabled={updatingOrderId === order.orderId}
+                        className={`w-[130px] h-8 rounded-full border-none shadow-none text-xs font-medium px-2.5 ${getStatusColor(order.status)}`}
+                      >
                         <div className="flex items-center gap-1.5 focus:outline-none">
                           {getStatusIcon(order.status)}
                           <SelectValue placeholder="Status" className="capitalize" />
@@ -262,9 +291,10 @@ const Orders = ({ orders }: OrdersProps) => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="fulfilled">Fulfilled</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="refunded">Refunded</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>
@@ -345,15 +375,17 @@ const Orders = ({ orders }: OrdersProps) => {
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="processing">Processing</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="paid">Paid</TabsTrigger>
+              <TabsTrigger value="fulfilled">Fulfilled</TabsTrigger>
               <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+              <TabsTrigger value="refunded">Refunded</TabsTrigger>
             </TabsList>
             <TabsContent value="all">{renderOrdersTable(filterOrders('all'))}</TabsContent>
             <TabsContent value="pending">{renderOrdersTable(filterOrders('pending'))}</TabsContent>
-            <TabsContent value="processing">{renderOrdersTable(filterOrders('processing'))}</TabsContent>
-            <TabsContent value="completed">{renderOrdersTable(filterOrders('completed'))}</TabsContent>
+            <TabsContent value="paid">{renderOrdersTable(filterOrders('paid'))}</TabsContent>
+            <TabsContent value="fulfilled">{renderOrdersTable(filterOrders('fulfilled'))}</TabsContent>
             <TabsContent value="cancelled">{renderOrdersTable(filterOrders('cancelled'))}</TabsContent>
+            <TabsContent value="refunded">{renderOrdersTable(filterOrders('refunded'))}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>

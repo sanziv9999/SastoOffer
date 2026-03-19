@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Deal;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class VendorAnalyticsController extends Controller
@@ -111,6 +112,28 @@ class VendorAnalyticsController extends Controller
         return \Inertia\Inertia::render('vendor/Orders', [
             'orders' => $orders,
         ]);
+    }
+
+    public function updateOrderStatus(Request $request, Order $order)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor || (int) $order->vendor_id !== (int) $vendor->id) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'status' => ['required', 'in:pending,paid,fulfilled,cancelled,refunded'],
+        ]);
+
+        $order->status = $data['status'];
+        if ($data['status'] === 'paid' && ! $order->paid_at) {
+            $order->paid_at = now();
+        }
+        $order->save();
+
+        return back()->with('success', 'Order status updated successfully.');
     }
 
     public function customers(Request $request)

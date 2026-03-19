@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/vendor/analytics', [VendorAnalyticsController::class, 'index'])->name('vendor.analytics');
         Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
+        Route::patch('/vendor/orders/{order}/status', [VendorAnalyticsController::class, 'updateOrderStatus'])->name('vendor.orders.status');
         Route::get('/vendor/customers', [VendorAnalyticsController::class, 'customers'])->name('vendor.customers');
         Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
         Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');
