@@ -19,10 +19,12 @@ class Review extends Model
         'comment',
         'vendor_reply',
         'vendor_replied_at',
+        'is_hidden',
     ];
 
     protected $casts = [
         'rating' => 'integer',
+        'is_hidden' => 'boolean',
         'vendor_replied_at' => 'datetime',
     ];
 

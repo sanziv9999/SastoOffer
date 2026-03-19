@@ -277,6 +277,7 @@ class VendorAnalyticsController extends Controller
                     'dealId' => $dealId ? (string) $dealId : null,
                     'dealTitle' => $dealTitle,
                     'type' => $r->reviewable_type === \App\Models\VendorProfile::class ? 'vendor' : 'deal',
+                    'isHidden' => (bool) $r->is_hidden,
                     'createdAt' => $r->created_at->toIso8601String(),
                     'merchantReply' => $r->vendor_reply ? [
                         'comment' => $r->vendor_reply,

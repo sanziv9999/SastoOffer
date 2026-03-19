@@ -294,6 +294,7 @@ class DealController extends Controller
                     ] : null,
                 ],
                 'reviews' => $selectedPivot->reviews()
+                    ->where('is_hidden', false)
                     ->with('user')
                     ->latest()
                     ->get()

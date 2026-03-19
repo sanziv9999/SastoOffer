@@ -102,6 +102,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');
         Route::get('/vendor/reviews', [VendorAnalyticsController::class, 'reviews'])->name('vendor.reviews');
         Route::post('/vendor/reviews/{review}/reply', [ReviewController::class, 'vendorReply'])->name('vendor.reviews.reply');
+        Route::patch('/vendor/reviews/{review}/toggle-hidden', [ReviewController::class, 'toggleHidden'])->name('vendor.reviews.toggle-hidden');
     });
 
     Route::get('/vendor/settings', [VendorProfileController::class, 'edit'])->name('vendor.settings');

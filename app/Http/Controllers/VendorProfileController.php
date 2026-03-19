@@ -255,6 +255,7 @@ class VendorProfileController extends Controller
         });
 
         $vendorReviews = $vendorProfile->reviews()
+            ->where('is_hidden', false)
             ->with('user')
             ->latest()
             ->get()

@@ -110,4 +110,29 @@ class ReviewController extends Controller
 
         return back()->with('success', 'Reply posted successfully.');
     }
+
+    public function toggleHidden(Review $review)
+    {
+        $vendor = auth()->user()->vendorProfile;
+
+        if (! $vendor) {
+            abort(403);
+        }
+
+        $isVendorReview = $review->reviewable_type === VendorProfile::class
+            && (int) $review->reviewable_id === (int) $vendor->id;
+
+        $isDealReview = $review->reviewable_type === DealOfferType::class
+            && DealOfferType::where('id', $review->reviewable_id)
+                ->whereHas('deal', fn ($q) => $q->where('vendor_id', $vendor->id))
+                ->exists();
+
+        if (! $isVendorReview && ! $isDealReview) {
+            abort(403);
+        }
+
+        $review->update(['is_hidden' => ! $review->is_hidden]);
+
+        return back()->with('success', $review->is_hidden ? 'Review hidden.' : 'Review visible again.');
+    }
 }
