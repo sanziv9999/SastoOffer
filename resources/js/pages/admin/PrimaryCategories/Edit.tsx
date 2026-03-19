@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { router, useForm, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 type Props = {
   primaryCategory: any;
@@ -12,18 +13,32 @@ type Props = {
 };
 
 const Edit = ({ primaryCategory, parentOptions }: Props) => {
-  const { data, setData, processing, errors } = useForm({
+  const { data, setData, post, processing, errors } = useForm({
     name: primaryCategory?.name || '',
     slug: primaryCategory?.slug || '',
     description: primaryCategory?.description || '',
     display_order: primaryCategory?.display_order ?? '',
     is_active: !!primaryCategory?.is_active,
     parent_id: primaryCategory?.parent_id ?? '',
+    image: null as File | null,
+    remove_image: false,
+    _method: 'put',
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(primaryCategory?.image_url || null);
+
+  useEffect(() => {
+    if (!data.image) {
+      setImagePreview(primaryCategory?.image_url || null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(data.image);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [data.image, primaryCategory?.image_url]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.put(`/admin/primary-categories/${primaryCategory.id}`, data as any);
+    post(`/admin/primary-categories/${primaryCategory.id}`, { forceFormData: true });
   };
 
   return (
@@ -81,6 +96,34 @@ const Edit = ({ primaryCategory, parentOptions }: Props) => {
               <label className="text-sm font-medium">Description (optional)</label>
               <Textarea value={data.description} onChange={(e) => setData('description', e.target.value)} />
               {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Category image (optional)</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setData('image', e.target.files?.[0] || null)}
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Category preview"
+                  className="h-20 w-20 rounded-md border object-cover"
+                />
+              )}
+              {primaryCategory?.image_url && (
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={!!data.remove_image}
+                    onChange={(e) => setData('remove_image', e.target.checked)}
+                  />
+                  Remove current image
+                </label>
+              )}
+              {errors.image && <p className="text-xs text-destructive">{errors.image}</p>}
+              {errors.remove_image && <p className="text-xs text-destructive">{errors.remove_image}</p>}
             </div>
 
             <div className="space-y-1.5">

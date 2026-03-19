@@ -8,6 +8,7 @@ use App\Http\Requests\UpdatePrimaryCategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,6 +64,12 @@ class PrimaryCategoryCrudController extends Controller
         // If parent_id is supplied, this becomes a sub-category under that parent.
         // If not supplied, it will be a top-level category (parent_id = null).
         $data['parent_id'] = $data['parent_id'] ?? null;
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('categories', 'public');
+            $data['image_url'] = '/storage/' . $path;
+        }
+
         Category::create($data);
 
         return redirect()->route('admin.primary-categories.index')->with('success', 'Primary category created.');
@@ -92,6 +99,23 @@ class PrimaryCategoryCrudController extends Controller
         }
         if (array_key_exists('slug', $data) && empty($data['slug']) && ! empty($data['name'] ?? $primaryCategory->name)) {
             $data['slug'] = Str::slug($data['name'] ?? $primaryCategory->name);
+        }
+
+        if ($request->boolean('remove_image')) {
+            if (! empty($primaryCategory->image_url)) {
+                $storagePath = str_replace('/storage/', '', $primaryCategory->image_url);
+                Storage::disk('public')->delete($storagePath);
+            }
+            $data['image_url'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if (! empty($primaryCategory->image_url)) {
+                $oldStoragePath = str_replace('/storage/', '', $primaryCategory->image_url);
+                Storage::disk('public')->delete($oldStoragePath);
+            }
+            $path = $request->file('image')->store('categories', 'public');
+            $data['image_url'] = '/storage/' . $path;
         }
 
         $primaryCategory->update($data);

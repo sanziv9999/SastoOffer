@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 type PageProps = {
   parentOptions: Array<{ id: number; name: string }>;
@@ -20,11 +21,23 @@ const Create = () => {
     display_order: '',
     is_active: true,
     parent_id: '' as number | '' | null,
+    image: null as File | null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!data.image) {
+      setImagePreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(data.image);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [data.image]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post('/admin/primary-categories');
+    post('/admin/primary-categories', { forceFormData: true });
   };
 
   return (
@@ -84,6 +97,23 @@ const Create = () => {
               <label className="text-sm font-medium">Description (optional)</label>
               <Textarea value={data.description} onChange={(e) => setData('description', e.target.value)} />
               {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Category image (optional)</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setData('image', e.target.files?.[0] || null)}
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Category preview"
+                  className="h-20 w-20 rounded-md border object-cover"
+                />
+              )}
+              {errors.image && <p className="text-xs text-destructive">{errors.image}</p>}
             </div>
 
             <div className="space-y-1.5">

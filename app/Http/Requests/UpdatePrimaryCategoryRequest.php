@@ -26,6 +26,7 @@ class UpdatePrimaryCategoryRequest extends FormRequest
             'is_active'     => ['nullable', 'boolean'],
             'parent_id'     => ['nullable', 'exists:categories,id'],
             'image'         => ['nullable', 'image', 'max:2048'],
+            'remove_image'  => ['nullable', 'boolean'],
         ];
     }
 }

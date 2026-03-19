@@ -61,9 +61,16 @@ const Index = ({ primaryCategories, filters }: Props) => {
             items.map((c: any) => (
               <div key={c.id} className="space-y-1">
                 <div className="flex items-center justify-between gap-3 border rounded-md p-3">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{c.name}</div>
-                    <div className="text-xs text-muted-foreground">Slug: {c.slug || '-'}</div>
+                  <div className="min-w-0 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md border bg-muted overflow-hidden shrink-0">
+                      {c.image_url ? (
+                        <img src={c.image_url} alt={c.name} className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{c.name}</div>
+                      <div className="text-xs text-muted-foreground">Slug: {c.slug || '-'}</div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" asChild>
@@ -82,10 +89,17 @@ const Index = ({ primaryCategories, filters }: Props) => {
                         key={child.id}
                         className="flex items-center justify-between gap-3 border rounded-md p-2 bg-muted/40"
                       >
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{child.name}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            Slug: {child.slug || '-'}
+                        <div className="min-w-0 flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-md border bg-muted overflow-hidden shrink-0">
+                            {child.image_url ? (
+                              <img src={child.image_url} alt={child.name} className="h-full w-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium truncate">{child.name}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Slug: {child.slug || '-'}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
