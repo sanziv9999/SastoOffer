@@ -80,7 +80,8 @@ class ActivityMailer
                 'total' => (float) $order->grand_total,
                 'vendor_name' => $order->vendor?->business_name,
             ],
-            uniqueKey: 'order:' . $order->id . ':customer',
+            // Deduplicate by shared checkout order number for customer notifications.
+            uniqueKey: 'order-number:' . $order->order_number . ':customer:' . $order->user_id,
         );
     }
 

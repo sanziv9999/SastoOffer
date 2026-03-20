@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
     Route::get('/dashboard/purchases', [CheckoutController::class, 'myOrders'])->name('dashboard.purchases');
+    Route::patch('/dashboard/purchases/{orderNumber}/cancel', [CheckoutController::class, 'cancelOrderGroup'])->name('dashboard.purchases.cancel');
     Route::get('/dashboard/purchases/{id}', [DashboardController::class, 'voucherDetail'])->name('dashboard.purchases.voucher');
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])->name('dashboard.reviews');
     Route::get('/dashboard/reviews/edit/{id}', [DashboardController::class, 'editReview'])->name('dashboard.reviews.edit');

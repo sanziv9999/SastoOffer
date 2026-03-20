@@ -9,6 +9,7 @@ use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -26,6 +27,7 @@ class CheckoutController extends Controller
 
         $orders = DB::transaction(function () use ($user, $cartItems) {
             $grouped = $cartItems->groupBy(fn (CartItem $item) => $item->offerType->deal->vendor_id ?? 0);
+            $sharedOrderNumber = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
 
             $createdOrders = [];
 
@@ -40,16 +42,13 @@ class CheckoutController extends Controller
                 $order = Order::create([
                     'user_id' => $user->id,
                     'vendor_id' => $vendorId ?: null,
-                    'order_number' => 'TMP-' . uniqid('', true),
+                    'order_number' => $sharedOrderNumber,
                     'status' => 'pending',
                     'currency_code' => 'NPR',
                     'subtotal' => $subtotal,
                     'discount_total' => $discountTotal,
                     'tax_total' => 0,
                     'grand_total' => $subtotal,
-                ]);
-                $order->update([
-                    'order_number' => 'ORD-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
                 ]);
 
                 foreach ($items as $cartItem) {
@@ -85,11 +84,21 @@ class CheckoutController extends Controller
 
         foreach ($orders as $createdOrder) {
             try {
-                $activityMailer->sendOrderPlacedCustomer($createdOrder);
                 $activityMailer->sendOrderPlacedVendor($createdOrder);
             } catch (\Throwable $e) {
                 Log::warning('Order activity mail failed', [
                     'order_id' => $createdOrder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        if ($firstOrder) {
+            try {
+                // Send one customer confirmation for the shared checkout order number.
+                $activityMailer->sendOrderPlacedCustomer($firstOrder);
+            } catch (\Throwable $e) {
+                Log::warning('Customer order confirmation mail failed', [
+                    'order_id' => $firstOrder->id,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -115,27 +124,43 @@ class CheckoutController extends Controller
 
     public function myOrders()
     {
-        $orders = Order::where('user_id', auth()->id())
+        $groupedOrders = Order::where('user_id', auth()->id())
             ->with(['items.deal', 'vendor'])
             ->latest()
             ->get()
-            ->map(function (Order $order) {
+            ->groupBy(fn (Order $order) => $order->order_number ?: ('ORD-' . $order->id))
+            ->map(function ($ordersInGroup, $orderNumber) {
+                /** @var \Illuminate\Support\Collection<int, Order> $ordersInGroup */
+                $firstOrder = $ordersInGroup->first();
+                $vendors = $ordersInGroup->pluck('vendor')->filter();
+                $uniqueVendorNames = $vendors->pluck('business_name')->filter()->unique()->values();
+                $uniqueVendorSlugs = $vendors->pluck('slug')->filter()->unique()->values();
+                $allItems = $ordersInGroup->flatMap(fn (Order $order) => $order->items);
+
+                $statuses = $ordersInGroup->pluck('status')->filter()->values();
+                $statusPriority = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'];
+                $aggregatedStatus = collect($statusPriority)->first(fn ($status) => $statuses->contains($status)) ?? 'pending';
+                $canCancel = $ordersInGroup->every(fn (Order $o) => $o->status === 'pending');
+
                 return [
-                    'id' => $order->id,
-                    'orderNumber' => $order->order_number,
-                    'status' => $order->status,
-                    'subtotal' => (float) $order->subtotal,
-                    'discountTotal' => (float) $order->discount_total,
-                    'taxTotal' => (float) $order->tax_total,
-                    'grandTotal' => (float) $order->grand_total,
-                    'currencyCode' => $order->currency_code,
-                    'paymentMethod' => $order->payment_method,
-                    'paidAt' => $order->paid_at?->toIso8601String(),
-                    'vendorName' => $order->vendor?->business_name ?? 'Unknown Vendor',
-                    'vendorSlug' => $order->vendor?->slug,
-                    'createdAt' => $order->created_at->toIso8601String(),
-                    'itemCount' => $order->items->sum('quantity'),
-                    'items' => $order->items->map(fn (OrderItem $item) => [
+                    'id' => $firstOrder?->id,
+                    'orderNumber' => $orderNumber,
+                    'status' => $aggregatedStatus,
+                    'canCancel' => $canCancel,
+                    'subtotal' => (float) $ordersInGroup->sum('subtotal'),
+                    'discountTotal' => (float) $ordersInGroup->sum('discount_total'),
+                    'taxTotal' => (float) $ordersInGroup->sum('tax_total'),
+                    'grandTotal' => (float) $ordersInGroup->sum('grand_total'),
+                    'currencyCode' => $firstOrder?->currency_code,
+                    'paymentMethod' => $firstOrder?->payment_method,
+                    'paidAt' => $ordersInGroup->pluck('paid_at')->filter()->max()?->toIso8601String(),
+                    'vendorName' => $uniqueVendorNames->count() > 1
+                        ? 'Multiple vendors (' . $uniqueVendorNames->count() . ')'
+                        : ($uniqueVendorNames->first() ?? 'Unknown Vendor'),
+                    'vendorSlug' => $uniqueVendorSlugs->count() === 1 ? $uniqueVendorSlugs->first() : null,
+                    'createdAt' => $ordersInGroup->max('created_at')?->toIso8601String(),
+                    'itemCount' => (int) $allItems->sum('quantity'),
+                    'items' => $allItems->map(fn (OrderItem $item) => [
                         'id' => $item->id,
                         'dealId' => $item->deal_id,
                         'dealOfferTypeId' => $item->deal_offer_type_id,
@@ -149,10 +174,52 @@ class CheckoutController extends Controller
                         'offerType' => $item->meta['offer_type'] ?? 'Offer',
                     ])->values()->all(),
                 ];
-            });
+            })
+            ->sortByDesc('createdAt')
+            ->values();
 
         return \Inertia\Inertia::render('dashboard/MyPurchases', [
-            'purchases' => $orders,
+            'purchases' => $groupedOrders,
         ]);
+    }
+
+    public function cancelOrderGroup(Request $request, string $orderNumber, ActivityMailer $activityMailer)
+    {
+        $orders = Order::where('user_id', auth()->id())
+            ->where('order_number', $orderNumber)
+            ->with('vendor.user')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return back()->with('error', 'Order not found.');
+        }
+
+        if ($orders->contains(fn (Order $order) => $order->status !== 'pending')) {
+            return back()->with('error', 'Only pending orders can be cancelled.');
+        }
+
+        DB::transaction(function () use ($orders) {
+            foreach ($orders as $order) {
+                $order->status = 'cancelled';
+                $order->save();
+            }
+        });
+
+        try {
+            $firstOrder = $orders->first();
+            if ($firstOrder) {
+                $activityMailer->sendOrderStatusChangedCustomer($firstOrder, 'cancelled');
+            }
+            foreach ($orders as $order) {
+                $activityMailer->sendOrderStatusChangedVendor($order, 'cancelled');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Order cancel status mail failed', [
+                'order_number' => $orderNumber,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return back()->with('success', 'Order cancelled successfully.');
     }
 }

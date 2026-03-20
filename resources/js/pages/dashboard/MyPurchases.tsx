@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 
 interface OrderItem {
   id: number;
@@ -26,6 +27,7 @@ interface Order {
   id: number;
   orderNumber: string;
   status: string;
+  canCancel: boolean;
   subtotal: number;
   discountTotal: number;
   taxTotal: number;
@@ -63,6 +65,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
   const [selectedItem, setSelectedItem] = useState<SelectedOrderItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [cancellingOrderNumber, setCancellingOrderNumber] = useState<string | null>(null);
 
   const toggleExpand = (orderId: number) => {
     setExpandedOrders(prev => {
@@ -91,6 +94,27 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
     setIsItemModalOpen(true);
   };
 
+  const handleCancelOrder = (order: Order) => {
+    if (!order.canCancel) {
+      return;
+    }
+
+    const ok = window.confirm(`Cancel order ${order.orderNumber}? This action cannot be undone.`);
+    if (!ok) {
+      return;
+    }
+
+    setCancellingOrderNumber(order.orderNumber);
+    router.patch(
+      route('dashboard.purchases.cancel', { orderNumber: order.orderNumber }),
+      {},
+      {
+        preserveScroll: true,
+        onFinish: () => setCancellingOrderNumber(null),
+      },
+    );
+  };
+
   const renderOrderCard = (order: Order) => {
     const cfg = statusConfig[order.status] || statusConfig.pending;
     const isExpanded = expandedOrders.has(order.id);
@@ -112,16 +136,36 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
             </div>
             <div className="flex items-center gap-1.5">
               <Store className="h-3.5 w-3.5 text-muted-foreground" />
-              <a
-                href={`/vendor-profile/${order.vendorSlug ?? order.id}`}
-                className="text-sm font-medium text-teal-950 truncate hover:text-primary hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {order.vendorName}
-              </a>
+              {order.vendorSlug ? (
+                <a
+                  href={`/vendor-profile/${order.vendorSlug}`}
+                  className="text-sm font-medium text-teal-950 truncate hover:text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {order.vendorName}
+                </a>
+              ) : (
+                <span className="text-sm font-medium text-teal-950 truncate">
+                  {order.vendorName}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {order.canCancel && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-[11px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancelOrder(order);
+                }}
+                disabled={cancellingOrderNumber === order.orderNumber}
+              >
+                {cancellingOrderNumber === order.orderNumber ? 'Cancelling...' : 'Cancel'}
+              </Button>
+            )}
             <span className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 ${cfg.color}`}>
               {cfg.icon}
               {cfg.label}
