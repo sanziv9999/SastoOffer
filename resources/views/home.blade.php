@@ -15,6 +15,6 @@
         <x-recent-offers :recentOffers="$recentOffers" />
 
         {{-- Popular Brands --}}
-        <x-brand-logos />
+        <x-brand-logos :vendors="$topRatedVendors" />
     </div>
 </x-layout>

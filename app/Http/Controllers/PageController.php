@@ -32,7 +32,15 @@ class PageController extends Controller
             ->take(6)
             ->get();
 
-        return view('home', compact('featuredDeals', 'recentOffers', 'categories'));
+        $topRatedVendors = \App\Models\VendorProfile::query()
+            ->where('verified_status', 'verified')
+            ->withAvg('reviews', 'rating')
+            ->with(['images' => fn($q) => $q->where('attribute_name', 'logo')])
+            ->orderByDesc('reviews_avg_rating')
+            ->take(12)
+            ->get();
+
+        return view('home', compact('featuredDeals', 'recentOffers', 'categories', 'topRatedVendors'));
     }
 
     public function search(Request $request)
