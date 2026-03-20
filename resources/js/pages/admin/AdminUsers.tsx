@@ -38,6 +38,13 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   };
 
+  const statusTone = (status?: string) => {
+    const value = String(status || 'active').toLowerCase();
+    if (value === 'active') return 'bg-green-100 text-green-700 border-green-200';
+    if (value === 'suspended') return 'bg-red-100 text-red-700 border-red-200';
+    return 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
   const filteredUsers = users?.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -105,6 +112,30 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
         },
       );
     }
+  };
+
+  const handleActivate = (id: string) => {
+    router.patch(
+      route('admin.users.activate', id),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => toast.success('User activated'),
+        onError: () => toast.error('Failed to activate user'),
+      },
+    );
+  };
+
+  const handleVerify = (id: string) => {
+    router.patch(
+      route('admin.users.verify', id),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => toast.success('User verified'),
+        onError: () => toast.error('Failed to verify user'),
+      },
+    );
   };
 
   return (
@@ -205,6 +236,8 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
                     <th className="h-12 px-4 text-left align-middle font-medium">User</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Email</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Verified</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Joined</th>
                     <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
                   </tr>
@@ -228,15 +261,36 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
                           {roleLabel(u.role)}
                         </Badge>
                       </td>
+                      <td className="p-4 align-middle">
+                        <Badge className={statusTone(u.status)}>
+                          {String(u.status || 'active').charAt(0).toUpperCase() + String(u.status || 'active').slice(1)}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle">
+                        {u.email_verified_at ? (
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Verified</Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200">Unverified</Badge>
+                        )}
+                      </td>
                       <td className="p-4 align-middle">{(u.created_at || u.createdAt) ? new Date(u.created_at || u.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="p-4 align-middle text-right">
-                        <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleSuspend(u.id)}>Suspend</Button>
+                        <div className="inline-flex items-center gap-1">
+                          {!u.email_verified_at && (
+                            <Button variant="ghost" size="sm" onClick={() => handleVerify(u.id)}>Verify</Button>
+                          )}
+                          {String(u.status || '').toLowerCase() === 'suspended' ? (
+                            <Button variant="ghost" size="sm" onClick={() => handleActivate(u.id)}>Activate</Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleSuspend(u.id)}>Suspend</Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
+                        </div>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
                         No users found matching your search.
                       </td>
                     </tr>

@@ -213,6 +213,7 @@ class AdminController extends Controller
                     'name' => $u->name,
                     'email' => $u->email,
                     'status' => $u->status,
+                    'email_verified_at' => $u->email_verified_at?->toIso8601String(),
                     'role' => $u->getRoleNames()->first() ?? 'customer',
                     'created_at' => $u->created_at?->toIso8601String(),
                 ];
@@ -262,6 +263,37 @@ class AdminController extends Controller
         $user->save();
 
         return back()->with('success', 'User suspended successfully.');
+    }
+
+    public function activateUser(User $user): RedirectResponse
+    {
+        $admin = auth()->user();
+        if (! $admin || ! $admin->hasRole('admin')) {
+            abort(403);
+        }
+
+        $user->status = 'active';
+        $user->save();
+
+        return back()->with('success', 'User activated successfully.');
+    }
+
+    public function verifyUser(User $user): RedirectResponse
+    {
+        $admin = auth()->user();
+        if (! $admin || ! $admin->hasRole('admin')) {
+            abort(403);
+        }
+
+        if ($user->email_verified_at === null) {
+            $user->email_verified_at = now();
+        }
+        if ($user->status !== 'active') {
+            $user->status = 'active';
+        }
+        $user->save();
+
+        return back()->with('success', 'User verified successfully.');
     }
 
     public function vendors()
