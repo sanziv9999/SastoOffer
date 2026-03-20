@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link, router } from '@inertiajs/react';
-import { CalendarDays, Clock, Globe, Mail, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
+import { CalendarDays, Clock, ExternalLink, Globe, Mail, MapPin, Phone, ShieldCheck, User } from 'lucide-react';
 
 const AdminVendorView = ({ vendor }: { vendor: any }) => {
   const formatDate = (value?: string | null) => {
@@ -46,6 +46,19 @@ const AdminVendorView = ({ vendor }: { vendor: any }) => {
           ? 'bg-gray-700 text-white hover:bg-gray-700'
           : 'bg-amber-500 text-white hover:bg-amber-500';
   const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const latitude = address?.latitude !== null && address?.latitude !== undefined ? Number(address.latitude) : null;
+  const longitude = address?.longitude !== null && address?.longitude !== undefined ? Number(address.longitude) : null;
+  const hasCoordinates =
+    latitude !== null &&
+    longitude !== null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
+  const mapEmbedSrc = hasCoordinates
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.01}%2C${latitude - 0.01}%2C${longitude + 0.01}%2C${latitude + 0.01}&layer=mapnik&marker=${latitude}%2C${longitude}`
+    : null;
+  const mapOpenUrl = hasCoordinates
+    ? `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`
+    : null;
 
   return (
     <div className="space-y-6">
@@ -59,50 +72,76 @@ const AdminVendorView = ({ vendor }: { vendor: any }) => {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <CardTitle>Verification Controls</CardTitle>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="capitalize">{getCategoryLabel()}</Badge>
-            <Select value={vendor.verified_status || 'pending'} onValueChange={updateVerifiedStatus}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 overflow-hidden">
+          <div className="h-40 w-full bg-muted">
+            {vendor?.cover ? (
+              <img src={vendor.cover} alt="Vendor cover" className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">No cover image</div>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <CardContent className="pt-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="h-16 w-16 rounded-xl border bg-muted overflow-hidden shrink-0">
+                  {vendor?.logo ? (
+                    <img src={vendor.logo} alt="Vendor logo" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-xl font-semibold text-muted-foreground">
+                      {vendor?.business_name?.charAt(0) || 'V'}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xl font-semibold">{vendor?.business_name || 'N/A'}</div>
+                  <div className="text-sm text-muted-foreground">Slug: {vendor?.slug || 'N/A'}</div>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Badge variant="outline">{getCategoryLabel()}</Badge>
+                    <Badge className={statusClass}>{statusLabel}</Badge>
+                    <Badge className={vendor?.is_profile_complete ? 'bg-green-600 text-white hover:bg-green-600' : 'bg-red-600 text-white hover:bg-red-600'}>
+                      {vendor?.is_profile_complete ? 'Profile Complete' : 'Profile Incomplete'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <div>Verified at: <span className="font-medium text-foreground">{formatDate(vendor?.verified_at)}</span></div>
+                <div>Verified by: <span className="font-medium text-foreground">{vendor?.verified_by?.name || 'N/A'}</span></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification Controls</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-1">
               <div className="text-sm text-muted-foreground">Current status</div>
               <Badge className={statusClass}>{statusLabel}</Badge>
             </div>
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Profile completeness</div>
-              <Badge className={vendor?.is_profile_complete ? 'bg-green-600 text-white hover:bg-green-600' : 'bg-red-600 text-white hover:bg-red-600'}>
-                {vendor?.is_profile_complete ? 'Complete' : 'Incomplete'}
-              </Badge>
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Change status</div>
+              <Select value={vendor.verified_status || 'pending'} onValueChange={updateVerifiedStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Verified at</div>
-              <div className="text-sm font-medium">{formatDate(vendor?.verified_at)}</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Verified by</div>
-              <div className="text-sm font-medium">{vendor?.verified_by?.name || 'N/A'}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>Business Details</CardTitle>
           </CardHeader>
@@ -134,29 +173,48 @@ const AdminVendorView = ({ vendor }: { vendor: any }) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Media</CardTitle>
+            <CardTitle>Address & Map</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">Logo</div>
-              <div className="h-24 w-24 rounded border bg-muted overflow-hidden">
-                {vendor?.logo ? (
-                  <img src={vendor.logo} alt="Vendor logo" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No logo</div>
-                )}
+            <div className="flex items-start gap-3">
+              <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+              <div className="space-y-1">
+                <div className="text-sm text-muted-foreground">Full address</div>
+                <div className="font-medium">{addressLabel}</div>
+                <div className="text-xs text-muted-foreground">
+                  Lat: {latitude ?? 'N/A'} · Lng: {longitude ?? 'N/A'}
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">Cover</div>
-              <div className="h-28 w-full rounded border bg-muted overflow-hidden">
-                {vendor?.cover ? (
-                  <img src={vendor.cover} alt="Vendor cover" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No cover</div>
+
+            {hasCoordinates && mapEmbedSrc ? (
+              <div className="space-y-3">
+                <div className="h-[280px] w-full overflow-hidden rounded-md border">
+                  <iframe
+                    title="Vendor location map"
+                    width="100%"
+                    height="100%"
+                    className="border-0"
+                    loading="lazy"
+                    src={mapEmbedSrc}
+                  />
+                </div>
+                {mapOpenUrl && (
+                  <a
+                    href={mapOpenUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary underline"
+                  >
+                    Open in OpenStreetMap <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                 )}
               </div>
-            </div>
+            ) : (
+              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                Location coordinates are missing for this vendor.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -207,75 +265,32 @@ const AdminVendorView = ({ vendor }: { vendor: any }) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Address & Coordinates</CardTitle>
+            <CardTitle>Media</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">Full address</div>
-                <div className="font-medium">{addressLabel}</div>
-                <div className="text-xs text-muted-foreground">Address ID: {vendor?.default_address?.id || 'N/A'}</div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Logo</div>
+              <div className="h-24 w-24 rounded border bg-muted overflow-hidden">
+                {vendor?.logo ? (
+                  <img src={vendor.logo} alt="Vendor logo" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No logo</div>
+                )}
               </div>
             </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Latitude:</span> {vendor?.default_address?.latitude ?? 'N/A'}
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Longitude:</span> {vendor?.default_address?.longitude ?? 'N/A'}
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Cover</div>
+              <div className="h-28 w-full rounded border bg-muted overflow-hidden">
+                {vendor?.cover ? (
+                  <img src={vendor.cover} alt="Vendor cover" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No cover</div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Location Map</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {vendor?.default_address?.latitude !== null &&
-          vendor?.default_address?.latitude !== undefined &&
-          vendor?.default_address?.longitude !== null &&
-          vendor?.default_address?.longitude !== undefined ? (
-            <div className="space-y-3">
-              <div className="h-[320px] w-full overflow-hidden rounded-md border">
-                <iframe
-                  title="Vendor location map"
-                  width="100%"
-                  height="100%"
-                  className="border-0"
-                  loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${
-                    Number(vendor.default_address.longitude) - 0.01
-                  }%2C${
-                    Number(vendor.default_address.latitude) - 0.01
-                  }%2C${
-                    Number(vendor.default_address.longitude) + 0.01
-                  }%2C${
-                    Number(vendor.default_address.latitude) + 0.01
-                  }&layer=mapnik&marker=${Number(vendor.default_address.latitude)}%2C${Number(
-                    vendor.default_address.longitude,
-                  )}`}
-                />
-              </div>
-              <a
-                href={`https://www.openstreetmap.org/?mlat=${Number(vendor.default_address.latitude)}&mlon=${Number(
-                  vendor.default_address.longitude,
-                )}#map=16/${Number(vendor.default_address.latitude)}/${Number(vendor.default_address.longitude)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-primary underline"
-              >
-                Open in OpenStreetMap
-              </a>
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              Location coordinates are missing for this vendor.
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
