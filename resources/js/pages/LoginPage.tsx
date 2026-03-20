@@ -50,7 +50,7 @@ const LoginPage = () => {
         <CardContent>
 
           {/* Social Login */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
+          {/* <div className="grid grid-cols-3 gap-2 mb-5">
             <Button variant="outline" size="sm" className="w-full" onClick={() => handleSocialLogin('Google')}>
               <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -75,7 +75,7 @@ const LoginPage = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-card px-2 text-sm text-muted-foreground">OR</span>
             </div>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
