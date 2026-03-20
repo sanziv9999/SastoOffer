@@ -1,12 +1,12 @@
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, Package } from 'lucide-react';
+import { Plus, Search, Package, Layers3, CircleDollarSign, TrendingUp, Clock3 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
@@ -19,6 +19,7 @@ interface ManageDealsProps {
 const ManageDeals = ({ deals }: ManageDealsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { flash } = usePage().props as any;
+  const allDeals = deals || [];
 
   useEffect(() => {
     if (flash?.success) {
@@ -30,10 +31,32 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
   }, [flash]);
 
   const filterDeals = (status?: string) => {
-    let filtered = deals || [];
+    let filtered = allDeals;
     if (status && status !== 'all') filtered = filtered.filter((d: any) => d.status === status);
     if (searchTerm) filtered = filtered.filter((d: any) => d.title.toLowerCase().includes(searchTerm.toLowerCase()));
     return filtered;
+  };
+
+  const stats = useMemo(() => {
+    const totalDeals = allDeals.length;
+    const activeDeals = allDeals.filter((d: any) => d.status === 'active').length;
+    const pendingDeals = allDeals.filter((d: any) => d.status === 'pending').length;
+    const totalSold = allDeals.reduce((sum: number, d: any) => sum + Number(d.quantitySold || 0), 0);
+    const estRevenue = allDeals.reduce(
+      (sum: number, d: any) => sum + (Number(d.quantitySold || 0) * Number(d.price || 0)),
+      0,
+    );
+
+    return { totalDeals, activeDeals, pendingDeals, totalSold, estRevenue };
+  }, [allDeals]);
+
+  const getStatusBadge = (status: string) => {
+    const normalized = String(status || '').toLowerCase();
+    if (normalized === 'active') return 'bg-green-100 text-green-700 border-green-200';
+    if (normalized === 'pending') return 'bg-amber-100 text-amber-700 border-amber-200';
+    if (normalized === 'expired') return 'bg-slate-100 text-slate-700 border-slate-200';
+    if (normalized === 'draft') return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+    return 'bg-muted text-muted-foreground border-border';
   };
 
   const renderTable = (dealsList: any[]) => (
@@ -47,6 +70,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                 <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
+                <th className="h-12 px-4 text-left align-middle font-medium">Inventory</th>
                 <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
               </tr>
             </thead>
@@ -66,12 +90,27 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     <div className="font-medium">Rs. {Number(deal.price ?? 0).toFixed(2)}</div>
                   </td>
                   <td className="p-4 align-middle">
-                    <Badge variant={deal.status === 'active' ? 'default' : deal.status === 'expired' ? 'secondary' : 'outline'}
-                      className={deal.status === 'active' ? 'bg-green-500' : undefined}>
+                    <Badge variant="outline" className={getStatusBadge(deal.status)}>
                       {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
                     </Badge>
                   </td>
-                  <td className="p-4 align-middle">{deal.quantitySold || 0} sold</td>
+                  <td className="p-4 align-middle">
+                    <div className="font-medium">{deal.quantitySold || 0} sold</div>
+                    <div className="text-xs text-muted-foreground">
+                      Est. Rs. {(Number(deal.quantitySold || 0) * Number(deal.price || 0)).toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="p-4 align-middle">
+                    <div className="text-sm">
+                      {deal.maxQuantity ? (
+                        <span>
+                          {Math.min(Number(deal.quantitySold || 0), Number(deal.maxQuantity))}/{deal.maxQuantity}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Unlimited</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 align-middle text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" asChild>
@@ -106,17 +145,65 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Manage Deals</h1>
-          <p className="text-muted-foreground">View and manage all your deals</p>
+          <p className="text-muted-foreground">Manager view for deal performance, status, and actions</p>
         </div>
         <Button asChild><Link href="/vendor/deals/create"><Plus className="mr-2 h-4 w-4" />Create Deal</Link></Button>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Deals</p>
+              <Layers3 className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats.totalDeals}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Active</p>
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            </div>
+            <p className="text-2xl font-bold mt-1 text-green-700">{stats.activeDeals}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Pending</p>
+              <Clock3 className="h-4 w-4 text-amber-600" />
+            </div>
+            <p className="text-2xl font-bold mt-1 text-amber-700">{stats.pendingDeals}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Units Sold</p>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats.totalSold}</p>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 md:col-span-1">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Est. Revenue</p>
+              <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold mt-1">Rs. {stats.estRevenue.toFixed(2)}</p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>All Deals</CardTitle>
-              <CardDescription>{deals?.length || 0} total deals</CardDescription>
+              <CardTitle>Deal Portfolio</CardTitle>
+              <CardDescription>{allDeals.length || 0} total deals across all statuses</CardDescription>
             </div>
             <div className="flex w-full md:w-auto">
               <Input placeholder="Search deals..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-80 rounded-r-none" />
@@ -127,11 +214,11 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
         <CardContent>
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="expired">Expired</TabsTrigger>
+              <TabsTrigger value="all">All ({allDeals.length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({allDeals.filter((d: any) => d.status === 'active').length})</TabsTrigger>
+              <TabsTrigger value="draft">Draft ({allDeals.filter((d: any) => d.status === 'draft').length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({allDeals.filter((d: any) => d.status === 'pending').length})</TabsTrigger>
+              <TabsTrigger value="expired">Expired ({allDeals.filter((d: any) => d.status === 'expired').length})</TabsTrigger>
             </TabsList>
             <TabsContent value="all">{renderTable(filterDeals())}</TabsContent>
             <TabsContent value="active">{renderTable(filterDeals('active'))}</TabsContent>

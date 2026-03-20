@@ -39,16 +39,6 @@ const DealDetails = () => {
     );
   }
 
-  const discountedPrice = deal.discountedPrice ?? 0;
-  const originalPrice = deal.originalPrice ?? 0;
-  const savingsAmount = originalPrice > 0 ? originalPrice - discountedPrice : 0;
-  const discountPct =
-    typeof deal.discountPercent === 'number' && deal.discountPercent > 0
-      ? deal.discountPercent
-      : originalPrice > 0
-        ? Math.round((savingsAmount / originalPrice) * 100)
-        : 0;
-
   const sortedImages = [...(deal.images || [])].sort(
     (a: any, b: any) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
   );
@@ -59,13 +49,27 @@ const DealDetails = () => {
   const galleryImages = sortedImages.filter((img: any) => img.id !== featureImage?.id);
 
   const offers = Array.isArray(deal.offers) ? deal.offers : [];
-  const [selectedOfferId, setSelectedOfferId] = useState<number | null>(offers?.[0]?.id ?? null);
+  const [selectedOfferId, setSelectedOfferId] = useState<number | null>(
+    Number(deal.offerPivotId ?? offers?.[0]?.id ?? null)
+  );
 
   const selectedOffer = useMemo(() => {
     if (!offers.length) return null;
     if (selectedOfferId === null) return offers[0] ?? null;
     return offers.find((o: any) => Number(o.id) === Number(selectedOfferId)) ?? offers[0] ?? null;
   }, [offers, selectedOfferId]);
+
+  const discountedPrice = Number(selectedOffer?.pivot?.final_price ?? deal.discountedPrice ?? 0);
+  const originalPrice = Number(selectedOffer?.pivot?.original_price ?? deal.originalPrice ?? 0);
+  const savingsAmount = originalPrice > 0 ? originalPrice - discountedPrice : 0;
+  const discountPct =
+    typeof selectedOffer?.pivot?.discount_percent === 'number' && selectedOffer?.pivot?.discount_percent > 0
+      ? selectedOffer.pivot.discount_percent
+      : typeof deal.discountPercent === 'number' && deal.discountPercent > 0
+        ? deal.discountPercent
+        : originalPrice > 0
+          ? Math.round((savingsAmount / originalPrice) * 100)
+          : 0;
 
   const selectedEndsAt = selectedOffer?.pivot?.ends_at ?? deal.ends_at ?? null;
 
@@ -169,28 +173,34 @@ const DealDetails = () => {
             </div>
           )}
 
-          {/* Offer selector (when multiple offers exist) */}
-          {offers.length > 1 && (
-            <div className="mb-4">
-              <p className="text-sm font-medium mb-2">Choose an offer</p>
-              <div className="flex flex-wrap gap-2">
-                {offers.map((o: any) => {
-                  const active = Number(o.id) === Number(selectedOffer?.id);
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      onClick={() => setSelectedOfferId(Number(o.id))}
-                      className={[
-                        'px-3 py-1.5 rounded-full text-xs border transition-colors',
-                        active ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-input',
-                      ].join(' ')}
-                    >
-                      {o.display_name}
-                    </button>
-                  );
-                })}
+          {/* Parent + child offer management */}
+          {offers.length > 0 && (
+            <div className="mb-5 rounded-xl border bg-muted/20 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">Parent Deal</p>
+                <Badge variant="outline">{offers.length} child offer{offers.length !== 1 ? 's' : ''}</Badge>
               </div>
+              <p className="text-sm text-muted-foreground mb-3">{deal.title}</p>
+
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Select Child Offer</label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={selectedOfferId ?? ''}
+                onChange={(e) => setSelectedOfferId(Number(e.target.value))}
+              >
+                {offers.map((o: any) => (
+                  <option key={o.id} value={o.id}>
+                    {(o.display_name || o.name || `Offer #${o.id}`) + ` - Rs. ${Number(o?.pivot?.final_price ?? discountedPrice).toFixed(2)}`}
+                  </option>
+                ))}
+              </select>
+
+              {selectedOffer && (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{selectedOffer.display_name || selectedOffer.name || 'Offer'}</span>
+                  {selectedOffer?.pivot?.status ? ` · ${selectedOffer.pivot.status}` : ''}
+                </div>
+              )}
             </div>
           )}
 

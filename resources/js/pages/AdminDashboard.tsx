@@ -11,9 +11,13 @@ import {
   AlertTriangle,
   FileText,
   CheckCircle,
-  XCircle,
   Package,
-  Search
+  Search,
+  ArrowUpRight,
+  ShieldCheck,
+  LayoutDashboard,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import {
   Card,
@@ -49,6 +53,16 @@ const AdminDashboard = ({
   userGrowth = [],
 }: AdminDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedDealIds, setExpandedDealIds] = useState<Set<number>>(new Set());
+
+  const togglePendingDeal = (dealId: number) => {
+    setExpandedDealIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(dealId)) next.delete(dealId);
+      else next.add(dealId);
+      return next;
+    });
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,9 +95,37 @@ const AdminDashboard = ({
         </form>
       </div>
 
+      {/* Quick Access */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1.5" asChild>
+          <Link href="/admin/deals/pending">
+            <ShieldCheck className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-medium">Review Pending</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1.5" asChild>
+          <Link href="/admin/users">
+            <Users className="h-4 w-4 text-blue-600" />
+            <span className="text-xs font-medium">Manage Users</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1.5" asChild>
+          <Link href="/admin/vendors">
+            <Store className="h-4 w-4 text-violet-600" />
+            <span className="text-xs font-medium">Manage Vendors</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-auto py-3 flex-col gap-1.5" asChild>
+          <Link href="/admin/reports">
+            <LayoutDashboard className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-medium">Platform Reports</span>
+          </Link>
+        </Button>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-emerald-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Revenue
@@ -97,7 +139,7 @@ const AdminDashboard = ({
             </p>}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Users
@@ -111,7 +153,7 @@ const AdminDashboard = ({
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-violet-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Deals
@@ -125,7 +167,7 @@ const AdminDashboard = ({
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Sales
@@ -180,82 +222,102 @@ const AdminDashboard = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingDeals.map(deal => (
-                      <tr
-                        key={deal.id}
-                        className="border-b transition-colors hover:bg-muted/50"
-                      >
-                        <td className="p-4 align-middle">
-                          <div className="flex items-center gap-3">
-                            {deal.image && <img
-                              src={deal.image}
-                              alt={deal.title}
-                              className="h-10 w-10 rounded object-cover"
-                            />}
-                            <div>
-                              <div className="font-medium">
-                                {deal.title.length > 25
-                                  ? `${deal.title.substring(0, 25)}...`
-                                  : deal.title}
+                    {pendingDeals.map(deal => {
+                      const isExpanded = expandedDealIds.has(deal.id);
+                      const offers = Array.isArray(deal.offers) ? deal.offers : [];
+                      return (
+                        <>
+                          <tr
+                            key={deal.id}
+                            className="border-b transition-colors hover:bg-muted/50 cursor-pointer"
+                            onClick={() => togglePendingDeal(deal.id)}
+                          >
+                            <td className="p-4 align-middle">
+                              <div className="flex items-center gap-3">
+                                <div className="text-muted-foreground">
+                                  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </div>
+                                {deal.image && <img
+                                  src={deal.image}
+                                  alt={deal.title}
+                                  className="h-10 w-10 rounded object-cover"
+                                />}
+                                <div>
+                                  <div className="font-medium">
+                                    {deal.title.length > 25
+                                      ? `${deal.title.substring(0, 25)}...`
+                                      : deal.title}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    ID: {deal.id} · {offers.length} offer{offers.length !== 1 ? 's' : ''}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-xs text-muted-foreground">
-                                ID: {deal.id}
+                            </td>
+                            <td className="p-4 align-middle">
+                              {deal.vendorName || 'Unknown Vendor'}
+                            </td>
+                            <td className="p-4 align-middle">
+                              <div>
+                                <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
+                                <div className="text-xs text-muted-foreground line-through">
+                                  Rs. {deal.originalPrice?.toFixed(2)}
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 align-middle">
-                          {deal.vendorName || 'Unknown Vendor'}
-                        </td>
-                        <td className="p-4 align-middle">
-                          <div>
-                            <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground line-through">
-                              Rs. {deal.originalPrice?.toFixed(2)}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 align-middle">
-                          <Badge variant="outline">
-                            {deal.type === 'percentage' ? 'Discount' :
-                              deal.type === 'fixed' ? 'Fixed Price' :
-                                deal.type === 'bogo' ? 'BOGO' :
-                                  deal.type}
-                          </Badge>
-                        </td>
-                        <td className="p-4 align-middle">
-                          {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : 'N/A'}
-                        </td>
-                        <td className="p-4 align-middle text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="bg-green-500 hover:bg-green-600"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                            >
-                              <Link href={`/deals/${(deal as any).slug ?? deal.id}`}>
-                                View
-                              </Link>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                            <td className="p-4 align-middle">
+                              <Badge variant="outline">{deal.type}</Badge>
+                            </td>
+                            <td className="p-4 align-middle">
+                              {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="p-4 align-middle text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link href={`/admin/deals/${deal.id}/view`}>
+                                    Review <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                                  </Link>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={6} className="p-0">
+                                <div className="bg-muted/20 border-b px-6 py-4">
+                                  <h4 className="text-sm font-semibold mb-3">Child Offers</h4>
+                                  {offers.length > 0 ? (
+                                    <div className="space-y-2">
+                                      {offers.map((offer: any) => (
+                                        <div key={offer.id} className="flex items-center justify-between rounded-md border bg-background px-3 py-2 text-sm">
+                                          <div>
+                                            <p className="font-medium">{offer.offerTypeTitle}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                              #{offer.id}
+                                              {offer.endDate ? ` · Ends ${new Date(offer.endDate).toLocaleDateString()}` : ''}
+                                            </p>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="font-semibold">Rs. {Number(offer.discountedPrice ?? 0).toFixed(2)}</p>
+                                            <p className="text-xs text-muted-foreground line-through">Rs. {Number(offer.originalPrice ?? 0).toFixed(2)}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-muted-foreground">No child offers attached.</p>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

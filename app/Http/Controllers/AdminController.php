@@ -27,26 +27,40 @@ class AdminController extends Controller
         $activeDealsCount = (int) Deal::where('status', 'active')->count();
 
         $pendingDeals = Deal::query()
-            ->with(['vendor', 'offerTypes', 'images'])
+            ->with(['vendor', 'offerPivots.offerType', 'images'])
             ->where('status', 'pending')
             ->latest()
             ->take(8)
             ->get()
             ->map(function (Deal $deal) {
-                $offerType = $deal->offerTypes->first();
-                $offer = $offerType?->pivot;
+                $offers = $deal->offerPivots
+                    ->map(function ($pivot) {
+                        return [
+                            'id' => $pivot->id,
+                            'offerTypeTitle' => $pivot->offerType?->display_name ?? $pivot->offerType?->name ?? 'Offer',
+                            'status' => $pivot->status,
+                            'discountedPrice' => $pivot->final_price !== null ? (float) $pivot->final_price : null,
+                            'originalPrice' => $pivot->original_price !== null ? (float) $pivot->original_price : null,
+                            'endDate' => $pivot->ends_at?->toIso8601String(),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                $primaryOffer = $offers[0] ?? null;
                 $base = $deal->base_price !== null ? (float) $deal->base_price : null;
 
                 return [
                     'id' => $deal->id,
                     'title' => $deal->title,
                     'vendorName' => $deal->vendor?->business_name,
-                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
-                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
-                    'type' => $offerType?->name ?? 'offer',
+                    'discountedPrice' => $primaryOffer['discountedPrice'] ?? $base,
+                    'originalPrice' => $primaryOffer['originalPrice'] ?? $base,
+                    'type' => $primaryOffer['offerTypeTitle'] ?? 'Offer',
                     'createdAt' => $deal->created_at?->toIso8601String(),
                     'image' => $deal->featuredImageUrl(),
                     'slug' => $deal->slug,
+                    'offers' => $offers,
                 ];
             })
             ->values()
