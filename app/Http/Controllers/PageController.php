@@ -40,8 +40,16 @@ class PageController extends Controller
         $subSlug    = $request->query('subcategory');
         // Support comma-separated districts for multi-select
         $locationParam  = trim((string) $request->query('location', $request->query('city', $request->query('district', ''))));
+        
+        // Treat "All Districts" or "All Cities" as no location selected
+        if (in_array($locationParam, ['All Districts', 'All Cities'], true)) {
+            $locationParam = '';
+        }
+
         $locationSlugs  = ($locationParam !== '')
-            ? array_filter(array_map('trim', explode(',', $locationParam)))
+            ? array_filter(array_map('trim', explode(',', $locationParam)), function($slug) {
+                return !in_array($slug, ['All Districts', 'All Cities'], true);
+            })
             : [];
         $sort       = $request->query('sort', 'relevance');
         $featured   = $request->query('featured') === 'true';
@@ -173,16 +181,19 @@ class PageController extends Controller
             ])
             ->all();
 
-        // Fetch distinct districts for the location filter
-        $locations = \App\Models\Address::query()
-            ->whereNotNull('district')
-            ->where('district', '!=', '')
-            ->distinct()
-            ->orderBy('district')
-            ->pluck('district')
-            ->filter()
-            ->values()
-            ->all();
+        // Use full list of districts for the location filter (as in the navbar)
+        $locations = [
+            "Achham", "Arghakhanchi", "Baglung", "Baitadi", "Bajhang", "Bajura", "Banke", "Bara", 
+            "Bardiya", "Bhaktapur", "Bhojpur", "Chitwan", "Dadeldhura", "Dailekh", "Dang", "Darchula", 
+            "Dhading", "Dhankuta", "Dhanusha", "Dolakha", "Dolpa", "Doti", "Eastern Rukum", "Gorkha", 
+            "Gulmi", "Humla", "Ilam", "Jajarkot", "Jhapa", "Jumla", "Kailali", "Kalikot", "Kanchanpur", 
+            "Kapilvastu", "Kaski", "Kathmandu", "Kavrepalanchok", "Khotang", "Lalitpur", "Lamjung", 
+            "Mahottari", "Makwanpur", "Manang", "Morang", "Mugu", "Mustang", "Myagdi", "Nawalpur", 
+            "Nuwakot", "Okhaldhunga", "Palpa", "Panchthar", "Parasi", "Parbat", "Parsa", "Pyuthan", 
+            "Ramechhap", "Rasuwa", "Rautahat", "Rolpa", "Rupandehi", "Salyan", "Sankhuwasabha", 
+            "Saptari", "Sarlahi", "Sindhuli", "Sindhupalchok", "Siraha", "Solukhumbu", "Sunsari", 
+            "Surkhet", "Syangja", "Tanahun", "Taplejung", "Tehrathum", "Udayapur", "Western Rukum"
+        ];
 
         return view('search', [
             'deals'           => $deals,
