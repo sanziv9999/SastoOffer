@@ -26,7 +26,13 @@ class PageController extends Controller
             ->get()
             ->map(fn($offer) => $offer->toCardData());
 
-        return view('home', compact('featuredDeals', 'recentOffers'));
+        $categories = Category::whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('display_order')
+            ->take(6)
+            ->get();
+
+        return view('home', compact('featuredDeals', 'recentOffers', 'categories'));
     }
 
     public function search(Request $request)

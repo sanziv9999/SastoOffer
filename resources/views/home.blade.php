@@ -9,7 +9,7 @@
         <x-featured-products :featuredDeals="$featuredDeals" />
 
         {{-- Popular Categories / Multi Ads --}}
-        <x-multi-ads-banner />
+        <x-multi-ads-banner :categories="$categories" />
 
         {{-- Recent Offers Horizontal Scroll --}}
         <x-recent-offers :recentOffers="$recentOffers" />
