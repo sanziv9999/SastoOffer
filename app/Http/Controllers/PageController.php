@@ -45,6 +45,15 @@ class PageController extends Controller
 
     public function search(Request $request)
     {
+        $sortByOptions = [
+            'relevance' => 'Relevance',
+            'newest' => 'Newest',
+            'priceAsc' => 'Price: Low to High',
+            'priceDesc' => 'Price: High to Low',
+            'discountDesc' => 'Biggest Discount',
+            'endingSoon' => 'Ending Soon',
+        ];
+
         $query      = $request->query('q', '');
         // Support comma-separated category slugs for multi-select, or 'all'
         $categoryParam = $request->query('category', 'all');
@@ -209,7 +218,7 @@ class PageController extends Controller
             "Surkhet", "Syangja", "Tanahun", "Taplejung", "Tehrathum", "Udayapur", "Western Rukum"
         ];
 
-        return view('search', [
+        $viewData = [
             'deals'           => $deals,
             'categories'      => $categories,
             'locations'       => $locations,
@@ -223,7 +232,14 @@ class PageController extends Controller
             'maxPrice'          => $maxPrice,
             'availableMinPrice' => $availableMinPrice,
             'availableMaxPrice' => $availableMaxPrice,
-        ]);
+            'sortByOptions'     => $sortByOptions,
+        ];
+
+        if ($request->has('partial')) {
+            return view('partials.deals-grid', $viewData);
+        }
+
+        return view('search', $viewData);
     }
 
     public function forgotPassword()
