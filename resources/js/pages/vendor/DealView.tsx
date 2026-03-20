@@ -9,6 +9,13 @@ import { Separator } from '@/components/ui/separator';
 const DealView = () => {
   const { deal } = usePage().props as any;
 
+  const formatRs = (value: any) => {
+    if (value === null || value === undefined || value === '') return '-';
+    const n = Number(value);
+    if (Number.isNaN(n)) return '-';
+    return `Rs. ${n.toFixed(2)}`;
+  };
+
   const allImages = [...(deal?.images || [])].sort(
     (a: any, b: any) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
   );
@@ -42,7 +49,7 @@ const DealView = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Deal details</CardTitle>
+          <CardTitle>Deal overview</CardTitle>
           <CardDescription>These fields come from the `deals` table.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -58,9 +65,14 @@ const DealView = () => {
             )}
           </div>
 
-          <div className="text-sm">
-            <span className="text-muted-foreground">Base price:</span>{' '}
-            <span className="font-medium">Rs. {deal?.basePrice ?? '-'}</span>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Base price:</span>{' '}
+              <span className="font-medium">{formatRs(deal?.basePrice)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Deal ID: <span className="text-foreground font-medium">{deal?.id}</span>
+            </div>
           </div>
 
           {deal?.shortDesc && (
@@ -81,29 +93,62 @@ const DealView = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Offers</CardTitle>
-          <CardDescription>These fields come from `deal_offer_type`.</CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>Offers</CardTitle>
+              <CardDescription>These fields come from `deal_offer_type`.</CardDescription>
+            </div>
+            <Badge variant="outline">{Array.isArray(deal?.offers) ? deal.offers.length : 0} attached</Badge>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent>
           {Array.isArray(deal?.offers) && deal.offers.length > 0 ? (
-            deal.offers.map((o: any) => (
-              <div key={o.id} className="border rounded-md p-3 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-medium">{o.display_name}</div>
-                  <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
-                    {o.pivot?.status || 'active'}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Original: Rs. {o.pivot?.original_price ?? '-'} • Final: Rs. {o.pivot?.final_price ?? '-'}
-                  {o.pivot?.discountPercentage ? ` • ${o.pivot.discountPercentage}% off` : ''}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {o.pivot?.starts_at ? `From: ${o.pivot.starts_at}` : 'From: -'} •{' '}
-                  {o.pivot?.ends_at ? `To: ${o.pivot.ends_at}` : 'To: -'}
-                </div>
+            <div className="rounded-md border overflow-hidden">
+              <div className="relative w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                  <thead className="border-b bg-muted/20">
+                    <tr>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Offer</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Original</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Final</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Discount</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Validity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deal.offers.map((o: any) => (
+                      <tr key={o.id} className="border-b transition-colors hover:bg-muted/50">
+                        <td className="p-4 align-middle">
+                          <div className="font-medium">{o.display_name}</div>
+                          <div className="text-xs text-muted-foreground">#{o.id}</div>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
+                            {o.pivot?.status || 'active'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">{formatRs(o.pivot?.original_price)}</td>
+                        <td className="p-4 align-middle">{formatRs(o.pivot?.final_price)}</td>
+                        <td className="p-4 align-middle">
+                          {o.pivot?.discountPercentage !== null &&
+                          o.pivot?.discountPercentage !== undefined &&
+                          String(o.pivot?.discountPercentage) !== '' ? (
+                            <span className="text-sm">{o.pivot.discountPercentage}%</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 align-middle text-xs text-muted-foreground">
+                          {o.pivot?.starts_at ? `From ${o.pivot.starts_at}` : 'From -'} ·{' '}
+                          {o.pivot?.ends_at ? `To ${o.pivot.ends_at}` : 'To -'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">No offers attached yet.</p>
           )}
@@ -115,24 +160,39 @@ const DealView = () => {
           <CardHeader>
             <CardTitle>Images</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {feature && (
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <div className="text-sm font-medium mb-2">Feature photo</div>
-                <img src={feature.image_url} alt="Feature" className="w-full max-w-3xl rounded-md border object-cover" />
+                {feature ? (
+                  <div className="overflow-hidden rounded-md border bg-muted">
+                    <img src={feature.image_url} alt="Feature" className="w-full aspect-video object-cover" />
+                  </div>
+                ) : (
+                  <div className="h-[220px] rounded-md border bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                    No feature photo
+                  </div>
+                )}
               </div>
-            )}
-            {gallery.length > 0 && (
-              <>
-                <Separator />
-                <div className="text-sm font-medium">Gallery</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {gallery.map((img: any) => (
-                    <img key={img.id} src={img.image_url} alt="Gallery" className="aspect-square rounded-md border object-cover" />
-                  ))}
-                </div>
-              </>
-            )}
+              <div>
+                <div className="text-sm font-medium mb-2">Gallery</div>
+                {gallery.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {gallery.map((img: any) => (
+                      <div key={img.id} className="overflow-hidden rounded-md border bg-muted">
+                        <img src={img.image_url} alt="Gallery" className="aspect-square w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">No gallery images.</div>
+                )}
+              </div>
+            </div>
+            <Separator />
+            <div className="text-xs text-muted-foreground">
+              Tip: Use <span className="text-foreground font-medium">Edit</span> to manage deal images and content.
+            </div>
           </CardContent>
         </Card>
       ) : null}

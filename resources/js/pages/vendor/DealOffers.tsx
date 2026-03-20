@@ -200,41 +200,74 @@ const DealOffers = () => {
           <CardTitle>Attached offers</CardTitle>
           <CardDescription>All offer types applied to this deal.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-4">
           {Array.isArray(attachedOffers) && attachedOffers.length > 0 ? (
-            attachedOffers.map((o: any) => (
-              <div key={o.id} className="border rounded-md p-3 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{o.display_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {o.pivot?.original_price ? `Original: Rs. ${o.pivot.original_price}` : 'Original: -'}{' '}
-                      {o.pivot?.final_price ? `• Final: Rs. ${o.pivot.final_price}` : ''}
-                      {(o.pivot?.starts_at || o.pivot?.ends_at) ? (
-                        <>
-                          {' '}•{' '}
-                          {o.pivot?.starts_at ? `From: ${o.pivot.starts_at}` : 'From: -'}
-                          {' '}
-                          {o.pivot?.ends_at ? `To: ${o.pivot.ends_at}` : 'To: -'}
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
-                      {o.pivot?.status || 'active'}
-                    </Badge>
-                    <Button variant="outline" size="sm" onClick={() => startEdit(o)}>
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => onRemove(o.id)}>
-                      Remove
-                    </Button>
-                  </div>
+            <>
+              <div className="rounded-md border overflow-hidden">
+                <div className="relative w-full overflow-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead className="border-b bg-muted/20">
+                      <tr>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Offer</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Original</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Final</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Validity</th>
+                        <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attachedOffers.map((o: any) => (
+                        <tr key={o.id} className="border-b transition-colors hover:bg-muted/50">
+                          <td className="p-4 align-middle">
+                            <div className="font-medium truncate">{o.display_name}</div>
+                            <div className="text-xs text-muted-foreground">#{o.id}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
+                              {o.pivot?.status || 'active'}
+                            </Badge>
+                          </td>
+                          <td className="p-4 align-middle text-muted-foreground">
+                            {o.pivot?.original_price != null ? `Rs. ${Number(o.pivot.original_price).toFixed(2)}` : '-'}
+                          </td>
+                          <td className="p-4 align-middle">
+                            {o.pivot?.final_price != null ? `Rs. ${Number(o.pivot.final_price).toFixed(2)}` : '-'}
+                          </td>
+                          <td className="p-4 align-middle text-xs text-muted-foreground">
+                            {o.pivot?.starts_at ? `From ${o.pivot.starts_at}` : 'From -'} ·{' '}
+                            {o.pivot?.ends_at ? `To ${o.pivot.ends_at}` : 'To -'}
+                          </td>
+                          <td className="p-4 align-middle text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" size="sm" onClick={() => startEdit(o)}>
+                                Edit
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => onRemove(o.id)}>
+                                Remove
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              </div>
 
-                {editingOfferTypeId === Number(o.id) && (
-                  <form onSubmit={onUpdate} className="space-y-4 bg-muted/30 border rounded-md p-3">
+              {editingOfferTypeId !== null && (
+                <div className="bg-muted/30 border rounded-md p-4">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <div className="font-medium">Edit attached offer</div>
+                      <div className="text-xs text-muted-foreground">
+                        Editing: {editingOfferType?.display_name || editingOfferType?.name || `Offer #${editingOfferTypeId}`}
+                      </div>
+                    </div>
+                    <Badge variant="outline">{editingUiType}</Badge>
+                  </div>
+
+                  <form onSubmit={onUpdate} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Offer type</Label>
@@ -340,9 +373,9 @@ const DealOffers = () => {
                       </Button>
                     </div>
                   </form>
-                )}
-              </div>
-            ))
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">No offers attached yet. Add one below.</p>
           )}
