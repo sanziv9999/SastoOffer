@@ -21,6 +21,7 @@
             availableMinPrice: {{ (int)$availableMinPrice }},
             availableMaxPrice: {{ (int)$availableMaxPrice }},
             dealTypes: @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []),
+            selectedLocations: @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []),
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
             
@@ -30,6 +31,7 @@
                 this.$watch('minPrice', () => this.debouncedApplyFilters());
                 this.$watch('maxPrice', () => this.debouncedApplyFilters());
                 this.$watch('dealTypes', () => this.debouncedApplyFilters());
+                this.$watch('selectedLocations', () => this.debouncedApplyFilters());
                 this.$watch('isFeatured', () => this.debouncedApplyFilters());
                 this.$watch('searchQuery', () => this.debouncedApplyFilters());
             },
@@ -52,6 +54,9 @@
 
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
                 else params.delete('sort');
+
+                if (this.selectedLocations.length > 0) params.set('location', this.selectedLocations.join(','));
+                else params.delete('location');
 
                 if (this.isFeatured) params.set('featured', 'true');
                 else params.delete('featured');
@@ -94,7 +99,7 @@
                 {{ $query ? "Search results for \"$query\"" : "All Deals" }}
             </h1>
             
-            <template x-if="searchQuery || selectedCategories.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
+            <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                 <button 
                     @click="resetFilters" 
                     class="hidden md:flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
@@ -127,8 +132,10 @@
             {{-- Sidebar - Desktop Filter --}}
             <aside class="hidden md:block">
                 <x-search-filters 
-                    :categories="$categories" 
+                    :categories="$categories"
+                    :locations="$locations"
                     :current-category="$currentCategory"
+                    :current-location="$currentLocation"
                     :min-price="$minPrice"
                     :max-price="$maxPrice"
                     :deal-type="$dealType"
@@ -270,8 +277,10 @@
             
             <div class="flex-grow overflow-y-auto pr-2 -mr-2">
                 <x-search-filters 
-                    :categories="$categories" 
+                    :categories="$categories"
+                    :locations="$locations"
                     :current-category="$currentCategory"
+                    :current-location="$currentLocation"
                     :min-price="$minPrice"
                     :max-price="$maxPrice"
                     :deal-type="$dealType"

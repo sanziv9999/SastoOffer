@@ -38,7 +38,11 @@ class PageController extends Controller
             ? array_filter(array_map('trim', explode(',', $categoryParam)))
             : [];
         $subSlug    = $request->query('subcategory');
-        $district   = trim((string) $request->query('city', $request->query('district', '')));
+        // Support comma-separated districts for multi-select
+        $locationParam  = trim((string) $request->query('location', $request->query('city', $request->query('district', ''))));
+        $locationSlugs  = ($locationParam !== '')
+            ? array_filter(array_map('trim', explode(',', $locationParam)))
+            : [];
         $sort       = $request->query('sort', 'relevance');
         $featured   = $request->query('featured') === 'true';
         // Support comma-separated deal types for multi-select
@@ -58,7 +62,7 @@ class PageController extends Controller
                 'displayTypes',
             ])
             ->where('status', 'active')
-            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $categorySlugs, $district) {
+            ->whereHas('deal', function ($q) use ($query, $subSlug, $categorySlugs, $locationSlugs) {
                 $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
                     ->when(!$subSlug && count($categorySlugs) > 0, function ($qq) use ($categorySlugs) {
@@ -69,10 +73,10 @@ class PageController extends Controller
                               ->orWhereHas('category.parent', fn ($c) => $c->whereIn('slug', $categorySlugs));
                         });
                     })
-                    ->when($district !== '' && !in_array($district, ['All Cities', 'All Districts'], true), function ($qq) use ($district) {
-                        $needle = mb_strtolower($district);
-                        $qq->whereHas('vendor.defaultAddress', function ($addressQ) use ($needle) {
-                            $addressQ->whereRaw('LOWER(district) = ?', [$needle]);
+                    ->when(count($locationSlugs) > 0, function ($qq) use ($locationSlugs) {
+                        $needles = array_map('mb_strtolower', $locationSlugs);
+                        $qq->whereHas('vendor.defaultAddress', function ($addressQ) use ($needles) {
+                            $addressQ->whereRaw('LOWER(district) IN (' . implode(',', array_fill(0, count($needles), '?')) . ')', $needles);
                         });
                     });
             });
@@ -169,15 +173,27 @@ class PageController extends Controller
             ])
             ->all();
 
+        // Fetch distinct districts for the location filter
+        $locations = \App\Models\Address::query()
+            ->whereNotNull('district')
+            ->where('district', '!=', '')
+            ->distinct()
+            ->orderBy('district')
+            ->pluck('district')
+            ->filter()
+            ->values()
+            ->all();
+
         return view('search', [
             'deals'           => $deals,
             'categories'      => $categories,
+            'locations'       => $locations,
             'query'           => $query,
-            'currentDistrict' => $district,
-            'currentCategory' => $categoryParam,   // comma-separated slugs or 'all'
+            'currentLocation' => $locationParam,
+            'currentCategory' => $categoryParam,
             'sortBy'          => $sort,
             'isFeatured'      => $featured,
-            'dealType'        => $typeParam,   // raw comma-separated value or 'all'
+            'dealType'        => $typeParam,
             'minPrice'          => $minPrice,
             'maxPrice'          => $maxPrice,
             'availableMinPrice' => $availableMinPrice,

@@ -1,4 +1,4 @@
-@props(['categories', 'currentCategory', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'isMobile' => false])
+@props(['categories', 'locations' => [], 'currentCategory', 'currentLocation' => '', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'isMobile' => false])
 
 <div
     class="{{ $isMobile ? 'space-y-6' : 'bg-card shadow-sm rounded-lg p-5 sticky top-20 border' }}"
@@ -9,6 +9,7 @@
         if (typeof maxPrice === 'undefined') maxPrice = {{ (int) $maxPrice }};
         if (typeof availableMinPrice === 'undefined') availableMinPrice = {{ (int) $minPrice }};
         if (typeof availableMaxPrice === 'undefined') availableMaxPrice = {{ (int) $maxPrice }};
+        if (typeof selectedLocations === 'undefined') selectedLocations = @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []);
         if (typeof dealTypes === 'undefined') dealTypes = @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []);
         if (typeof isFeatured === 'undefined') isFeatured = {{ $isFeatured ? 'true' : 'false' }};
         if (typeof searchQuery === 'undefined') searchQuery = '';
@@ -215,6 +216,70 @@
             </div>
         </div>
     </div>
+
+    {{-- Location Filter --}}
+    @if(count($locations) > 0)
+    <div x-data="{ open: true, locationSearch: '' }" class="border-b">
+        <button
+            @click="open = !open"
+            class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
+        >
+            Location
+            <div class="flex items-center gap-1.5">
+                <template x-if="selectedLocations.length > 0">
+                    <span class="inline-flex items-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5" x-text="selectedLocations.length"></span>
+                </template>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"></path></svg>
+            </div>
+        </button>
+        <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
+            {{-- Inline search --}}
+            <div class="relative mb-2">
+                <input
+                    type="search"
+                    x-model="locationSearch"
+                    placeholder="Search locations..."
+                    class="w-full h-8 pl-7 pr-3 rounded-md border border-input bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground h-3 w-3"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </div>
+            <div class="space-y-1 max-h-48 overflow-y-auto pr-1">
+                {{-- All Locations --}}
+                <label class="flex items-center gap-2 py-0.5 cursor-pointer group" x-show="locationSearch === ''">
+                    <input
+                        type="checkbox"
+                        :checked="selectedLocations.length === 0"
+                        @change="selectedLocations = []; debouncedApplyFilters()"
+                        class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <span class="font-medium leading-none text-foreground group-hover:text-primary transition-colors">All Locations</span>
+                </label>
+                @foreach($locations as $district)
+                    <label
+                        class="flex items-center gap-2 py-0.5 cursor-pointer group"
+                        x-show="locationSearch === '' || '{{ strtolower($district) }}'.includes(locationSearch.toLowerCase())"
+                    >
+                        <input
+                            type="checkbox"
+                            value="{{ $district }}"
+                            :checked="selectedLocations.includes('{{ addslashes($district) }}')"
+                            @change="
+                                if ($event.target.checked) {
+                                    if (!selectedLocations.includes('{{ addslashes($district) }}')) selectedLocations.push('{{ addslashes($district) }}');
+                                } else {
+                                    selectedLocations = selectedLocations.filter(l => l !== '{{ addslashes($district) }}');
+                                }
+                                debouncedApplyFilters();
+                            "
+                            class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                        <span class="text-sm leading-none text-foreground group-hover:text-primary transition-colors">{{ $district }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Options --}}
     <div x-data="{ open: true }" class="border-b">
