@@ -165,6 +165,7 @@ class AdminController extends Controller
                     'id' => $u->id,
                     'name' => $u->name,
                     'email' => $u->email,
+                    'status' => $u->status,
                     'role' => $u->getRoleNames()->first() ?? 'customer',
                     'created_at' => $u->created_at?->toIso8601String(),
                 ];
@@ -175,6 +176,45 @@ class AdminController extends Controller
             'users' => $users,
             'filters' => ['search' => $search],
         ]);
+    }
+
+    public function updateUser(Request $request, User $user): RedirectResponse
+    {
+        $admin = auth()->user();
+        if (! $admin || ! $admin->hasRole('admin')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['required', 'in:customer,vendor,admin'],
+        ]);
+
+        $user->update([
+            'name' => $data['name'],
+            'email' => $data['email'],
+        ]);
+        $user->syncRoles([$data['role']]);
+
+        return back()->with('success', 'User updated successfully.');
+    }
+
+    public function suspendUser(User $user): RedirectResponse
+    {
+        $admin = auth()->user();
+        if (! $admin || ! $admin->hasRole('admin')) {
+            abort(403);
+        }
+
+        if ((int) $admin->id === (int) $user->id) {
+            return back()->with('error', 'You cannot suspend your own account.');
+        }
+
+        $user->status = 'suspended';
+        $user->save();
+
+        return back()->with('success', 'User suspended successfully.');
     }
 
     public function vendors()

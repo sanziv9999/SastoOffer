@@ -124,6 +124,8 @@ Route::middleware(['auth'])->group(function () {
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('admin.display-types');
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::patch('/admin/users/{user}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');
     Route::get('/admin/vendors', [VendorProfileController::class, 'index'])->name('admin.vendors.index');
     Route::get('/admin/vendors/{vendorProfile}', [VendorProfileController::class, 'adminShow'])->name('admin.vendors.show');
     Route::patch('/admin/vendors/{vendorProfile}/verified-status', [VendorProfileController::class, 'updateVerifiedStatus'])->name('admin.vendors.verified-status');

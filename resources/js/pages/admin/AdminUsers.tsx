@@ -71,16 +71,39 @@ const AdminUsers = ({ users: initialUsers, filters }: AdminUsersProps) => {
 
   const handleEditUser = () => {
     if (!currentUser) return;
-    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...formData, role: normalizeRole(formData.role) } : u));
-    setIsEditUserOpen(false);
-    setCurrentUser(null);
-    toast.success('User updated successfully');
+
+    router.patch(
+      route('admin.users.update', currentUser.id),
+      {
+        name: formData.name,
+        email: formData.email,
+        role: normalizeRole(formData.role),
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsEditUserOpen(false);
+          setCurrentUser(null);
+          toast.success('User updated successfully');
+        },
+        onError: () => {
+          toast.error('Failed to update user.');
+        },
+      },
+    );
   };
 
   const handleSuspend = (id: string) => {
     if (confirm('Are you sure you want to suspend this user?')) {
-      setUsers(users.filter(u => u.id !== id));
-      toast.error('User suspended');
+      router.patch(
+        route('admin.users.suspend', id),
+        {},
+        {
+          preserveScroll: true,
+          onSuccess: () => toast.success('User suspended'),
+          onError: () => toast.error('Failed to suspend user'),
+        },
+      );
     }
   };
 
