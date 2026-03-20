@@ -28,6 +28,7 @@ interface VendorOrder {
   orderId: number;
   customer: string;
   customerEmail: string;
+  cancellationReason?: string | null;
   subtotal: number;
   discountTotal: number;
   taxTotal: number;
@@ -147,6 +148,11 @@ const Orders = ({ orders }: OrdersProps) => {
               <span className="flex items-center gap-1.5">
                 <CheckCircle className="h-3 w-3 text-green-500" />
                 Paid {formatDistanceToNow(new Date(order.paidAt), { addSuffix: true })}
+              </span>
+            )}
+            {order.cancellationReason && (
+              <span className="w-full text-red-600">
+                Cancellation reason: {order.cancellationReason}
               </span>
             )}
           </div>

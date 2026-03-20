@@ -133,6 +133,7 @@ class VendorAnalyticsController extends Controller
                     'orderId' => $order->id,
                     'customer' => $order->user?->name ?? 'Customer',
                     'customerEmail' => $order->user?->email ?? '',
+                    'cancellationReason' => $order->metadata['cancel_reason'] ?? null,
                     'subtotal' => (float) $order->subtotal,
                     'discountTotal' => (float) $order->discount_total,
                     'taxTotal' => (float) $order->tax_total,

@@ -147,6 +147,12 @@ class CheckoutController extends Controller
                     'orderNumber' => $orderNumber,
                     'status' => $aggregatedStatus,
                     'canCancel' => $canCancel,
+                    'cancellationReason' => $ordersInGroup
+                        ->pluck('metadata')
+                        ->filter()
+                        ->map(fn ($m) => is_array($m) ? ($m['cancel_reason'] ?? null) : null)
+                        ->filter()
+                        ->first(),
                     'subtotal' => (float) $ordersInGroup->sum('subtotal'),
                     'discountTotal' => (float) $ordersInGroup->sum('discount_total'),
                     'taxTotal' => (float) $ordersInGroup->sum('tax_total'),
@@ -185,6 +191,11 @@ class CheckoutController extends Controller
 
     public function cancelOrderGroup(Request $request, string $orderNumber, ActivityMailer $activityMailer)
     {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+        $reason = trim((string) $data['reason']);
+
         $orders = Order::where('user_id', auth()->id())
             ->where('order_number', $orderNumber)
             ->with('vendor.user')
@@ -198,9 +209,14 @@ class CheckoutController extends Controller
             return back()->with('error', 'Only pending orders can be cancelled.');
         }
 
-        DB::transaction(function () use ($orders) {
+        DB::transaction(function () use ($orders, $reason) {
             foreach ($orders as $order) {
                 $order->status = 'cancelled';
+                $meta = is_array($order->metadata) ? $order->metadata : [];
+                $meta['cancel_reason'] = $reason;
+                $meta['cancelled_at'] = now()->toIso8601String();
+                $meta['cancelled_by_user_id'] = auth()->id();
+                $order->metadata = $meta;
                 $order->save();
             }
         });

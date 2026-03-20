@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState } from 'react';
@@ -28,6 +29,7 @@ interface Order {
   orderNumber: string;
   status: string;
   canCancel: boolean;
+  cancellationReason?: string | null;
   subtotal: number;
   discountTotal: number;
   taxTotal: number;
@@ -66,6 +68,8 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const [selectedItem, setSelectedItem] = useState<SelectedOrderItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [cancellingOrderNumber, setCancellingOrderNumber] = useState<string | null>(null);
+  const [cancelTargetOrder, setCancelTargetOrder] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   const toggleExpand = (orderId: number) => {
     setExpandedOrders(prev => {
@@ -94,23 +98,33 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
     setIsItemModalOpen(true);
   };
 
-  const handleCancelOrder = (order: Order) => {
+  const openCancelDialog = (order: Order) => {
     if (!order.canCancel) {
       return;
     }
+    setCancelTargetOrder(order);
+    setCancelReason('');
+  };
 
-    const ok = window.confirm(`Cancel order ${order.orderNumber}? This action cannot be undone.`);
-    if (!ok) {
+  const handleCancelOrderSubmit = () => {
+    if (!cancelTargetOrder) {
+      return;
+    }
+    if (cancelReason.trim().length < 5) {
       return;
     }
 
-    setCancellingOrderNumber(order.orderNumber);
+    setCancellingOrderNumber(cancelTargetOrder.orderNumber);
     router.patch(
-      route('dashboard.purchases.cancel', { orderNumber: order.orderNumber }),
-      {},
+      route('dashboard.purchases.cancel', { orderNumber: cancelTargetOrder.orderNumber }),
+      { reason: cancelReason.trim() },
       {
         preserveScroll: true,
         onFinish: () => setCancellingOrderNumber(null),
+        onSuccess: () => {
+          setCancelTargetOrder(null);
+          setCancelReason('');
+        },
       },
     );
   };
@@ -159,7 +173,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                 className="h-7 text-[11px]"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCancelOrder(order);
+                  openCancelDialog(order);
                 }}
                 disabled={cancellingOrderNumber === order.orderNumber}
               >
@@ -282,6 +296,11 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                 <span className="flex items-center gap-1">
                   <CheckCircle className="h-3 w-3 text-green-500" />
                   Paid {formatDistanceToNow(new Date(order.paidAt), { addSuffix: true })}
+                </span>
+              )}
+              {order.cancellationReason && (
+                <span className="w-full text-red-600">
+                  Cancel reason: {order.cancellationReason}
                 </span>
               )}
             </div>
@@ -416,6 +435,37 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                 Deal page not available
               </Button>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!cancelTargetOrder} onOpenChange={(open) => !open && setCancelTargetOrder(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Order</DialogTitle>
+            <DialogDescription>
+              Tell the vendor why you are cancelling order {cancelTargetOrder?.orderNumber}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Enter cancellation reason (minimum 5 characters)"
+              rows={4}
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={() => setCancelTargetOrder(null)}>
+                Close
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelOrderSubmit}
+                disabled={!cancelTargetOrder || cancelReason.trim().length < 5 || cancellingOrderNumber === cancelTargetOrder.orderNumber}
+              >
+                {cancelTargetOrder && cancellingOrderNumber === cancelTargetOrder.orderNumber ? 'Cancelling...' : 'Confirm Cancel'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
