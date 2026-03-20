@@ -391,32 +391,31 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 opacity-60 flex-shrink-0"><path d="m6 9 6 6 6-6"></path></svg>
                                 </button>
 
-                                {{-- Dropdown panel --}}
+                                {{-- ultra-Compact Dropdown --}}
                                 <div
                                     x-show="openCategory === '{{ $category['id'] }}'"
                                     x-cloak
-                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter="transition ease-out duration-100"
                                     x-transition:enter-start="opacity-0 translate-y-1"
                                     x-transition:enter-end="opacity-100 translate-y-0"
-                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave="transition ease-in duration-75"
                                     x-transition:leave-start="opacity-100 translate-y-0"
                                     x-transition:leave-end="opacity-0 translate-y-1"
-                                    class="absolute left-0 top-full mt-1 z-50 w-[600px] lg:w-[750px] bg-background border border-border rounded-lg shadow-lg p-5"
+                                    class="absolute left-0 top-full mt-1 z-50 w-60 bg-background border border-border shadow-xl rounded-lg p-2"
                                 >
-                                    <div class="grid grid-cols-3 gap-3">
-                                        <div class="col-span-full pb-3 border-b border-border">
-                                            <a href="{{ route('search', ['category' => $category->slug]) }}" class="font-medium text-primary hover:underline flex items-center gap-1.5 text-sm">
-                                                All {{ $category->name }} Deals
-                                            </a>
-                                        </div>
-
+                                    <div class="flex items-center justify-between mb-2 px-2 pb-1 border-b border-border/40">
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{{ $category['name'] }}</span>
+                                        <a href="{{ route('search', ['category' => $category->slug]) }}" class="text-[10px] font-bold text-primary hover:underline underline-offset-2">All</a>
+                                    </div>
+                                    
+                                    <div class="flex flex-col gap-0.5">
                                         @foreach($category->children as $sub)
-                                            <div class="p-1.5 font-sans hover:bg-muted/50 rounded-md transition-colors">
-                                                <a href="{{ route('search', ['category' => $category->slug, 'subcategory' => $sub->slug]) }}" class="block font-medium text-sm hover:text-primary tooltip-trigger text-foreground whitespace-normal group/sub">
-                                                    {{ $sub->name }}
-                                                    <span class="inline-block transform translate-x-0 group-hover/sub:translate-x-1 transition-transform duration-200 ml-1 opacity-0 group-hover/sub:opacity-100 text-primary">→</span>
-                                                </a>
-                                            </div>
+                                            <a 
+                                                href="{{ route('search', ['category' => $category->slug, 'subcategory' => $sub->slug]) }}" 
+                                                class="flex items-center px-2 py-1.5 rounded hover:bg-muted transition-colors group/sub"
+                                            >
+                                                <span class="text-xs font-semibold text-slate-600 group-hover/sub:text-primary transition-colors">{{ $sub->name }}</span>
+                                            </a>
                                         @endforeach
                                     </div>
                                 </div>
@@ -426,7 +425,7 @@
                         {{-- All Deals link --}}
                         <a
                             href="{{ route('search') }}"
-                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 h-8 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors flex-shrink-0"
+                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 h-8 text-sm font-medium text-primary hover:bg-muted transition-colors flex-shrink-0"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                             All Deals
