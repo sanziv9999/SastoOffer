@@ -64,7 +64,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
       <div className="rounded-md border">
         <div className="relative w-full overflow-auto">
           <table className="w-full caption-bottom text-sm">
-            <thead className="border-b">
+            <thead className="border-b bg-muted/20">
               <tr>
                 <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
                 <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
@@ -101,18 +101,18 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     </div>
                   </td>
                   <td className="p-4 align-middle">
-                    <div className="text-sm">
+                    <div className="text-sm text-muted-foreground">
                       {deal.maxQuantity ? (
-                        <span>
+                        <span className="text-foreground">
                           {Math.min(Number(deal.quantitySold || 0), Number(deal.maxQuantity))}/{deal.maxQuantity}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">Unlimited</span>
+                        <span className="text-foreground">Unlimited</span>
                       )}
                     </div>
                   </td>
                   <td className="p-4 align-middle text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
                       </Button>
