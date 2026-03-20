@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
-    public function placeOrder(Request $request)
+    public function placeOrder(Request $request, ActivityMailer $activityMailer)
     {
         $user = auth()->user();
 
@@ -80,6 +82,18 @@ class CheckoutController extends Controller
         });
 
         $firstOrder = $orders[0] ?? null;
+
+        foreach ($orders as $createdOrder) {
+            try {
+                $activityMailer->sendOrderPlacedCustomer($createdOrder);
+                $activityMailer->sendOrderPlacedVendor($createdOrder);
+            } catch (\Throwable $e) {
+                Log::warning('Order activity mail failed', [
+                    'order_id' => $createdOrder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()
             ->route('order.confirmation', $firstOrder->id)

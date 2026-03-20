@@ -8,10 +8,12 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\CustomerProfile;
 use App\Models\VendorProfile;
 use App\Models\User;
+use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +42,7 @@ class AuthController extends Controller
         return Inertia::render('RegisterPage');
     }
 
-    public function register(RegisterRequest $request): RedirectResponse
+    public function register(RegisterRequest $request, ActivityMailer $activityMailer): RedirectResponse
     {
         $user = User::create([
             'name'     => $request->validated('name'),
@@ -70,6 +72,15 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        try {
+            $activityMailer->sendRegistrationWelcome($user);
+        } catch (\Throwable $e) {
+            Log::warning('Registration welcome mail skipped', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return $this->redirectByRole();
     }

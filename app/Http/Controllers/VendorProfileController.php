@@ -7,7 +7,9 @@ use App\Models\Category;
 use App\Models\Address;
 use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
+use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class VendorProfileController extends Controller
@@ -59,7 +61,7 @@ class VendorProfileController extends Controller
         ]);
     }
 
-    public function updateVerifiedStatus(Request $request, VendorProfile $vendorProfile)
+    public function updateVerifiedStatus(Request $request, VendorProfile $vendorProfile, ActivityMailer $activityMailer)
     {
         $user = auth()->user();
         if (! $user || ! $user->hasRole('admin')) {
@@ -70,7 +72,9 @@ class VendorProfileController extends Controller
             'verified_status' => ['required', 'in:pending,verified,rejected,suspended'],
         ]);
 
-        $vendorProfile->verified_status = $data['verified_status'];
+        $oldStatus = $vendorProfile->verified_status;
+        $newStatus = $data['verified_status'];
+        $vendorProfile->verified_status = $newStatus;
 
         if ($data['verified_status'] === 'verified') {
             $vendorProfile->verified_at = now();
@@ -81,6 +85,19 @@ class VendorProfileController extends Controller
         }
 
         $vendorProfile->save();
+
+        if ($oldStatus !== $newStatus) {
+            try {
+                $vendorProfile->loadMissing('user');
+                $activityMailer->sendVendorStatusChanged($vendorProfile, $newStatus);
+            } catch (\Throwable $e) {
+                Log::warning('Vendor status mail failed', [
+                    'vendor_profile_id' => $vendorProfile->id,
+                    'status' => $newStatus,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return back()->with('success', 'Vendor status updated.');
     }

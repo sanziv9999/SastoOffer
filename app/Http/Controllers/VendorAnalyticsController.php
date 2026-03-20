@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Deal;
 use App\Models\Order;
+use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class VendorAnalyticsController extends Controller
 {
@@ -115,7 +117,7 @@ class VendorAnalyticsController extends Controller
         ]);
     }
 
-    public function updateOrderStatus(Request $request, Order $order)
+    public function updateOrderStatus(Request $request, Order $order, ActivityMailer $activityMailer)
     {
         $user = auth()->user();
         $vendor = $user->vendorProfile;
@@ -128,11 +130,27 @@ class VendorAnalyticsController extends Controller
             'status' => ['required', 'in:pending,paid,fulfilled,cancelled,refunded'],
         ]);
 
-        $order->status = $data['status'];
-        if ($data['status'] === 'paid' && ! $order->paid_at) {
+        $previousStatus = $order->status;
+        $newStatus = $data['status'];
+
+        $order->status = $newStatus;
+        if ($newStatus === 'paid' && ! $order->paid_at) {
             $order->paid_at = now();
         }
         $order->save();
+
+        if ($previousStatus !== $newStatus) {
+            try {
+                $activityMailer->sendOrderStatusChangedCustomer($order, $newStatus);
+                $activityMailer->sendOrderStatusChangedVendor($order, $newStatus);
+            } catch (\Throwable $e) {
+                Log::warning('Order status change mail failed', [
+                    'order_id' => $order->id,
+                    'status' => $newStatus,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return back()->with('success', 'Order status updated successfully.');
     }
