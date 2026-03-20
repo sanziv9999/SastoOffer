@@ -32,17 +32,23 @@ class PageController extends Controller
     public function search(Request $request)
     {
         $query      = $request->query('q', '');
-        $category   = $request->query('category', 'all');      // primary category slug or 'all'
-        $subSlug    = $request->query('subcategory');          // optional business subcategory slug
+        // Support comma-separated category slugs for multi-select, or 'all'
+        $categoryParam = $request->query('category', 'all');
+        $categorySlugs = ($categoryParam !== 'all' && $categoryParam !== '')
+            ? array_filter(array_map('trim', explode(',', $categoryParam)))
+            : [];
+        $subSlug    = $request->query('subcategory');
         $district   = trim((string) $request->query('city', $request->query('district', '')));
         $sort       = $request->query('sort', 'relevance');
         $featured   = $request->query('featured') === 'true';
-        $type       = $request->query('type', 'all');
+        // Support comma-separated deal types for multi-select
+        $typeParam  = $request->query('type', 'all');
+        $typeSlugs  = ($typeParam !== 'all' && $typeParam !== '')
+            ? array_filter(array_map('trim', explode(',', $typeParam)))
+            : [];
         $reqMinPrice = $request->query('minPrice');
         $reqMaxPrice = $request->query('maxPrice');
 
-        // Fetch deals via deal_offer_type (offers) instead of deals table.
-        // This means only deals with at least one attached offer will appear here.
         $offerQuery = DealOfferType::query()
             ->with([
                 'deal.category.parent',
@@ -52,16 +58,15 @@ class PageController extends Controller
                 'displayTypes',
             ])
             ->where('status', 'active')
-            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $category, $district) {
+            ->whereHas('deal', function ($q) use ($query, $featured, $subSlug, $categorySlugs, $district) {
                 $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
-                    ->when(!$subSlug && $category !== 'all', function ($qq) use ($category) {
-                        // Top-level category filter should match:
-                        // - leaf category's parent slug, OR
-                        // - category slug itself (if deal uses a top-level category directly)
-                        $qq->where(function ($w) use ($category) {
-                            $w->whereHas('category.parent', fn ($c) => $c->where('slug', $category))
-                                ->orWhereHas('category', fn ($c) => $c->where('slug', $category)->whereNull('parent_id'));
+                    ->when(!$subSlug && count($categorySlugs) > 0, function ($qq) use ($categorySlugs) {
+                        $qq->where(function ($w) use ($categorySlugs) {
+                            // Match if the deal's own category slug is in selected list (subcat)
+                            $w->whereHas('category', fn ($c) => $c->whereIn('slug', $categorySlugs))
+                              // OR the deal's category's parent slug is in the list (parent cat)
+                              ->orWhereHas('category.parent', fn ($c) => $c->whereIn('slug', $categorySlugs));
                         });
                     })
                     ->when($district !== '' && !in_array($district, ['All Cities', 'All Districts'], true), function ($qq) use ($district) {
@@ -76,9 +81,9 @@ class PageController extends Controller
             $offerQuery->whereHas('displayTypes', fn ($q) => $q->where('name', 'featured'));
         }
 
-        // Deal type filter should filter offer rows directly (one card per offer).
-        if ($type !== 'all') {
-            $offerQuery->whereHas('offerType', fn ($q) => $q->where('slug', $type)->orWhere('name', $type));
+        // Deal type filter (multi-select via comma-separated slugs)
+        if (count($typeSlugs) > 0) {
+            $offerQuery->whereHas('offerType', fn ($q) => $q->whereIn('slug', $typeSlugs)->orWhereIn('name', $typeSlugs));
         }
 
         // Pull a reasonable working set and group in memory (pivot-driven).
@@ -149,12 +154,18 @@ class PageController extends Controller
 
         $categories = Category::where('is_active', true)
             ->whereNull('parent_id')
+            ->with(['children' => fn($q) => $q->where('is_active', true)->orderBy('display_order')])
             ->orderBy('display_order')
-            ->get(['id', 'name', 'slug'])
+            ->get()
             ->map(fn ($cat) => [
-                'id'   => $cat->id,
-                'name' => $cat->name,
-                'slug' => $cat->slug,
+                'id'       => $cat->id,
+                'name'     => $cat->name,
+                'slug'     => $cat->slug,
+                'children' => $cat->children->map(fn ($sub) => [
+                    'id'   => $sub->id,
+                    'name' => $sub->name,
+                    'slug' => $sub->slug,
+                ])->all(),
             ])
             ->all();
 
@@ -163,10 +174,10 @@ class PageController extends Controller
             'categories'      => $categories,
             'query'           => $query,
             'currentDistrict' => $district,
-            'currentCategory' => $category,
+            'currentCategory' => $categoryParam,   // comma-separated slugs or 'all'
             'sortBy'          => $sort,
             'isFeatured'      => $featured,
-            'dealType'        => $type,
+            'dealType'        => $typeParam,   // raw comma-separated value or 'all'
             'minPrice'          => $minPrice,
             'maxPrice'          => $maxPrice,
             'availableMinPrice' => $availableMinPrice,

@@ -14,23 +14,22 @@
 
     <div class="container py-8" 
         x-data="{ 
-            selectedCategory: '{{ addslashes($currentCategory) }}',
+            selectedCategories: @js($currentCategory !== 'all' && $currentCategory !== '' ? array_filter(array_map('trim', explode(',', $currentCategory))) : []),
             sortBy: '{{ addslashes($sortBy) }}',
             minPrice: {{ (int)$minPrice }},
             maxPrice: {{ (int)$maxPrice }},
             availableMinPrice: {{ (int)$availableMinPrice }},
             availableMaxPrice: {{ (int)$availableMaxPrice }},
-            dealType: '{{ addslashes($dealType) }}',
+            dealTypes: @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []),
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
             
             init() {
-                // Initialize watchers for real-time filtering
-                this.$watch('selectedCategory', () => this.debouncedApplyFilters());
+                this.$watch('selectedCategories', () => this.debouncedApplyFilters());
                 this.$watch('sortBy', () => this.applyFilters());
                 this.$watch('minPrice', () => this.debouncedApplyFilters());
                 this.$watch('maxPrice', () => this.debouncedApplyFilters());
-                this.$watch('dealType', () => this.debouncedApplyFilters());
+                this.$watch('dealTypes', () => this.debouncedApplyFilters());
                 this.$watch('isFeatured', () => this.debouncedApplyFilters());
                 this.$watch('searchQuery', () => this.debouncedApplyFilters());
             },
@@ -48,7 +47,7 @@
                 if (this.searchQuery) params.set('q', this.searchQuery);
                 else params.delete('q');
 
-                if (this.selectedCategory !== 'all') params.set('category', this.selectedCategory);
+                if (this.selectedCategories.length > 0) params.set('category', this.selectedCategories.join(','));
                 else params.delete('category');
 
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
@@ -57,7 +56,7 @@
                 if (this.isFeatured) params.set('featured', 'true');
                 else params.delete('featured');
 
-                if (this.dealType !== 'all') params.set('type', this.dealType);
+                if (this.dealTypes.length > 0) params.set('type', this.dealTypes.join(','));
                 else params.delete('type');
                 
                 let min = Math.min(this.minPrice, this.maxPrice);
@@ -68,18 +67,14 @@
 
                 if (max < this.availableMaxPrice) params.set('maxPrice', max);
                 else params.delete('maxPrice');
-                
-                // Keep the city/district if present
-                // (It's already in URLSearchParams if we initialized with window.location.search)
 
                 const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-                if (window.location.search !== '?' + params.toString() && window.location.href !== window.location.origin + newUrl) {
+                if (window.location.href !== window.location.origin + newUrl) {
                     window.location.href = newUrl;
                 }
             },
             
             resetFilters() {
-                // Keep only search query and city if they exist, or just go to base search
                 const params = new URLSearchParams(window.location.search);
                 const query = params.get('q');
                 const city = params.get('city');
@@ -99,7 +94,7 @@
                 {{ $query ? "Search results for \"$query\"" : "All Deals" }}
             </h1>
             
-            <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
+            <template x-if="searchQuery || selectedCategories.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                 <button 
                     @click="resetFilters" 
                     class="hidden md:flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
