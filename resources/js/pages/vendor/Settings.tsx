@@ -52,6 +52,17 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
     vendorProfile: any, 
     primaryCategories: any[]
 }) => {
+    const TAB_KEYS = ['general', 'location', 'hours', 'social'] as const;
+    type TabKey = (typeof TAB_KEYS)[number];
+
+    const getTabFromUrl = (): TabKey => {
+        if (typeof window === 'undefined') return 'general';
+        const params = new URLSearchParams(window.location.search);
+        const tab = String(params.get('tab') || '').toLowerCase();
+        if (TAB_KEYS.includes(tab as any)) return tab as TabKey;
+        return 'general';
+    };
+
     const verificationStatus = String(vendorProfile?.verified_status || 'pending').toLowerCase();
     const verificationMeta: Record<string, { label: string; badgeClass: string; note: string }> = {
         verified: {
@@ -339,8 +350,11 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         // Since we are uploading files, we must use POST and spoof PUT 
-        post('/vendor/settings', {
+        const tab = getTabFromUrl();
+        post(`/vendor/settings?tab=${tab}`, {
             forceFormData: true,
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => toast.success('Business profile updated successfully!'),
             onError: (errs: any) => {
                 console.error("Validation Errors:", errs);
@@ -374,7 +388,19 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                 </CardContent>
             </Card>
 
-            <Tabs defaultValue="general" className="space-y-4">
+            <Tabs
+                value={getTabFromUrl()}
+                className="space-y-4"
+                onValueChange={(val) => {
+                    const next = String(val).toLowerCase();
+                    const allowed = TAB_KEYS.includes(next as any) ? next : 'general';
+                    if (typeof window !== 'undefined') {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', allowed);
+                        window.history.replaceState({}, '', url.toString());
+                    }
+                }}
+            >
                 <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
                     <TabsTrigger value="general">General Info</TabsTrigger>
                     <TabsTrigger value="location">Location</TabsTrigger>
