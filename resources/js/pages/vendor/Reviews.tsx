@@ -7,7 +7,6 @@ import {
     MoreVertical,
     Filter,
     CheckCircle2,
-    ThumbsUp,
     Search,
     Store,
     ShoppingBag,
@@ -46,10 +45,12 @@ interface VendorReviewsProps {
 const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [ratingFilter, setRatingFilter] = useState('all');
+    const [visibilityFilter, setVisibilityFilter] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [reviews, setReviews] = useState(initialReviews || []);
+    const [togglingHidden, setTogglingHidden] = useState<string | null>(null);
 
     const [submittingReply, setSubmittingReply] = useState(false);
 
@@ -76,13 +77,31 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
         });
     };
 
+    const toggleHidden = (reviewId: string) => {
+        setTogglingHidden(reviewId);
+        router.patch(`/vendor/reviews/${reviewId}/toggle-hidden`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setReviews(reviews.map((r: any) =>
+                    r.id === reviewId ? { ...r, isHidden: !r.isHidden } : r
+                ));
+            },
+            onFinish: () => setTogglingHidden(null),
+        });
+    };
+
+    const hiddenCount = reviews.filter((r: any) => r.isHidden).length;
+
     const filteredReviews = reviews
         .filter((r: any) => {
             const matchesSearch =
                 r.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 r.comment?.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesRating = ratingFilter === 'all' || r.rating.toString() === ratingFilter;
-            return matchesSearch && matchesRating;
+            const matchesVisibility = visibilityFilter === 'all'
+                || (visibilityFilter === 'visible' && !r.isHidden)
+                || (visibilityFilter === 'hidden' && r.isHidden);
+            return matchesSearch && matchesRating && matchesVisibility;
         })
         .sort((a: any, b: any) => {
             if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -119,9 +138,18 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                         </div>
                         <Separator orientation="vertical" className="h-8" />
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Total Reviews</span>
+                            <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Total</span>
                             <span className="text-xl font-bold">{reviews.length}</span>
                         </div>
+                        {hiddenCount > 0 && (
+                            <>
+                                <Separator orientation="vertical" className="h-8" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Hidden</span>
+                                    <span className="text-xl font-bold text-orange-500">{hiddenCount}</span>
+                                </div>
+                            </>
+                        )}
                     </Card>
                 </div>
             </div>
@@ -153,6 +181,16 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                 <SelectItem value="1">1 Star</SelectItem>
                             </SelectContent>
                         </Select>
+                        <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="Visibility" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Reviews</SelectItem>
+                                <SelectItem value="visible">Visible</SelectItem>
+                                <SelectItem value="hidden">Hidden</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <Select value={sortBy} onValueChange={setSortBy}>
                             <SelectTrigger className="w-[140px]">
                                 <SelectValue placeholder="Sort by" />
@@ -172,7 +210,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
             <div className="space-y-4">
                 {filteredReviews.length > 0 ? (
                     filteredReviews.map((review: any) => (
-                        <Card key={review.id} className="overflow-hidden">
+                        <Card key={review.id} className={`overflow-hidden transition-opacity ${review.isHidden ? 'opacity-60 border-dashed' : ''}`}>
                             <CardHeader className="pb-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-4">
@@ -183,6 +221,9 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                             <div className="flex items-center gap-2">
                                                 <CardTitle className="text-base">{review.customerName || 'Anonymous'}</CardTitle>
                                                 <Badge variant="outline" className="text-[10px] h-4">Verified Purchase</Badge>
+                                                {review.isHidden && (
+                                                    <Badge variant="secondary" className="text-[10px] h-4 bg-orange-100 text-orange-700">Hidden</Badge>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-1 mt-1">
                                                 {[1, 2, 3, 4, 5].map((i) => (
@@ -201,8 +242,12 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>Report Review</DropdownMenuItem>
-                                            <DropdownMenuItem>Mark as Helpful</DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => toggleHidden(review.id)}
+                                                disabled={togglingHidden === review.id}
+                                            >
+                                                {review.isHidden ? 'Show on Public Pages' : 'Hide from Public Pages'}
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -228,11 +273,6 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                             </CardContent>
                             <CardFooter className="pt-0 flex flex-col items-stretch gap-4">
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                                        <ThumbsUp className="h-3 w-3" />
-                                        Helpful ({Math.floor(Math.random() * 10)})
-                                    </button>
-                                    <Separator orientation="vertical" className="h-3" />
                                     <button
                                         className="flex items-center gap-1 hover:text-primary transition-colors"
                                         onClick={() => handleReply(review.id)}
