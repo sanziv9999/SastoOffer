@@ -35,9 +35,19 @@ interface AdminDashboardProps {
   recentUsers: any[];
   vendorsList: any[];
   systemAlerts: any[];
+  monthlyRevenue: Array<{ month: string; amount: number }>;
+  userGrowth: Array<{ month: string; users: number }>;
 }
 
-const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemAlerts }: AdminDashboardProps) => {
+const AdminDashboard = ({
+  stats,
+  pendingDeals,
+  recentUsers,
+  vendorsList,
+  systemAlerts,
+  monthlyRevenue = [],
+  userGrowth = [],
+}: AdminDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -45,25 +55,8 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
     // Search logic would normally trigger an Inertia visit or local filter
   };
 
-  const monthlyRevenue = [
-    { month: 'Jan', amount: 15400 },
-    { month: 'Feb', amount: 18200 },
-    { month: 'Mar', amount: 16500 },
-    { month: 'Apr', amount: 21000 },
-    { month: 'May', amount: 24500 },
-    { month: 'Jun', amount: 28900 },
-  ];
-  const maxRev = Math.max(...monthlyRevenue.map(d => d.amount));
-
-  const userGrowth = [
-    { month: 'Jan', users: 120 },
-    { month: 'Feb', users: 180 },
-    { month: 'Mar', users: 250 },
-    { month: 'Apr', users: 310 },
-    { month: 'May', users: 420 },
-    { month: 'Jun', users: 550 },
-  ];
-  const maxUsers = Math.max(...userGrowth.map(d => d.users));
+  const maxRev = monthlyRevenue.length > 0 ? Math.max(...monthlyRevenue.map(d => d.amount), 1) : 1;
+  const maxUsers = userGrowth.length > 0 ? Math.max(...userGrowth.map(d => d.users), 1) : 1;
 
   return (
     <div className="space-y-6">
@@ -289,6 +282,7 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {monthlyRevenue.length > 0 ? (
             <div className="h-[200px] flex items-end gap-2 pt-4">
               {monthlyRevenue.map((data, idx) => (
                 <div key={idx} className="flex flex-col items-center flex-1 gap-2 group relative">
@@ -305,6 +299,11 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
                 </div>
               ))}
             </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No revenue data yet.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -316,6 +315,7 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {userGrowth.length > 0 ? (
             <div className="h-[200px] flex items-end gap-2 pt-4">
               {userGrowth.map((data, idx) => (
                 <div key={idx} className="flex flex-col items-center flex-1 gap-2 group relative">
@@ -333,6 +333,11 @@ const AdminDashboard = ({ stats, pendingDeals, recentUsers, vendorsList, systemA
                 </div>
               ))}
             </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No user growth data yet.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

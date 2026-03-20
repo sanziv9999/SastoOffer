@@ -6,7 +6,9 @@ use App\Models\Deal;
 use App\Models\DealOfferType;
 use App\Models\DisplayType;
 use App\Models\FeaturedDealRank;
+use App\Models\Order;
 use App\Models\User;
+use App\Models\VendorProfile;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -16,12 +18,133 @@ class AdminController extends Controller
 {
     public function index()
     {
+        $totalRevenue = (float) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('grand_total');
+        $totalSales = (int) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('subtotal');
+        $redeemedSalesCount = (int) Order::where('status', 'fulfilled')->count();
+
+        $totalUsers = (int) User::count();
+        $totalVendors = (int) VendorProfile::count();
+        $activeDealsCount = (int) Deal::where('status', 'active')->count();
+
+        $pendingDeals = Deal::query()
+            ->with(['vendor', 'offerTypes', 'images'])
+            ->where('status', 'pending')
+            ->latest()
+            ->take(8)
+            ->get()
+            ->map(function (Deal $deal) {
+                $offerType = $deal->offerTypes->first();
+                $offer = $offerType?->pivot;
+                $base = $deal->base_price !== null ? (float) $deal->base_price : null;
+
+                return [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'vendorName' => $deal->vendor?->business_name,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
+                    'type' => $offerType?->name ?? 'offer',
+                    'createdAt' => $deal->created_at?->toIso8601String(),
+                    'image' => $deal->featuredImageUrl(),
+                    'slug' => $deal->slug,
+                ];
+            })
+            ->values()
+            ->all();
+
+        $recentUsers = User::query()
+            ->latest()
+            ->take(8)
+            ->get()
+            ->map(function (User $u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'role' => $u->getRoleNames()->first() ?? 'customer',
+                    'avatar' => null,
+                    'createdAt' => $u->created_at?->toIso8601String(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $vendorsList = VendorProfile::query()
+            ->with(['user', 'images'])
+            ->latest()
+            ->take(8)
+            ->get()
+            ->map(function (VendorProfile $vendor) {
+                return [
+                    'id' => $vendor->id,
+                    'businessName' => $vendor->business_name,
+                    'contactEmail' => $vendor->public_email ?: $vendor->user?->email,
+                    'averageRating' => round((float) ($vendor->reviews()->avg('rating') ?? 0), 1),
+                    'createdAt' => $vendor->created_at?->toIso8601String(),
+                    'logo' => $vendor->images?->firstWhere('attribute_name', 'logo')?->image_url,
+                ];
+            })
+            ->values()
+            ->all();
+
+        $monthlyRevenue = Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get()
+            ->groupBy(fn (Order $order) => $order->created_at->format('Y-m'))
+            ->sortKeys()
+            ->map(fn ($group, $key) => [
+                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
+                'amount' => round((float) $group->sum('grand_total'), 2),
+            ])
+            ->values()
+            ->all();
+
+        $userGrowth = User::query()
+            ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get()
+            ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
+            ->sortKeys()
+            ->map(fn ($group, $key) => [
+                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
+                'users' => $group->count(),
+            ])
+            ->values()
+            ->all();
+
+        $systemAlerts = collect();
+        if (count($pendingDeals) > 0) {
+            $systemAlerts->push([
+                'type' => 'warning',
+                'title' => 'Deals pending approval',
+                'description' => count($pendingDeals) . ' deal(s) are waiting for admin review.',
+                'actionLabel' => 'Review pending deals',
+            ]);
+        }
+        if ($totalVendors === 0) {
+            $systemAlerts->push([
+                'type' => 'info',
+                'title' => 'No vendors found',
+                'description' => 'No vendor profiles are registered yet.',
+                'actionLabel' => null,
+            ]);
+        }
+
         return Inertia::render('AdminDashboard', [
-            'stats' => [],
-            'pendingDeals' => [],
-            'recentUsers' => [],
-            'vendorsList' => [],
-            'systemAlerts' => [],
+            'stats' => [
+                'totalRevenue' => $totalRevenue,
+                'totalUsers' => $totalUsers,
+                'totalVendors' => $totalVendors,
+                'activeDealsCount' => $activeDealsCount,
+                'totalSales' => $totalSales,
+                'redeemedSalesCount' => $redeemedSalesCount,
+            ],
+            'pendingDeals' => $pendingDeals,
+            'recentUsers' => $recentUsers,
+            'vendorsList' => $vendorsList,
+            'systemAlerts' => $systemAlerts->values()->all(),
+            'monthlyRevenue' => $monthlyRevenue,
+            'userGrowth' => $userGrowth,
         ]);
     }
 
