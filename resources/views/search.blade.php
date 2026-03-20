@@ -109,24 +109,6 @@
                 </button>
             </template>
         </div>
-        
-        {{-- Centered Search Bar --}}
-        <div class="max-w-sm mx-auto mb-8">
-            <form @submit.prevent="applyFilters" class="relative group">
-                <input 
-                    type="search" 
-                    x-model="searchQuery"
-                    placeholder="Search for amazing deals..." 
-                    class="w-full h-11 pl-10 pr-4 rounded-lg border border-input bg-background shadow-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary text-sm outline-none"
-                />
-                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-                </div>
-                <button type="submit" class="absolute right-1 top-1 bottom-1 px-4 rounded-md bg-primary text-primary-foreground font-medium text-xs shadow hover:bg-primary/90 transition-all">
-                    SEARCH
-                </button>
-            </form>
-        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
             {{-- Sidebar - Desktop Filter --}}
