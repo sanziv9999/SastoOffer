@@ -47,4 +47,34 @@ class UpdateVendorProfileRequest extends FormRequest
             'cover'          => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if (! is_array($this->social_media)) {
+            return;
+        }
+
+        $normalized = collect($this->social_media)->map(function ($row) {
+            return [
+                'platform' => strtolower(trim((string) ($row['platform'] ?? ''))),
+                'url' => trim((string) ($row['url'] ?? '')),
+            ];
+        })->all();
+
+        $this->merge(['social_media' => $normalized]);
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $rows = collect($this->input('social_media', []))
+                ->filter(fn ($row) => is_array($row) && ! empty($row['platform']));
+
+            $platforms = $rows->map(fn ($row) => strtolower(trim((string) $row['platform'])));
+
+            if ($platforms->count() !== $platforms->unique()->count()) {
+                $validator->errors()->add('social_media', 'Each social media platform can be added only once.');
+            }
+        });
+    }
 }
