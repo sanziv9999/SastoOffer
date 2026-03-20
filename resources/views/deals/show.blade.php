@@ -9,7 +9,7 @@
             ->sortBy(fn ($img) => (int) ($img['sort_order'] ?? 0))
             ->values();
         $featureImage = $sortedImages->firstWhere('attribute_name', 'feature_photo') ?? $sortedImages->first();
-        $galleryImages = $sortedImages->filter(fn($img) => ($img['id'] ?? null) !== ($featureImage['id'] ?? null));
+        $galleryImages = $sortedImages->filter(fn($img) => ($img['id'] ?? null) !== ($featureImage['id'] ?? null))->values();
 
         $endsAt = isset($deal['ends_at']) ? new \DateTime($deal['ends_at']) : null;
         $isExpired = $endsAt && new \DateTime() > $endsAt;
@@ -43,14 +43,36 @@
     <div class="container py-8 max-w-7xl mx-auto px-4"
         x-data="{ 
             quantity: 1,
+            showImageModal: false,
+            activeImageIndex: 0,
+            allImages: @js($sortedImages->toArray()),
+            
+            openModal(index) {
+                this.activeImageIndex = index;
+                this.showImageModal = true;
+                document.body.style.overflow = 'hidden';
+            },
+            closeModal() {
+                this.showImageModal = false;
+                document.body.style.overflow = '';
+            },
+            nextImage() {
+                this.activeImageIndex = (this.activeImageIndex + 1) % this.allImages.length;
+            },
+            prevImage() {
+                this.activeImageIndex = (this.activeImageIndex - 1 + this.allImages.length) % this.allImages.length;
+            },
             handleAddToCart() {
                 this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
             },
             async handleBuyNow() {
                 await this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
-                window.location.href = '/cart'; // Redirect to cart or checkout? User is asking for Groupon style, usually cart first.
+                window.location.href = '/cart';
             }
         }"
+        @keydown.escape.window="closeModal()"
+        @keydown.left.window="if(showImageModal) prevImage()"
+        @keydown.right.window="if(showImageModal) nextImage()"
     >
         {{-- Breadcrumb --}}
         <div class="text-sm mb-6 flex items-center gap-1 text-muted-foreground">
@@ -65,12 +87,21 @@
             {{-- Left Column – Images --}}
             <div>
                 @if($featureImage)
-                    <div class="rounded-2xl overflow-hidden shadow-md mb-3 bg-muted">
+                    <div 
+                        class="rounded-2xl overflow-hidden shadow-md mb-3 bg-muted group cursor-zoom-in relative"
+                        @click="openModal(0)"
+                    >
                         <img
                             src="{{ $featureImage['image_url'] }}"
                             alt="{{ $deal['title'] }}"
-                            class="w-full aspect-video object-cover"
+                            class="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <div class="h-12 w-12 rounded-full bg-white/90 shadow-lg text-primary items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><path d="m15 18-6-6 6-6"/></svg>
+                            </div>
+                        </div>
                     </div>
                 @else
                     <div class="rounded-2xl overflow-hidden shadow-md mb-3 bg-muted/40 w-full aspect-video flex items-center justify-center">
@@ -80,18 +111,80 @@
 
                 @if($galleryImages->count() > 0)
                     <div class="grid grid-cols-4 gap-2">
-                        @foreach($galleryImages as $img)
-                            <div class="rounded-lg overflow-hidden shadow-sm bg-muted">
+                        @foreach($galleryImages as $index => $img)
+                            <div 
+                                class="rounded-lg overflow-hidden shadow-sm bg-muted group cursor-zoom-in relative"
+                                @click="openModal({{ $index + 1 }})"
+                            >
                                 <img
                                     src="{{ $img['image_url'] }}"
                                     alt="{{ $deal['title'] }}"
-                                    class="w-full aspect-square object-cover"
+                                    class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
                             </div>
                         @endforeach
                     </div>
                 @endif
             </div>
+
+            {{-- Image Lightbox Modal --}}
+            <template x-teleport="body">
+                <div 
+                    x-show="showImageModal" 
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-10"
+                    x-cloak
+                >
+                    {{-- Close button --}}
+                    <button 
+                        @click="closeModal()" 
+                        class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-[110] bg-white/10 hover:bg-white/20 rounded-full p-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                    </button>
+
+                    {{-- Navigation buttons --}}
+                    <template x-if="allImages.length > 1">
+                        <div class="contents">
+                            <button 
+                                @click.stop="prevImage()" 
+                                class="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-all z-[110] bg-white/5 hover:bg-white/10 rounded-full p-3 md:p-4 backdrop-blur-sm"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                            </button>
+                            <button 
+                                @click.stop="nextImage()" 
+                                class="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-all z-[110] bg-white/5 hover:bg-white/10 rounded-full p-3 md:p-4 backdrop-blur-sm"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180"><path d="m15 18-6-6 6-6"></path></svg>
+                            </button>
+                        </div>
+                    </template>
+
+                    {{-- Main Image Container --}}
+                    <div class="relative w-full h-full flex items-center justify-center overflow-hidden" @click="closeModal()">
+                        <img 
+                            :src="allImages[activeImageIndex].image_url" 
+                            class="max-w-full max-h-full object-contain select-none transition-all duration-300"
+                            x-transition:enter="transition ease-out duration-300 transform"
+                            x-transition:enter-start="scale-95 opacity-0"
+                            x-transition:enter-end="scale-100 opacity-100"
+                            @click.stop
+                        >
+                        
+                        {{-- Image Counter --}}
+                        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-white/80 text-sm font-medium">
+                            <span x-text="activeImageIndex + 1"></span> / <span x-text="allImages.length"></span>
+                        </div>
+                    </div>
+                </div>
+            </template>
 
             {{-- Right Column – Details --}}
             <div>
