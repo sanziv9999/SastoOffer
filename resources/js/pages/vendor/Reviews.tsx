@@ -91,6 +91,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
     };
 
     const hiddenCount = reviews.filter((r: any) => r.isHidden).length;
+    const visibleCount = reviews.length - hiddenCount;
 
     const filteredReviews = reviews
         .filter((r: any) => {
@@ -111,6 +112,8 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
             return 0;
         });
 
+    const filteredCount = filteredReviews.length;
+
     const averageRating = reviews.length > 0
         ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)
         : '0.0';
@@ -124,7 +127,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Card className="flex items-center px-4 py-2 gap-4">
+                    <Card className="flex items-center px-5 py-3 gap-4 bg-muted/20 rounded-xl">
                         <div className="flex flex-col">
                             <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Average Rating</span>
                             <div className="flex items-center gap-1.5">
@@ -210,7 +213,10 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
             <div className="space-y-4">
                 {filteredReviews.length > 0 ? (
                     filteredReviews.map((review: any) => (
-                        <Card key={review.id} className={`overflow-hidden transition-opacity ${review.isHidden ? 'opacity-60 border-dashed' : ''}`}>
+                        <Card
+                            key={review.id}
+                            className={`overflow-hidden transition-colors rounded-xl ${review.isHidden ? 'opacity-70 border-dashed' : ''}`}
+                        >
                             <CardHeader className="pb-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex gap-4">
@@ -267,19 +273,23 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                         </span>
                                     )}
                                 </div>
-                                <p className="leading-relaxed whitespace-pre-line border-l-4 border-muted pl-4 py-1">
-                                    {review.comment}
-                                </p>
+                                <div className="bg-muted/30 border rounded-lg px-4 py-3">
+                                    <p className="leading-relaxed whitespace-pre-line">
+                                        {review.comment}
+                                    </p>
+                                </div>
                             </CardContent>
                             <CardFooter className="pt-0 flex flex-col items-stretch gap-4">
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <button
-                                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-3 gap-2"
                                         onClick={() => handleReply(review.id)}
                                     >
-                                        <Reply className="h-3 w-3" />
+                                        <Reply className="h-3.5 w-3.5" />
                                         Reply to Customer
-                                    </button>
+                                    </Button>
                                 </div>
 
                                 {replyingTo === review.id && (
@@ -329,13 +339,16 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                 )}
             </div>
 
-            {/* Pagination Placeholder */}
-            <div className="flex items-center justify-center py-4">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled>Previous</Button>
-                    <div className="flex items-center gap-1 h-8 px-3 rounded-md bg-muted text-sm font-medium">1</div>
-                    <Button variant="outline" size="sm">Next</Button>
-                </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+                <span>
+                    Showing <span className="text-foreground font-medium">{filteredCount}</span> review{filteredCount === 1 ? '' : 's'}
+                </span>
+                <span>
+                    Visible: <span className="text-foreground font-medium">{visibleCount}</span>
+                    {hiddenCount > 0 && (
+                        <> · Hidden: <span className="text-orange-500 font-medium">{hiddenCount}</span></>
+                    )}
+                </span>
             </div>
         </div>
     );
