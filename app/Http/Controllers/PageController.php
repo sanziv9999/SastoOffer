@@ -55,12 +55,25 @@ class PageController extends Controller
         ];
 
         $query      = $request->query('q', '');
-        // Support comma-separated category slugs for multi-select, or 'all'
         $categoryParam = $request->query('category', 'all');
+        $subSlug    = $request->query('subcategory');
+        
+        // If a subcategory is provided via navbar, merge it into category slugs so the filter checks it
+        if ($subSlug && $categoryParam !== 'all') {
+            if ($categoryParam === '') {
+                $categoryParam = $subSlug;
+            } else {
+                $existing = array_filter(array_map('trim', explode(',', $categoryParam)));
+                if (!in_array($subSlug, $existing)) {
+                    $existing[] = $subSlug;
+                    $categoryParam = implode(',', $existing);
+                }
+            }
+        }
+
         $categorySlugs = ($categoryParam !== 'all' && $categoryParam !== '')
             ? array_filter(array_map('trim', explode(',', $categoryParam)))
             : [];
-        $subSlug    = $request->query('subcategory');
         // Support comma-separated districts for multi-select
         $locationParam  = trim((string) $request->query('location', $request->query('city', $request->query('district', ''))));
         
