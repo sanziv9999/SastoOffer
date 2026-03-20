@@ -9,6 +9,7 @@ use App\Models\FeaturedDealRank;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\VendorProfile;
+use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,10 @@ class AdminController extends Controller
 {
     public function index()
     {
+        $monthKeys = collect(range(5, 0))
+            ->map(fn (int $offset) => now()->subMonths($offset)->format('Y-m'))
+            ->values();
+
         $totalRevenue = (float) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('grand_total');
         $totalSales = (int) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('subtotal');
         $redeemedSalesCount = (int) Order::where('status', 'fulfilled')->count();
@@ -101,30 +106,49 @@ class AdminController extends Controller
             ->values()
             ->all();
 
-        $monthlyRevenue = Order::query()
+        $monthlyRevenueByMonth = Order::query()
             ->whereNotIn('status', ['cancelled', 'refunded'])
             ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
             ->get()
             ->groupBy(fn (Order $order) => $order->created_at->format('Y-m'))
-            ->sortKeys()
-            ->map(fn ($group, $key) => [
-                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
-                'amount' => round((float) $group->sum('grand_total'), 2),
+            ->map(fn ($group) => round((float) $group->sum('grand_total'), 2));
+
+        $monthlyRevenue = $monthKeys
+            ->map(fn (string $key) => [
+                'month' => Carbon::parse($key . '-01')->format('M'),
+                'amount' => (float) ($monthlyRevenueByMonth->get($key) ?? 0),
             ])
-            ->values()
             ->all();
 
-        $userGrowth = User::query()
+        $userGrowthByMonth = User::query()
             ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
             ->get()
             ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
-            ->sortKeys()
-            ->map(fn ($group, $key) => [
-                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
-                'users' => $group->count(),
+            ->map(fn ($group) => $group->count());
+
+        $userGrowth = $monthKeys
+            ->map(fn (string $key) => [
+                'month' => Carbon::parse($key . '-01')->format('M'),
+                'users' => (int) ($userGrowthByMonth->get($key) ?? 0),
             ])
-            ->values()
             ->all();
+
+        $currentMonthKey = now()->format('Y-m');
+        $previousMonthKey = now()->subMonth()->format('Y-m');
+        $currentMonthRevenue = (float) ($monthlyRevenueByMonth->get($currentMonthKey) ?? 0);
+        $previousMonthRevenue = (float) ($monthlyRevenueByMonth->get($previousMonthKey) ?? 0);
+        $revenueChangePct = $previousMonthRevenue > 0
+            ? (($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100
+            : ($currentMonthRevenue > 0 ? 100.0 : 0.0);
+        $revenueChangeText = ($revenueChangePct >= 0 ? '+' : '') . number_format($revenueChangePct, 1) . '%';
+
+        $newUsersThisMonth = (int) User::query()
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->count();
+        $newVendorsThisMonth = (int) VendorProfile::query()
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->count();
+        $pendingDealsCount = (int) Deal::query()->where('status', 'pending')->count();
 
         $systemAlerts = collect();
         if (count($pendingDeals) > 0) {
@@ -152,6 +176,7 @@ class AdminController extends Controller
                 'activeDealsCount' => $activeDealsCount,
                 'totalSales' => $totalSales,
                 'redeemedSalesCount' => $redeemedSalesCount,
+                'revenueChange' => $revenueChangeText,
             ],
             'pendingDeals' => $pendingDeals,
             'recentUsers' => $recentUsers,
@@ -159,6 +184,14 @@ class AdminController extends Controller
             'systemAlerts' => $systemAlerts->values()->all(),
             'monthlyRevenue' => $monthlyRevenue,
             'userGrowth' => $userGrowth,
+            'reportData' => [
+                'currentMonthRevenue' => $currentMonthRevenue,
+                'previousMonthRevenue' => $previousMonthRevenue,
+                'revenueChangeText' => $revenueChangeText,
+                'newUsersThisMonth' => $newUsersThisMonth,
+                'newVendorsThisMonth' => $newVendorsThisMonth,
+                'pendingDealsCount' => $pendingDealsCount,
+            ],
         ]);
     }
 
@@ -680,8 +713,130 @@ class AdminController extends Controller
 
     public function reports()
     {
+        $monthKeys = collect(range(5, 0))
+            ->map(fn (int $offset) => now()->subMonths($offset)->format('Y-m'))
+            ->values();
+
+        $validOrders = Order::query()->whereNotIn('status', ['cancelled', 'refunded']);
+        $totalRevenue = (float) $validOrders->sum('grand_total');
+        $totalSales = (int) $validOrders->count();
+        $totalUsers = (int) User::count();
+        $totalVendors = (int) VendorProfile::count();
+        $activeDeals = (int) Deal::where('status', 'active')->count();
+
+        $fulfilledOrdersCount = (int) Order::where('status', 'fulfilled')->count();
+        $conversionRate = $totalSales > 0
+            ? number_format(($fulfilledOrdersCount / $totalSales) * 100, 1) . '%'
+            : '0.0%';
+
+        $currentMonthStart = now()->startOfMonth();
+        $nextMonthStart = now()->copy()->addMonth()->startOfMonth();
+        $previousMonthStart = now()->copy()->subMonth()->startOfMonth();
+        $currentMonthEnd = now()->endOfMonth();
+        $previousMonthEnd = now()->copy()->subMonth()->endOfMonth();
+
+        $currentMonthRevenue = (float) Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->sum('grand_total');
+        $previousMonthRevenue = (float) Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->sum('grand_total');
+
+        $currentMonthSales = (int) Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->count();
+        $previousMonthSales = (int) Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->count();
+
+        $currentMonthUsers = (int) User::query()
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->count();
+        $previousMonthUsers = (int) User::query()
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->count();
+
+        $currentMonthVendors = (int) VendorProfile::query()
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->count();
+        $previousMonthVendors = (int) VendorProfile::query()
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->count();
+
+        $currentMonthDeals = (int) Deal::query()
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->count();
+        $previousMonthDeals = (int) Deal::query()
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->count();
+
+        $currentMonthConversion = $currentMonthSales > 0
+            ? ($fulfilledOrdersCount / $currentMonthSales) * 100
+            : 0.0;
+        $previousMonthFulfilled = (int) Order::query()
+            ->where('status', 'fulfilled')
+            ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+            ->count();
+        $previousMonthConversion = $previousMonthSales > 0
+            ? ($previousMonthFulfilled / $previousMonthSales) * 100
+            : 0.0;
+
+        $monthlyRevenueByMonth = Order::query()
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get()
+            ->groupBy(fn (Order $order) => $order->created_at->format('Y-m'))
+            ->map(fn ($group) => round((float) $group->sum('grand_total'), 2));
+
+        $monthlyRevenue = $monthKeys
+            ->map(fn (string $key) => [
+                'month' => Carbon::parse($key . '-01')->format('M'),
+                'amount' => (float) ($monthlyRevenueByMonth->get($key) ?? 0),
+            ])
+            ->all();
+
+        $userGrowthByMonth = User::query()
+            ->whereDate('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get()
+            ->groupBy(fn (User $user) => $user->created_at->format('Y-m'))
+            ->map(fn ($group) => $group->count());
+
+        $userGrowth = $monthKeys
+            ->map(fn (string $key) => [
+                'month' => Carbon::parse($key . '-01')->format('M'),
+                'users' => (int) ($userGrowthByMonth->get($key) ?? 0),
+            ])
+            ->all();
+
+        $formatChange = function (float|int $current, float|int $previous): string {
+            if ((float) $previous === 0.0) {
+                return (float) $current > 0 ? '+100.0%' : '0.0%';
+            }
+            $pct = (((float) $current - (float) $previous) / (float) $previous) * 100;
+            return ($pct >= 0 ? '+' : '') . number_format($pct, 1) . '%';
+        };
+
         return Inertia::render('admin/AdminReports', [
-            'statsData' => [],
+            'statsData' => [
+                'totalRevenue' => $totalRevenue,
+                'totalSales' => $totalSales,
+                'totalUsers' => $totalUsers,
+                'totalVendors' => $totalVendors,
+                'activeDeals' => $activeDeals,
+                'conversionRate' => $conversionRate,
+                'revenueChange' => $formatChange($currentMonthRevenue, $previousMonthRevenue),
+                'salesChange' => $formatChange($currentMonthSales, $previousMonthSales),
+                'usersChange' => $formatChange($currentMonthUsers, $previousMonthUsers),
+                'vendorsChange' => $formatChange($currentMonthVendors, $previousMonthVendors),
+                'dealsChange' => $formatChange($currentMonthDeals, $previousMonthDeals),
+                'conversionChange' => $formatChange($currentMonthConversion, $previousMonthConversion),
+            ],
+            'monthlyRevenue' => $monthlyRevenue,
+            'userGrowth' => $userGrowth,
         ]);
     }
 

@@ -41,6 +41,14 @@ interface AdminDashboardProps {
   systemAlerts: any[];
   monthlyRevenue: Array<{ month: string; amount: number }>;
   userGrowth: Array<{ month: string; users: number }>;
+  reportData?: {
+    currentMonthRevenue?: number;
+    previousMonthRevenue?: number;
+    revenueChangeText?: string;
+    newUsersThisMonth?: number;
+    newVendorsThisMonth?: number;
+    pendingDealsCount?: number;
+  };
 }
 
 const AdminDashboard = ({
@@ -51,6 +59,7 @@ const AdminDashboard = ({
   systemAlerts,
   monthlyRevenue = [],
   userGrowth = [],
+  reportData,
 }: AdminDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDealIds, setExpandedDealIds] = useState<Set<number>>(new Set());
@@ -620,22 +629,58 @@ const AdminDashboard = ({
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">
-              <div className="border rounded-md p-8 text-center">
-                <FileText className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Current Month Revenue</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-bold">
+                      Rs. {Number(reportData?.currentMonthRevenue ?? 0).toFixed(2)}
+                    </div>
+                    <p className={`text-xs ${(reportData?.revenueChangeText || '').startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                      {reportData?.revenueChangeText || '0.0%'} vs last month
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">New Accounts (This Month)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-bold">{Number(reportData?.newUsersThisMonth ?? 0)}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Includes customers + admins
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Vendor & Deal Queue</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-bold">{Number(reportData?.newVendorsThisMonth ?? 0)} new vendors</div>
+                    <p className="text-xs text-muted-foreground">
+                      {Number(reportData?.pendingDealsCount ?? 0)} deals waiting approval
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="border rounded-md p-6">
                 <h3 className="text-lg font-semibold mb-2">Reports & Analytics</h3>
                 <p className="text-muted-foreground mb-4">
-                  Access detailed reports and analytics about platform performance.
+                  Report section now reflects live platform metrics from the database.
                 </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Button asChild>
-                    <Link href="/admin/reports/revenue">
-                      Revenue Reports
-                    </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/deals">Open Deal Reports</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link href="/admin/reports/users">
-                      User Analytics
-                    </Link>
+                    <Link href="/admin/users">Open User Reports</Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/vendors">Open Vendor Reports</Link>
                   </Button>
                 </div>
               </div>
