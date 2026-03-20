@@ -158,11 +158,21 @@ class DealController extends Controller
             return redirect()->route('vendor.dashboard')->with('error', 'Vendor profile not found.');
         }
 
-        $deals = Deal::where('vendor_id', $vendor->id)
+        $dealModels = Deal::where('vendor_id', $vendor->id)
             ->with(['category', 'offerTypes', 'images'])
             ->latest()
-            ->get()
-            ->map(function ($deal) {
+            ->get();
+
+        $salesByDeal = \App\Models\OrderItem::query()
+            ->selectRaw('deal_id, SUM(quantity) as sold_qty')
+            ->whereIn('deal_id', $dealModels->pluck('id'))
+            ->whereHas('order', fn ($q) => $q
+                ->where('vendor_id', $vendor->id)
+                ->whereNotIn('status', ['cancelled', 'refunded']))
+            ->groupBy('deal_id')
+            ->pluck('sold_qty', 'deal_id');
+
+        $deals = $dealModels->map(function ($deal) use ($salesByDeal) {
                 $base = (float) ($deal->base_price ?? 0);
                 return [
                     'id' => $deal->id,
@@ -171,7 +181,8 @@ class DealController extends Controller
                     // Manage Deals list should show only deal table data (base price),
                     // offers are managed separately in the Offers screen.
                     'price' => $base,
-                    'quantitySold' => 0,
+                    // Parent-deal sales = sum of all sold quantities across its offer purchases.
+                    'quantitySold' => (int) ($salesByDeal[$deal->id] ?? 0),
                     'maxQuantity' => $deal->total_inventory,
                     'endDate' => null,
                     'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Deal;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Services\ActivityMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,15 +20,23 @@ class VendorAnalyticsController extends Controller
             return collect();
         }
 
+        $dealSales = OrderItem::query()
+            ->selectRaw('deal_id, SUM(quantity) as quantity_sold, SUM(line_total) as total_revenue, COUNT(DISTINCT order_id) as orders_count')
+            ->whereHas('order', fn ($q) => $q
+                ->where('vendor_id', $vendor->id)
+                ->whereNotIn('status', ['cancelled', 'refunded']))
+            ->groupBy('deal_id')
+            ->get()
+            ->keyBy('deal_id');
+
         return Deal::where('vendor_id', $vendor->id)
             ->with(['offerTypes', 'images'])
             ->latest()
             ->get()
-            ->map(function ($deal) {
+            ->map(function ($deal) use ($dealSales) {
                 $offer = $deal->offerTypes->first()?->pivot;
-
-                // Placeholder until real purchases table exists
-                $quantitySold = 0;
+                $sale = $dealSales->get($deal->id);
+                $quantitySold = (int) ($sale->quantity_sold ?? 0);
 
                 return [
                     'id'             => $deal->id,
@@ -36,6 +45,8 @@ class VendorAnalyticsController extends Controller
                     'discountedPrice'=> $offer ? (float) $offer->final_price : 0,
                     'originalPrice'  => $offer ? (float) $offer->original_price : 0,
                     'quantitySold'   => $quantitySold,
+                    'revenue'        => round((float) ($sale->total_revenue ?? 0), 2),
+                    'ordersCount'    => (int) ($sale->orders_count ?? 0),
                     'endDate'        => $offer?->ends_at?->toIso8601String(),
                     'image'          => $deal->featuredImageUrl(),
                 ];
@@ -44,25 +55,62 @@ class VendorAnalyticsController extends Controller
 
     public function index(Request $request)
     {
-        $deals = $this->getVendorDeals();
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+        if (! $vendor) {
+            return \Inertia\Inertia::render('vendor/Analytics', [
+                'stats' => [
+                    'totalRevenue' => 0,
+                    'totalSales' => 0,
+                    'totalOrders' => 0,
+                    'avgOrderValue' => 0,
+                    'pageViews' => 0,
+                    'conversionRate' => 0,
+                    'activeDealsCount' => 0,
+                ],
+                'topDeals' => [],
+                'monthlySales' => [],
+            ]);
+        }
 
-        $totalSales   = $deals->sum('quantitySold');
-        $totalRevenue = $deals->sum(fn ($d) => ($d['quantitySold'] ?? 0) * ($d['discountedPrice'] ?? 0));
+        $deals = $this->getVendorDeals();
+        $salesOrders = Order::where('vendor_id', $vendor->id)
+            ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->get();
+        $totalOrders = $salesOrders->count();
+
+        $totalSales = (int) $deals->sum('quantitySold');
+        $totalRevenue = round((float) $salesOrders->sum('grand_total'), 2);
+        $monthlySales = $salesOrders
+            ->groupBy(fn ($o) => $o->created_at->format('Y-m'))
+            ->sortKeys()
+            ->map(fn ($group, $key) => [
+                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
+                'amount' => round((float) $group->sum('grand_total'), 2),
+                'orders' => $group->count(),
+            ])
+            ->values()
+            ->slice(-6)
+            ->values();
 
         $stats = [
             'totalRevenue'     => $totalRevenue,
             'totalSales'       => $totalSales,
-            'avgOrderValue'    => $totalSales > 0 ? $totalRevenue / $totalSales : 0,
+            'totalOrders'      => $totalOrders,
+            'avgOrderValue'    => $totalOrders > 0 ? round($totalRevenue / $totalOrders, 2) : 0,
             'pageViews'        => 0,
             'conversionRate'   => 0,
             'activeDealsCount' => $deals->where('status', 'active')->count(),
         ];
 
-        $topDeals = $deals->sortByDesc('quantitySold')->values();
+        $topDeals = $deals
+            ->sortByDesc('quantitySold')
+            ->values();
 
         return \Inertia\Inertia::render('vendor/Analytics', [
             'stats'    => $stats,
             'topDeals' => $topDeals,
+            'monthlySales' => $monthlySales,
         ]);
     }
 
@@ -244,8 +292,37 @@ class VendorAnalyticsController extends Controller
 
     public function salesHistory(Request $request)
     {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            return \Inertia\Inertia::render('vendor/SalesHistory', [
+                'sales' => [],
+            ]);
+        }
+
+        $sales = OrderItem::query()
+            ->whereHas('order', fn ($q) => $q->where('vendor_id', $vendor->id))
+            ->with(['order.user'])
+            ->latest()
+            ->get()
+            ->map(function (OrderItem $item) {
+                $order = $item->order;
+                return [
+                    'id' => $order?->order_number . '-I' . $item->id,
+                    'deal' => $item->title,
+                    'customer' => $order?->user?->name ?? 'Customer',
+                    'quantity' => (int) $item->quantity,
+                    'unitPrice' => (float) $item->unit_price,
+                    'total' => (float) $item->line_total,
+                    'status' => $order?->status ?? 'pending',
+                    'date' => $order?->created_at?->toDateString(),
+                ];
+            })
+            ->values();
+
         return \Inertia\Inertia::render('vendor/SalesHistory', [
-            'sales' => [],
+            'sales' => $sales,
         ]);
     }
 

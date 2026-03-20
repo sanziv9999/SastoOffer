@@ -8,28 +8,20 @@ import { Separator } from '@/components/ui/separator';
 interface VendorAnalyticsProps {
   stats: any;
   topDeals: any[];
+  monthlySales: Array<{ month: string; amount: number; orders: number }>;
 }
 
-const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
+const VendorAnalytics = ({ stats, topDeals, monthlySales = [] }: VendorAnalyticsProps) => {
   const displayStats = [
     { label: 'Total Revenue', value: `Rs. ${stats?.totalRevenue?.toFixed(2) || '0.00'}`, icon: Banknote, change: stats?.revenueChange },
-    { label: 'Total Sales', value: (stats?.totalSales || 0).toString(), icon: ShoppingBag, change: stats?.salesChange },
+    { label: 'Total Items Sold', value: (stats?.totalSales || 0).toString(), icon: ShoppingBag, change: stats?.salesChange },
+    { label: 'Total Orders', value: (stats?.totalOrders || 0).toString(), icon: BarChart, change: stats?.ordersChange },
     { label: 'Avg Order Value', value: `Rs. ${stats?.avgOrderValue?.toFixed(2) || '0.00'}`, icon: TrendingUp, change: stats?.aovChange },
     { label: 'Page Views', value: (stats?.pageViews || 0).toLocaleString(), icon: Eye, change: stats?.viewsChange },
     { label: 'Conversion Rate', value: `${stats?.conversionRate || 0}%`, icon: Users, change: stats?.conversionChange },
-    { label: 'Active Deals', value: (stats?.activeDealsCount || 0).toString(), icon: BarChart, change: '' },
+    { label: 'Active Deals', value: (stats?.activeDealsCount || 0).toString(), icon: ShoppingBag, change: '' },
   ];
-
-  const monthlySales = [
-    { month: 'Jan', amount: 4500 },
-    { month: 'Feb', amount: 5200 },
-    { month: 'Mar', amount: 4800 },
-    { month: 'Apr', amount: 6100 },
-    { month: 'May', amount: 5900 },
-    { month: 'Jun', amount: 7200 },
-  ];
-
-  const maxSale = Math.max(...monthlySales.map(s => s.amount));
+  const maxSale = monthlySales.length > 0 ? Math.max(...monthlySales.map((s) => s.amount), 1) : 1;
 
   return (
     <div className="space-y-6">
@@ -73,9 +65,10 @@ const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Sales Revenue</CardTitle>
-            <CardDescription>Monthly revenue performance for the current year.</CardDescription>
+            <CardDescription>Monthly revenue based on actual order data.</CardDescription>
           </CardHeader>
           <CardContent>
+            {monthlySales.length > 0 ? (
             <div className="mt-4 h-[250px] flex items-end justify-between gap-2 px-2">
               {monthlySales.map((data) => (
                 <div key={data.month} className="flex-1 flex flex-col items-center gap-2 group">
@@ -83,10 +76,10 @@ const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
                     {/* Bar */}
                     <div
                       className="w-full max-w-[40px] bg-primary/20 rounded-t-sm transition-all group-hover:bg-primary/40 relative"
-                      style={{ height: `${(data.amount / maxSale) * 100}%` }}
+                      style={{ height: `${Math.max((data.amount / maxSale) * 100, 4)}%` }}
                     >
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
-                        Rs. {data.amount}
+                        Rs. {data.amount} ({data.orders})
                       </div>
                       {/* Inner highlight */}
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary/20" />
@@ -96,6 +89,11 @@ const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
                 </div>
               ))}
             </div>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
+                No sales chart data yet.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -123,7 +121,7 @@ const VendorAnalytics = ({ stats, topDeals }: VendorAnalyticsProps) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-bold">Rs. {((deal.quantitySold || 0) * (deal.discountedPrice || 0)).toLocaleString()}</div>
+                    <div className="text-xs font-bold">Rs. {(deal.revenue || 0).toLocaleString()}</div>
                     <div className="text-[10px] text-muted-foreground font-medium uppercase">Revenue</div>
                   </div>
                 </div>

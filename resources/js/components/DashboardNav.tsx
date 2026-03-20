@@ -27,16 +27,6 @@ const userLinks = [
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ];
 
-const vendorLinks = [
-  { icon: Store, label: 'Overview', path: '/vendor' },
-  { icon: Tags, label: 'Manage Deals', path: '/vendor/deals' },
-  { icon: ClipboardList, label: 'Orders', path: '/vendor/orders', badge: 3 },
-  { icon: BarChart3, label: 'Analytics', path: '/vendor/analytics' },
-  { icon: UserCheck, label: 'Customers', path: '/vendor/customers' },
-  { icon: Star, label: 'Reviews', path: '/vendor/reviews' },
-  { icon: Settings, label: 'Business Settings', path: '/vendor/settings' },
-];
-
 const adminLinks = [
   { icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin' },
   { icon: LayoutDashboard, label: 'Featured Deal Ranking', path: '/admin/featured-ranking' },
@@ -67,13 +57,24 @@ const DashboardNav = () => {
   const url = typeof window !== 'undefined' ? window.location.pathname : '/';
   let user = authUser;
   let vendorAccess: any = null;
+  let vendorMetrics: any = null;
 
   if (isInertia) {
     const page = usePage<any>();
     user = page.props.auth?.user || authUser;
     vendorAccess = page.props.auth?.vendor_access ?? null;
+    vendorMetrics = page.props.auth?.vendor_metrics ?? null;
   }
   const vendorMenusLocked = user?.role === 'vendor' && !(vendorAccess?.is_unlocked ?? false);
+  const vendorLinks = [
+    { icon: Store, label: 'Overview', path: '/vendor' },
+    { icon: Tags, label: 'Manage Deals', path: '/vendor/deals' },
+    { icon: ClipboardList, label: 'Orders', path: '/vendor/orders', badge: Number(vendorMetrics?.open_orders ?? 0) },
+    { icon: BarChart3, label: 'Analytics', path: '/vendor/analytics' },
+    { icon: UserCheck, label: 'Customers', path: '/vendor/customers' },
+    { icon: Star, label: 'Reviews', path: '/vendor/reviews' },
+    { icon: Settings, label: 'Business Settings', path: '/vendor/settings' },
+  ];
 
   const isActive = (path: string) => {
     // Standardize URL and path to ignore query strings, hashes, and trailing slashes

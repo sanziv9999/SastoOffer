@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
         $authUser = $request->user();
         $role = $authUser?->getRoleNames()->first() ?? 'customer';
         $vendorAccess = null;
+        $vendorMetrics = null;
 
         if ($authUser && $role === 'vendor') {
             $vendorProfile = VendorProfile::query()
@@ -56,6 +57,15 @@ class HandleInertiaRequests extends Middleware
                 'is_unlocked' => $isComplete && $isVerified,
                 'verified_status' => $vendorProfile?->verified_status,
             ];
+
+            if ($vendorProfile) {
+                $vendorMetrics = [
+                    'open_orders' => \App\Models\Order::where('vendor_id', $vendorProfile->id)
+                        ->whereIn('status', ['pending', 'paid'])
+                        ->count(),
+                    'total_orders' => \App\Models\Order::where('vendor_id', $vendorProfile->id)->count(),
+                ];
+            }
         }
 
         return [
@@ -68,6 +78,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $role,
                 ] : null,
                 'vendor_access' => $vendorAccess,
+                'vendor_metrics' => $vendorMetrics,
             ],
             'categories' => \App\Models\Category::where('is_active', true)
                 ->orderBy('name')

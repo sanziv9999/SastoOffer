@@ -26,8 +26,14 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
     }, {});
   }, [salesList]);
 
-  const totalRevenue = useMemo(() => salesList.filter((s: any) => s.status === 'completed').reduce((s: number, d: any) => s + (d.total || 0), 0), [salesList]);
-  const totalSold = useMemo(() => salesList.filter((s: any) => s.status === 'completed').reduce((s: number, d: any) => s + (d.quantity || 0), 0), [salesList]);
+  const totalRevenue = useMemo(
+    () => salesList.filter((s: any) => !['cancelled', 'refunded'].includes(String(s.status))).reduce((s: number, d: any) => s + (d.total || 0), 0),
+    [salesList],
+  );
+  const totalSold = useMemo(
+    () => salesList.filter((s: any) => !['cancelled', 'refunded'].includes(String(s.status))).reduce((s: number, d: any) => s + (d.quantity || 0), 0),
+    [salesList],
+  );
 
   const filtered = useMemo(() => salesList.filter((s: any) =>
     s.deal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,8 +43,11 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-500';
+      case 'fulfilled': return 'bg-green-500';
+      case 'paid': return 'bg-blue-500';
+      case 'pending': return 'bg-amber-500';
       case 'refunded': return 'bg-orange-500';
+      case 'cancelled': return 'bg-red-500';
       default: return 'bg-muted';
     }
   };
