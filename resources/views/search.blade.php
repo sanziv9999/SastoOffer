@@ -89,7 +89,6 @@
             }
         }"
     >
-    >
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl md:text-3xl font-bold">
                 {{ $query ? "Search results for \"$query\"" : "All Deals" }}
