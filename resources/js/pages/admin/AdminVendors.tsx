@@ -112,7 +112,8 @@ const AdminVendors = ({ vendors, filters }: AdminVendorsProps) => {
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span>{v.averageRating?.toFixed(1) || '0.0'}</span>
+                          <span>{typeof v.averageRating === 'number' ? v.averageRating.toFixed(1) : '0.0'}</span>
+                          <span className="text-xs text-muted-foreground">({v.reviewCount || 0})</span>
                         </div>
                       </td>
                       <td className="p-4 align-middle">{v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A'}</td>

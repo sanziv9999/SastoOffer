@@ -19,6 +19,8 @@ class VendorProfileController extends Controller
         $search = trim((string) $request->query('search', ''));
         $vendors = VendorProfile::query()
             ->with(['user', 'primaryCategory.parent', 'images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('business_name', 'like', "%{$search}%")
@@ -37,6 +39,8 @@ class VendorProfileController extends Controller
                     'business_name' => $v->business_name,
                     'description' => $v->description,
                     'public_email' => $v->public_email,
+                    'averageRating' => round((float) ($v->reviews_avg_rating ?? 0), 1),
+                    'reviewCount' => (int) ($v->reviews_count ?? 0),
                     'verified_status' => $v->verified_status,
                     'created_at' => $v->created_at?->toIso8601String(),
                     'logo' => $logo,
