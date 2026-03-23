@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/search', [PageController::class, 'search'])->name('search');
+Route::get('/api/search/suggestions', [PageController::class, 'suggestions'])->name('api.search.suggestions');
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
 Route::get('/checkout', fn () => redirect()->route('cart.index'))->name('checkout');
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
