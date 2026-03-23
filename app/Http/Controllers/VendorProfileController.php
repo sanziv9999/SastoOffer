@@ -292,7 +292,11 @@ class VendorProfileController extends Controller
                 'discountPercentage'=> $discountPct > 0 ? (int) $discountPct : null,
                 'image'             => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
                 'featured'          => (bool) ($deal?->is_featured ?? false),
-                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                // Prefer display_name, but fall back to name/slug so the UI always shows offer type.
+                'offerTypeTitle'    => $pivot->offerType?->display_name
+                    ?? $pivot->offerType?->name
+                    ?? $pivot->offerType?->slug
+                    ?? null,
                 'locationLabel'     => $locationLabel ?: 'Location',
                 'cityName'          => $locationLabel ?: 'Location',
                 'status'            => $isExpired ? 'expired' : 'active',
