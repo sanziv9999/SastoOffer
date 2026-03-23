@@ -1,4 +1,5 @@
 <div id="search-results-grid">
+    <div id="results-count-meta" class="hidden" data-count="{{ count($deals) }}"></div>
     {{-- Results Control - Desktop --}}
     <div class="hidden md:flex items-center justify-between mb-6">
         <div>

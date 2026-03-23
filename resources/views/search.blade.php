@@ -14,6 +14,8 @@
             selectedLocations: @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []),
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
+            resultsCount: {{ count($deals) }},
+            isFilterDrawerOpen: false,
             isLoading: false,
             
             init() {
@@ -64,6 +66,12 @@
                     const container = document.getElementById('search-results-container');
                     container.innerHTML = html;
                     
+                    // Update dynamic results count
+                    const meta = container.querySelector('#results-count-meta');
+                    if (meta) {
+                        this.resultsCount = parseInt(meta.dataset.count);
+                    }
+                    
                     // Re-initialize Alpine on the new content
                     if (window.Alpine) {
                         window.Alpine.initTree(container);
@@ -85,6 +93,7 @@
                 this.dealTypes = [];
                 this.selectedLocations = [];
                 this.isFeatured = false;
+                this.searchQuery = '';
                 this.applyFilters();
             }
         }"
@@ -105,7 +114,69 @@
             </template>
         </div>
 
+        {{-- Mobile Filters Drawer --}}
+        <div 
+            x-show="isFilterDrawerOpen"
+            class="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm md:hidden"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="isFilterDrawerOpen = false"
+            x-cloak
+        >
+            <div 
+                class="fixed inset-y-0 left-0 z-[101] h-[100dvh] w-full sm:max-w-sm border-r bg-background p-6 shadow-xl transition-transform duration-300 ease-in-out flex flex-col"
+                :class="isFilterDrawerOpen ? 'translate-x-0' : '-translate-x-full'"
+                @click.stop
+            >
+                <div class="flex flex-col space-y-2 mb-4 shrink-0">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-primary">Filters</h2>
+                        <button @click="isFilterDrawerOpen = false" class="p-2 rounded-full hover:bg-accent text-muted-foreground transition-all active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            <span class="sr-only">Close</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex-grow overflow-y-auto pr-2 -mr-2 scrollbar-hide overscroll-contain">
+                    <x-search-filters 
+                        :categories="$categories"
+                        :locations="$locations"
+                        :current-category="$currentCategory"
+                        :current-location="$currentLocation"
+                        :min-price="$minPrice"
+                        :max-price="$maxPrice"
+                        :deal-type="$dealType"
+                        :is-featured="$isFeatured"
+                        :sort-by="$sortBy"
+                        :is-mobile="true"
+                    />
+                </div>
+                
+                <div class="pt-6 mt-auto border-t bg-background shrink-0 space-y-3">
+                    <button 
+                        @click="isFilterDrawerOpen = false"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-bold transition-all bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-4 py-2 w-full active:scale-[0.98]"
+                    >
+                        Show <span class="mx-1 font-mono" x-text="resultsCount"></span> Results
+                    </button>
+                    <button 
+                        @click="resetFilters"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-semibold transition-all border border-input bg-background hover:bg-accent h-11 px-4 py-2 w-full text-muted-foreground active:scale-[0.98]"
+                        x-show="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice"
+                    >
+                        Reset All Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
+
             {{-- Sidebar - Desktop Filter --}}
             <aside class="hidden md:block">
                 <x-search-filters 
@@ -128,7 +199,7 @@
                     
                     <div class="flex gap-2">
                         <button 
-                            @click="$dispatch('open-mobile-filters')"
+                            @click="isFilterDrawerOpen = true"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 flex-1"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M20 7H4"/><path d="M16 12H8"/><path d="M12 17H12"/></svg>
@@ -162,7 +233,7 @@
                         </div>
                     </div>
                     
-                    <template x-if="searchQuery || selectedCategory !== 'all' || isFeatured || dealType !== 'all' || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
+                    <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice">
                         <button @click="resetFilters" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
                             Clear All Filters
@@ -178,62 +249,5 @@
         </div>
     </div>
 
-    {{-- Mobile Filters Drawer --}}
-    <div 
-        x-data="{ isOpen: false }" 
-        x-on:open-mobile-filters.window="isOpen = true"
-        x-show="isOpen"
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        @click="isOpen = false"
-        x-cloak
-    >
-        <div 
-            class="fixed inset-y-0 left-0 z-50 h-full w-full sm:max-w-sm border-r bg-background p-6 shadow-lg transition-transform duration-300 ease-in-out flex flex-col"
-            :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
-            @click.stop
-        >
-            <div class="flex flex-col space-y-2 mb-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">Filters</h2>
-                    <button @click="isOpen = false" class="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                        <span class="sr-only">Close</span>
-                    </button>
-                </div>
-                <p class="text-sm text-muted-foreground">
-                    Narrow down deals to find exactly what you're looking for.
-                </p>
-            </div>
-            
-            <div class="flex-grow overflow-y-auto pr-2 -mr-2">
-                <x-search-filters 
-                    :categories="$categories"
-                    :locations="$locations"
-                    :current-category="$currentCategory"
-                    :current-location="$currentLocation"
-                    :min-price="$minPrice"
-                    :max-price="$maxPrice"
-                    :deal-type="$dealType"
-                    :is-featured="$isFeatured"
-                    :sort-by="$sortBy"
-                    :is-mobile="true"
-                />
-            </div>
-            
-            <div class="pt-6 mt-auto">
-                <button 
-                    @click="isOpen = false"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-4 py-2 w-full"
-                >
-                    Show <span class="mx-1" x-text="{{ count($deals) }}"></span> Results
-                </button>
-            </div>
-        </div>
-    </div>
+</div>
 </x-layout>

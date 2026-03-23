@@ -188,12 +188,12 @@
                     <span class="font-medium leading-none text-foreground group-hover:text-primary transition-colors">All Types</span>
                 </label>
                 @foreach([
-                    'percentage_discount' => 'Percentage Discount',
-                    'fixed_amount_discount' => 'Fixed Amount Discount',
-                    'bogo' => 'Buy One Get One',
-                    'flash_sale' => 'Flash Sale',
-                    'free_shipping' => 'Free Shipping',
-                    'cashback' => 'Cashback Offer',
+                    'percentage-discount' => 'Percentage Discount',
+                    'fixed-amount-discount' => 'Fixed Amount Discount',
+                    'buy-one-get-one' => 'Buy One Get One',
+                    'flash-sale' => 'Flash Sale',
+                    'free-shipping' => 'Free Shipping',
+                    'cashback-offer' => 'Cashback Offer',
                 ] as $val => $label)
                     <label class="flex items-center gap-2 py-0.5 cursor-pointer group">
                         <input
