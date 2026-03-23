@@ -238,6 +238,9 @@ class VendorProfileController extends Controller
         $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
         $cover = $vendorProfile->images?->firstWhere('attribute_name', 'cover')?->image_url;
 
+        $statusTimezone = config('app.timezone', 'Asia/Kathmandu');
+        $now = \Carbon\Carbon::now($statusTimezone);
+
         // Fetch active deals for this vendor
         $deals = \App\Models\DealOfferType::whereHas('deal', function ($q) use ($vendorProfile) {
                 $q->where('vendor_id', $vendorProfile->id);
@@ -249,7 +252,7 @@ class VendorProfileController extends Controller
             ->get();
 
         // Map deals for the deal-card component
-        $mappedDeals = $deals->map(function ($pivot) {
+        $mappedDeals = $deals->map(function ($pivot) use ($now) {
             $deal = $pivot->deal;
             $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
             $address = $deal?->vendor?->defaultAddress;
@@ -257,6 +260,9 @@ class VendorProfileController extends Controller
                 $address?->district,
                 $address?->tole,
             ])->filter()->implode(', ');
+
+            $endsAt = $pivot->ends_at;
+            $isExpired = $endsAt ? $endsAt->lt($now) : false;
 
             return [
                 'id'                => $deal?->id,
@@ -272,7 +278,8 @@ class VendorProfileController extends Controller
                 'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
                 'locationLabel'     => $locationLabel ?: 'Location',
                 'cityName'          => $locationLabel ?: 'Location',
-                'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
+                'status'            => $isExpired ? 'expired' : 'active',
+                'timeLeft'          => $isExpired ? null : (optional($pivot->ends_at)?->diffForHumans() ?? 'soon'),
                 'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $pivot->id,
             ];
         });

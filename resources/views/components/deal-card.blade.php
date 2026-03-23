@@ -180,10 +180,17 @@
             </div>
             
             {{-- Time Left --}}
-            <div class="flex items-center text-xs text-amber-600 mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>Ends {{ isset($deal['timeLeft']) ? $deal['timeLeft'] : 'soon' }}</span>
-            </div>
+            @if(($deal['status'] ?? null) === 'expired')
+                <div class="flex items-center text-xs text-destructive mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+                    <span>Offer expired</span>
+                </div>
+            @else
+                <div class="flex items-center text-xs text-amber-600 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Ends {{ isset($deal['timeLeft']) ? $deal['timeLeft'] : 'soon' }}</span>
+                </div>
+            @endif
         </div>
     </div>
 @endif
