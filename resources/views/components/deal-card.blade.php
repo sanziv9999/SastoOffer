@@ -26,25 +26,35 @@
                         {{ $discountPercentage }}% OFF
                     </span>
                     @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
-                    <button 
-                        @click.prevent="toggleWishlist({{ $pivotId }})"
-                        class="bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-white transition-all transform active:scale-95 group/heart"
-                    >
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            width="14" height="14" 
-                            viewBox="0 0 24 24" 
-                            :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
-                            stroke="currentColor" 
-                            stroke-width="2.5" 
-                            stroke-linecap="round" 
-                            stroke-linejoin="round"
-                            class="h-3.5 w-3.5 transition-colors"
-                            :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive' : 'text-gray-400 group-hover/heart:text-destructive'"
+                    <div class="flex flex-col gap-1">
+                        <button 
+                            @click.prevent="toggleWishlist({{ $pivotId }})"
+                            class="bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-white transition-all transform active:scale-95 group/heart"
+                            title="Save to wishlist"
                         >
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                        </svg>
-                    </button>
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="14" height="14" 
+                                viewBox="0 0 24 24" 
+                                :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
+                                stroke="currentColor" 
+                                stroke-width="2.5" 
+                                stroke-linecap="round" 
+                                stroke-linejoin="round"
+                                class="h-3.5 w-3.5 transition-colors"
+                                :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive' : 'text-gray-400 group-hover/heart:text-destructive'"
+                            >
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            </svg>
+                        </button>
+                        <button 
+                            @click.prevent="cart.addItem({{ $pivotId }})"
+                            class="bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-white transition-all transform active:scale-95 text-gray-400 hover:text-primary"
+                            title="Add to cart"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="p-2.5 sm:p-3">
@@ -77,34 +87,43 @@
             </div>
         @endif
         
-        {{-- Discount Badge --}}
+        {{-- Discount & Actions Badge --}}
         <div class="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
             <span class="inline-flex items-center rounded-md border border-transparent bg-green-600 text-white shadow hover:bg-green-700 px-2.5 py-0.5 text-xs font-semibold">
                 {{ $discountPercentage }}% OFF
             </span>
 
-            {{-- Heart/Wishlist Button --}}
+            {{-- Actions --}}
             @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
-            <button 
-                @click.prevent="toggleWishlist({{ $pivotId }})"
-                class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all transform active:scale-95 group/heart"
-                title="Save to wishlist"
-            >
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="20" height="20" 
-                    viewBox="0 0 24 24" 
-                    :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
-                    stroke="currentColor" 
-                    stroke-width="2" 
-                    stroke-linecap="round" 
-                    stroke-linejoin="round"
-                    class="h-5 w-5 transition-colors"
-                    :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive animate-in zoom-in duration-300' : 'text-gray-400 group-hover/heart:text-destructive'"
+            <div class="flex flex-col gap-2">
+                <button 
+                    @click.prevent="toggleWishlist({{ $pivotId }})"
+                    class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all transform active:scale-95 group/heart"
+                    title="Save to wishlist"
                 >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                </svg>
-            </button>
+                    <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="20" height="20" 
+                        viewBox="0 0 24 24" 
+                        :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
+                        stroke="currentColor" 
+                        stroke-width="2" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round"
+                        class="h-5 w-5 transition-colors"
+                        :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive animate-in zoom-in duration-300' : 'text-gray-400 group-hover/heart:text-destructive'"
+                    >
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                </button>
+                <button 
+                    @click.prevent="cart.addItem({{ $pivotId }})"
+                    class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all transform active:scale-95 text-gray-400 hover:text-primary"
+                    title="Add to cart"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                </button>
+            </div>
         </div>
         
         {{-- Image --}}
