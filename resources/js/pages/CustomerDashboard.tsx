@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from '@/components/Link';
 import {
   ShoppingBag,
@@ -47,6 +47,56 @@ interface CustomerDashboardProps {
 const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: CustomerDashboardProps) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dashboardData, setDashboardData] = useState<{
+    stats: CustomerDashboardProps['stats'];
+    recommendations: any[];
+    recentActivity: any[];
+    deals: any[];
+  }>({
+    stats: stats || {
+      totalPurchases: 0,
+      activeCoupons: 0,
+      totalSavings: 0,
+      favoriteDealsCount: 0,
+    },
+    recommendations: recommendations || [],
+    recentActivity: recentActivity || [],
+    deals: deals || [],
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadDashboardData = async () => {
+      try {
+        const res = await fetch('/dashboard/data', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) return;
+        const json = await res.json();
+
+        setDashboardData({
+          stats: json.stats || {
+            totalPurchases: 0,
+            activeCoupons: 0,
+            totalSavings: 0,
+            favoriteDealsCount: 0,
+          },
+          recommendations: Array.isArray(json.recommendations) ? json.recommendations : [],
+          recentActivity: Array.isArray(json.recentActivity) ? json.recentActivity : [],
+          deals: Array.isArray(json.deals) ? json.deals : [],
+        });
+      } catch {
+        // Keep initial props when request fails.
+      }
+    };
+
+    loadDashboardData();
+    return () => controller.abort();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +104,8 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
     console.log('Searching for:', searchTerm);
   };
 
-  const getDealById = (dealId: string) => {
-    return deals?.find((deal: any) => deal.id === dealId);
+  const getDealById = (dealId: string | number) => {
+    return dashboardData.deals?.find((deal: any) => deal.id === dealId);
   };
 
   const getDealHref = (dealLike?: any, fallbackId?: string | number) => {
@@ -94,7 +144,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPurchases || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData.stats?.totalPurchases || 0}</div>
             <p className="text-xs text-muted-foreground">
               Across all categories
             </p>
@@ -106,7 +156,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeCoupons || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData.stats?.activeCoupons || 0}</div>
             <p className="text-xs text-muted-foreground">
               Ready to redeem
             </p>
@@ -118,7 +168,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {stats?.totalSavings?.toFixed(2) || '0.00'}</div>
+            <div className="text-2xl font-bold">Rs. {dashboardData.stats?.totalSavings?.toFixed(2) || '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               Money saved with deals
             </p>
@@ -130,7 +180,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.favoriteDealsCount || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData.stats?.favoriteDealsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               Saved for later
             </p>
@@ -177,7 +227,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendations?.map((deal: any) => (
+            {dashboardData.recommendations?.map((deal: any) => (
               <Card key={deal.id} className="hover:shadow-md transition-shadow">
                 <div className="aspect-video relative overflow-hidden rounded-t-lg">
                   <img
@@ -229,9 +279,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             </TabsList>
 
             <TabsContent value="recent" className="space-y-4">
-              {recentActivity?.length > 0 ? (
+              {dashboardData.recentActivity?.length > 0 ? (
                 <div className="space-y-3">
-                  {recentActivity.map((purchase: any) => {
+                  {dashboardData.recentActivity.map((purchase: any) => {
                     const purchaseDeal = purchase.deal || getDealById(purchase.dealId);
                     return (
                       <div
@@ -290,9 +340,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             </TabsContent>
 
             <TabsContent value="active" className="space-y-4">
-              {recentActivity?.filter((p: any) => !p.redeemed).length > 0 ? (
+              {dashboardData.recentActivity?.filter((p: any) => !p.redeemed).length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {recentActivity
+                  {dashboardData.recentActivity
                     .filter((p: any) => !p.redeemed)
                     .map((purchase: any) => {
                       const purchaseDeal = purchase.deal || getDealById(purchase.dealId);

@@ -15,27 +15,22 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    protected function buildCustomerDashboardPayload($user): array
     {
-        return Inertia::render('CustomerDashboard', [
-            'stats' => [],
-            'recommendations' => [],
-            'recentActivity' => [],
-            'deals' => [],
-        ]);
-    }
-
-    public function customerDashboardData()
-    {
-        $user = auth()->user();
         if (! $user) {
-            return response()->json([
-                'stats' => [],
+            return [
+                'stats' => [
+                    'totalPurchases' => 0,
+                    'activeCoupons' => 0,
+                    'totalSavings' => 0,
+                    'favoriteDealsCount' => 0,
+                    'reviewsCount' => 0,
+                ],
                 'deals' => [],
                 'recommendations' => [],
                 'recentActivity' => [],
                 'purchases' => [],
-            ], 401);
+            ];
         }
 
         $orders = Order::where('user_id', $user->id)
@@ -58,7 +53,6 @@ class DashboardController extends Controller
             $redeemed = in_array($aggregatedStatus, ['fulfilled', 'cancelled', 'refunded'], true);
 
             $firstItem = $allItems->first();
-
             $paidAt = $ordersInGroup->pluck('paid_at')->filter()->max();
 
             return [
@@ -113,7 +107,6 @@ class DashboardController extends Controller
 
         $dealsFromPurchases = $dealModels->map(fn (Deal $d) => $mapDeal($d))->values()->all();
 
-        // Recommendations: best discounts among active deals
         $recommendedDeals = Deal::with(['offerTypes', 'images'])
             ->latest()
             ->take(20)
@@ -123,7 +116,6 @@ class DashboardController extends Controller
                 $base = (float) ($card['originalPrice'] ?? 0);
                 $disc = (float) ($card['discountedPrice'] ?? 0);
                 $discountPct = $base > 0 ? (int) round((($base - $disc) / $base) * 100) : 0;
-
                 $card['discountPct'] = $discountPct;
 
                 return $card;
@@ -148,12 +140,11 @@ class DashboardController extends Controller
         $totalSavings = (float) $orders->sum('discount_total');
 
         $favoriteDealsCount = Wishlist::where('user_id', $user->id)
-            ->join('deal_offer_type', 'deal_offer_type.id', '=', 'wishlist.deal_offer_type_id')
+            ->join('deal_offer_type', 'deal_offer_type.id', '=', 'wishlists.deal_offer_type_id')
             ->distinct('deal_offer_type.deal_id')
             ->count('deal_offer_type.deal_id');
 
         $reviewsCount = Review::where('user_id', $user->id)->count();
-
         $activeCouponsCount = collect($purchaseGroups)->filter(fn ($p) => ! ($p['redeemed'] ?? false))->count();
 
         $stats = [
@@ -164,13 +155,32 @@ class DashboardController extends Controller
             'reviewsCount' => $reviewsCount,
         ];
 
-        return response()->json([
+        return [
             'stats' => $stats,
             'deals' => $deals,
             'recommendations' => $recommendedDeals,
             'recentActivity' => $recentActivity,
             'purchases' => $purchaseGroups->values()->all(),
+        ];
+    }
+
+    public function index(Request $request)
+    {
+        $payload = $this->buildCustomerDashboardPayload($request->user());
+
+        return Inertia::render('CustomerDashboard', [
+            'stats' => $payload['stats'],
+            'recommendations' => $payload['recommendations'],
+            'recentActivity' => $payload['recentActivity'],
+            'deals' => $payload['deals'],
         ]);
+    }
+
+    public function customerDashboardData()
+    {
+        $payload = $this->buildCustomerDashboardPayload(auth()->user());
+
+        return response()->json($payload);
     }
 
     public function favorites()
