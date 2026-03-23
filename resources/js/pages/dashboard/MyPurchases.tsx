@@ -1,5 +1,5 @@
-import { ShoppingBag, Calendar, Tag, Package, Clock, CheckCircle, XCircle, CreditCard, Receipt, ChevronDown, ChevronUp, Store, Banknote } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShoppingBag, Calendar, Tag, Package, Clock, CheckCircle, XCircle, CreditCard, Receipt, ChevronDown, ChevronUp, Store, Banknote, ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +9,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import Link from '@/components/Link';
 
 interface OrderItem {
   id: number;
@@ -48,8 +49,6 @@ interface MyPurchasesProps {
   purchases: Order[];
 }
 
-type SelectedOrderItem = OrderItem & { dealUrl: string | null };
-
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-800', icon: <Clock className="h-3 w-3" /> },
   paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800', icon: <CreditCard className="h-3 w-3" /> },
@@ -65,8 +64,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const totalSpent = orders.reduce((sum, o) => sum + o.grandTotal, 0);
   const totalSaved = orders.reduce((sum, o) => sum + o.discountTotal, 0);
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
-  const [selectedItem, setSelectedItem] = useState<SelectedOrderItem | null>(null);
-  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [cancellingOrderNumber, setCancellingOrderNumber] = useState<string | null>(null);
   const [cancelTargetOrder, setCancelTargetOrder] = useState<Order | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -88,14 +86,6 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
 
     const base = route('deals.show.by-deal', { deal: dealKey });
     return item.dealOfferTypeId ? `${base}?offer=${item.dealOfferTypeId}` : base;
-  };
-
-  const openItemModal = (item: OrderItem) => {
-    setSelectedItem({
-      ...item,
-      dealUrl: getDealUrl(item),
-    });
-    setIsItemModalOpen(true);
   };
 
   const openCancelDialog = (order: Order) => {
@@ -124,6 +114,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
         onSuccess: () => {
           setCancelTargetOrder(null);
           setCancelReason('');
+          setActiveOrder(null);
         },
       },
     );
@@ -180,6 +171,17 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                 {cancellingOrderNumber === order.orderNumber ? 'Cancelling...' : 'Cancel'}
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[11px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveOrder(order);
+              }}
+            >
+              View
+            </Button>
             <span className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 ${cfg.color}`}>
               {cfg.icon}
               {cfg.label}
@@ -213,7 +215,10 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                   {item.image ? (
                     <button
                       type="button"
-                      onClick={() => openItemModal(item)}
+                      onClick={() => {
+                        const url = getDealUrl(item);
+                        if (url) window.location.href = url;
+                      }}
                       className="flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover border hover:opacity-90 transition-opacity" />
@@ -221,7 +226,10 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => openItemModal(item)}
+                      onClick={() => {
+                        const url = getDealUrl(item);
+                        if (url) window.location.href = url;
+                      }}
                       className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
                     >
                       <ShoppingBag className="h-4 w-4 text-muted-foreground" />
@@ -230,7 +238,10 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                   <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      onClick={() => openItemModal(item)}
+                      onClick={() => {
+                        const url = getDealUrl(item);
+                        if (url) window.location.href = url;
+                      }}
                       className="text-sm font-medium truncate block hover:text-primary transition-colors text-left max-w-full"
                     >
                       {item.title}
@@ -310,6 +321,258 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
     );
   };
 
+  const renderOrderSinglePage = (order: Order) => {
+    const cfg = statusConfig[order.status] || statusConfig.pending;
+    const placedLabel = order.createdAt ? format(new Date(order.createdAt), 'MMM d, yyyy h:mm a') : '—';
+    const paidAtLabel = order.paidAt ? formatDistanceToNow(new Date(order.paidAt), { addSuffix: true }) : null;
+
+    const formatMoney = (value: number) => `Rs. ${value.toFixed(2)}`;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-8 px-2 gap-1" onClick={() => setActiveOrder(null)}>
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <span className="text-xs text-muted-foreground font-mono">{order.orderNumber}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 ${cfg.color}`}>
+                {cfg.icon}
+                {cfg.label}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {placedLabel}
+              </span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Vendor:{' '}
+              {order.vendorSlug ? (
+                <a
+                  href={`/vendor-profile/${order.vendorSlug}`}
+                  className="font-medium text-foreground hover:underline"
+                >
+                  {order.vendorName}
+                </a>
+              ) : (
+                <span className="font-medium text-foreground">{order.vendorName}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+            {order.canCancel && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openCancelDialog(order)}
+              >
+                Cancel order
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {order.cancellationReason && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+            <span className="font-semibold">Cancellation reason:</span> {order.cancellationReason}
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="md:col-span-1 border-border/80 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Store className="h-4 w-4 text-muted-foreground" />
+                Order meta
+              </CardTitle>
+              <CardDescription className="text-xs">Items and timing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Items</span>
+                <span className="font-semibold tabular-nums">{order.itemCount}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Placed</span>
+                <span className="font-medium">{placedLabel}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Currency</span>
+                <span className="font-mono text-xs">{order.currencyCode}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-1 border-border/80 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+                Payment
+              </CardTitle>
+              <CardDescription className="text-xs">Method and paid time</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Method</span>
+                <span className="font-medium">{order.paymentMethod || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Paid</span>
+                <span className="font-medium">
+                  {order.paidAt ? (
+                    <>
+                      {paidAtLabel}
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-1 border-border/80 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                Summary
+              </CardTitle>
+              <CardDescription className="text-xs">Totals and savings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-medium tabular-nums">{formatMoney(order.subtotal)}</span>
+              </div>
+              {order.discountTotal > 0 && (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-emerald-600">Savings</span>
+                  <span className="font-medium tabular-nums text-emerald-600">- {formatMoney(order.discountTotal)}</span>
+                </div>
+              )}
+              {order.taxTotal > 0 && (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span className="font-medium tabular-nums">{formatMoney(order.taxTotal)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Shipping</span>
+                <span className="text-primary font-semibold uppercase text-[10px] tracking-wider">Free</span>
+              </div>
+              <div className="pt-2 border-t flex items-center justify-between gap-4">
+                <span className="font-semibold text-foreground">Total</span>
+                <span className="font-bold text-foreground tabular-nums">{formatMoney(order.grandTotal)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-border/80 shadow-sm overflow-hidden">
+          <CardHeader className="pb-3 border-b bg-muted/20">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+              Items in this order
+            </CardTitle>
+            <CardDescription>
+              Click an item to open the full deal page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full caption-bottom text-sm min-w-[760px]">
+                <thead>
+                  <tr className="border-b bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3">Item</th>
+                    <th className="px-4 py-3 hidden md:table-cell">Offer</th>
+                    <th className="px-4 py-3 text-right">Qty</th>
+                    <th className="px-4 py-3 text-right hidden lg:table-cell">Unit</th>
+                    <th className="px-4 py-3 text-right">Line total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((item) => {
+                    const dealUrl = getDealUrl(item);
+                    const discount = hasDiscount(item);
+                    return (
+                      <tr key={item.id} className="border-b hover:bg-muted/40 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="flex items-start gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = getDealUrl(item);
+                                if (url) window.location.href = url;
+                              }}
+                              className="flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                              {item.image ? (
+                                <img
+                                  src={item.image}
+                                  alt={item.title}
+                                  className="h-12 w-12 rounded-lg object-cover border hover:opacity-90 transition-opacity"
+                                />
+                              ) : (
+                                <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                                  <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                            </button>
+
+                            <div className="min-w-0 pt-0.5">
+                              {dealUrl ? (
+                                <Link
+                                  href={dealUrl}
+                                  className="font-semibold text-sm block truncate hover:underline"
+                                >
+                                  {item.title}
+                                </Link>
+                              ) : (
+                                <div className="font-semibold text-sm block truncate">{item.title}</div>
+                              )}
+
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {item.offerType} · Qty {item.quantity}
+                              </div>
+
+                              {discount && (
+                                <div className="text-xs mt-1">
+                                  <span className="line-through text-muted-foreground/60">Rs. {item.originalPrice.toFixed(2)}</span>
+                                  <span className="text-emerald-600 font-medium ml-2">Rs. {item.unitPrice.toFixed(2)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 hidden md:table-cell align-middle text-muted-foreground">
+                          {item.offerType}
+                        </td>
+                        <td className="px-4 py-4 text-right align-middle font-medium tabular-nums">
+                          {item.quantity}
+                        </td>
+                        <td className="px-4 py-4 text-right align-middle hidden lg:table-cell tabular-nums text-muted-foreground">
+                          {formatMoney(item.unitPrice)}
+                        </td>
+                        <td className="px-4 py-4 text-right align-middle font-semibold tabular-nums">
+                          {formatMoney(item.lineTotal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const renderEmpty = (message: string) => (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mb-3" />
@@ -319,125 +582,73 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
-        <p className="text-muted-foreground">Track all your orders and purchases</p>
-      </div>
-
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <Clock className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{activeOrders.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Rs. {totalSpent.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Saved</CardTitle>
-            <Tag className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Rs. {totalSaved.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
-          <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-3">
-          {orders.length > 0 ? orders.map(renderOrderCard) : renderEmpty('No orders yet. Start shopping!')}
-        </TabsContent>
-        <TabsContent value="active" className="space-y-3">
-          {activeOrders.length > 0 ? activeOrders.map(renderOrderCard) : renderEmpty('No active orders.')}
-        </TabsContent>
-        <TabsContent value="completed" className="space-y-3">
-          {completedOrders.length > 0 ? completedOrders.map(renderOrderCard) : renderEmpty('No completed orders yet.')}
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="pr-8">{selectedItem?.title ?? 'Deal details'}</DialogTitle>
-            <DialogDescription>
-              Offer: {selectedItem?.offerType ?? 'Offer'} · Quantity: {selectedItem?.quantity ?? 0}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {selectedItem?.image ? (
-              <img
-                src={selectedItem.image}
-                alt={selectedItem.title}
-                className="w-full h-48 object-cover rounded-lg border"
-              />
-            ) : (
-              <div className="w-full h-48 rounded-lg bg-muted flex items-center justify-center border">
-                <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-
-            <div className="rounded-lg border p-3 space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Unit Price</span>
-                <span className="font-medium">Rs. {selectedItem?.unitPrice?.toFixed(2) ?? '0.00'}</span>
-              </div>
-              {selectedItem && selectedItem.originalPrice > selectedItem.unitPrice && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Original Price</span>
-                  <span className="line-through text-muted-foreground">Rs. {selectedItem.originalPrice.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Line Total</span>
-                <span className="font-semibold">Rs. {selectedItem?.lineTotal?.toFixed(2) ?? '0.00'}</span>
-              </div>
-            </div>
-
-            {selectedItem?.dealUrl ? (
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setIsItemModalOpen(false);
-                  window.location.href = selectedItem.dealUrl!;
-                }}
-              >
-                Open Full Deal Page
-              </Button>
-            ) : (
-              <Button className="w-full" disabled>
-                Deal page not available
-              </Button>
-            )}
+      {activeOrder ? (
+        renderOrderSinglePage(activeOrder)
+      ) : (
+        <>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
+            <p className="text-muted-foreground">Track all your orders and purchases</p>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{orders.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active</CardTitle>
+                <Clock className="h-4 w-4 text-amber-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">{activeOrders.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">Rs. {totalSpent.toFixed(2)}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Saved</CardTitle>
+                <Tag className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">Rs. {totalSaved.toFixed(2)}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="all" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
+              <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
+              <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-3">
+              {orders.length > 0 ? orders.map(renderOrderCard) : renderEmpty('No orders yet. Start shopping!')}
+            </TabsContent>
+            <TabsContent value="active" className="space-y-3">
+              {activeOrders.length > 0 ? activeOrders.map(renderOrderCard) : renderEmpty('No active orders.')}
+            </TabsContent>
+            <TabsContent value="completed" className="space-y-3">
+              {completedOrders.length > 0 ? completedOrders.map(renderOrderCard) : renderEmpty('No completed orders yet.')}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
 
       <Dialog open={!!cancelTargetOrder} onOpenChange={(open) => !open && setCancelTargetOrder(null)}>
         <DialogContent className="sm:max-w-md">
