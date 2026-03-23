@@ -211,19 +211,59 @@
                         </div>
                     </div>
 
-                    {{-- Map Placeholder --}}
+                    {{-- OpenStreetMap --}}
+                    @php
+                        $vendorLat = $vendor->defaultAddress->latitude ?? null;
+                        $vendorLng = $vendor->defaultAddress->longitude ?? null;
+                        $hasCoords = $vendorLat !== null && $vendorLng !== null && $vendorLat !== '' && $vendorLng !== '';
+                    @endphp
                     <div class="bg-card rounded-lg border overflow-hidden">
-                        <div class="h-48 bg-muted flex items-center justify-center relative">
-                             <div class="text-center p-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-primary mx-auto mb-2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                <p class="text-xs font-semibold uppercase text-muted-foreground">Location Pin</p>
-                                <p class="text-sm px-4">{{ $displayAddress }}</p>
-                             </div>
-                             {{-- Placeholder Background --}}
-                             <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
+                        <div class="h-48 bg-muted relative">
+                            @if($hasCoords)
+                                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                                <div id="vendor-osm-map" class="absolute inset-0"></div>
+
+                                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        var lat = parseFloat({{ $vendorLat }});
+                                        var lng = parseFloat({{ $vendorLng }});
+                                        if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+                                        var map = L.map('vendor-osm-map', { zoomControl: true }).setView([lat, lng], 13);
+                                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        }).addTo(map);
+
+                                        L.marker([lat, lng]).addTo(map).bindPopup(@json($vendor->business_name ?? 'Vendor'));
+                                    });
+                                </script>
+                            @else
+                                <div class="text-center p-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-primary mx-auto mb-2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <p class="text-xs font-semibold uppercase text-muted-foreground">Location Pin</p>
+                                    <p class="text-sm px-4">{{ $displayAddress }}</p>
+                                </div>
+                                <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 20px 20px;"></div>
+                            @endif
                         </div>
-                        <div class="p-4 bg-muted/30 border-t flex justify-center">
-                            <button class="text-xs font-bold text-primary hover:underline">OPEN IN GOOGLE MAPS</button>
+                        <div class="p-4 bg-muted/30 border-t flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vendor Location</p>
+                                <p class="text-sm font-medium line-clamp-2">{{ $displayAddress }}</p>
+                            </div>
+                            @if($hasCoords)
+                                <a
+                                    class="text-xs font-bold text-primary hover:underline whitespace-nowrap"
+                                    href="https://www.openstreetmap.org/?mlat={{ $vendorLat }}&mlon={{ $vendorLng }}#map=14/{{ $vendorLat }}/{{ $vendorLng }}"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    View on OSM
+                                </a>
+                            @else
+                                <span class="text-xs font-bold text-muted-foreground whitespace-nowrap">No coordinates</span>
+                            @endif
                         </div>
                     </div>
                 </div>
