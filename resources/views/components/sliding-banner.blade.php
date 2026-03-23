@@ -29,7 +29,7 @@
 @endphp
 
 <section 
-    class="relative w-full py-4 bg-white" 
+    class="relative w-full py-4 bg-transparent" 
     x-data="{ 
         currentBanner: 1, 
         realCount: {{ $realCount }},

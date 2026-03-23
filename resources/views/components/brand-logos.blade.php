@@ -1,6 +1,6 @@
 @props(['vendors' => []])
 
-<div class="bg-slate-50/50 py-12 border-y border-border/40" x-data="{ 
+<div class="bg-transparent py-12 border-y border-border/20" x-data="{ 
     scrollLeft() { this.$refs.brandScroll.scrollBy({ left: -240, behavior: 'smooth' }) },
     scrollRight() { this.$refs.brandScroll.scrollBy({ left: 240, behavior: 'smooth' }) }
 }">

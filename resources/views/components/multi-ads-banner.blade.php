@@ -1,6 +1,6 @@
 @props(['categories'])
 
-<section class="py-12 bg-white">
+<section class="py-12 bg-transparent">
     <div class="container mx-auto px-4">
         <div class="text-center mb-8">
             <h2 class="text-3xl font-bold mb-2">Discover Amazing Deals</h2>

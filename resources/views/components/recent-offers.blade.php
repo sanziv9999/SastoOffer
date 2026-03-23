@@ -1,7 +1,7 @@
 @props(['recentOffers' => []])
 
 @if(count($recentOffers) > 0)
-<section class="py-8 bg-gray-50">
+<section class="py-12 bg-transparent">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-slate-800 flex items-center">

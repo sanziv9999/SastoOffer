@@ -1,7 +1,7 @@
 @props(['featuredDeals' => []])
 
 @if(count($featuredDeals) > 0)
-<section class="py-8 bg-background">
+<section class="py-8 bg-transparent">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center mb-5">
             <h2 class="text-lg md:text-xl font-bold text-foreground flex items-center">
