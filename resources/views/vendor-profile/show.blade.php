@@ -145,7 +145,6 @@
                 <div class="lg:col-span-2">
                     @php
                         $activeDeals = $deals?->where('status', 'active')->values() ?? collect();
-                        $expiredDeals = $deals?->where('status', 'expired')->values() ?? collect();
                     @endphp
 
                     <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -165,18 +164,6 @@
                     @else
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             @foreach($activeDeals as $deal)
-                                <x-deal-card :deal="$deal" :featured="$deal['featured']" />
-                            @endforeach
-                        </div>
-                    @endif
-
-                    @if($expiredDeals->isNotEmpty())
-                        <h2 class="text-2xl font-bold mt-10 mb-6 flex items-center gap-2">
-                            Expired Deals
-                            <span class="text-xs font-normal text-muted-foreground">({{ $expiredDeals->count() }})</span>
-                        </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            @foreach($expiredDeals as $deal)
                                 <x-deal-card :deal="$deal" :featured="$deal['featured']" />
                             @endforeach
                         </div>
