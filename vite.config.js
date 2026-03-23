@@ -9,7 +9,9 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
         }),
-        react(),
+        // Avoid runtime crash when Fast Refresh preamble cannot be detected.
+        // (This only affects dev/HMR; production build remains unchanged.)
+        react({ fastRefresh: false }),
     ],
     resolve: {
         alias: {

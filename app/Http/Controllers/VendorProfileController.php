@@ -240,12 +240,21 @@ class VendorProfileController extends Controller
 
         $statusTimezone = config('app.timezone', 'Asia/Kathmandu');
         $now = \Carbon\Carbon::now($statusTimezone);
+        $today = $now->toDateString();
 
-        // Fetch active deals for this vendor
+        // Fetch active offers for this vendor (match vendor_id + validate date window)
         $deals = \App\Models\DealOfferType::whereHas('deal', function ($q) use ($vendorProfile) {
                 $q->where('vendor_id', $vendorProfile->id);
             })
             ->where('status', 'active')
+            // Offer should have started (date-based: ignore time component)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('starts_at')->orWhereDate('starts_at', '<=', $today);
+            })
+            // Offer should not be expired yet (date-based: ignore time component)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('ends_at')->orWhereDate('ends_at', '>=', $today);
+            })
             ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType'])
             ->latest()
             ->take(8)
@@ -262,7 +271,15 @@ class VendorProfileController extends Controller
             ])->filter()->implode(', ');
 
             $endsAt = $pivot->ends_at;
-            $isExpired = $endsAt ? $endsAt->lt($now) : false;
+            // If ends_at is stored as date-only (midnight), treat it as end-of-day.
+            // Otherwise, compare with full datetime.
+            $effectiveEndsAt = null;
+            if ($endsAt) {
+                $effectiveEndsAt = $endsAt->format('H:i:s') === '00:00:00'
+                    ? $endsAt->copy()->endOfDay()
+                    : $endsAt;
+            }
+            $isExpired = $effectiveEndsAt ? $effectiveEndsAt->lt($now) : false;
 
             return [
                 'id'                => $deal?->id,

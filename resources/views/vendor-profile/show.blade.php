@@ -148,7 +148,7 @@
                     @endphp
 
                     <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                        Active Deals
+                        Active Offers
                         <span class="text-xs font-normal text-muted-foreground">({{ $activeDeals->count() }})</span>
                     </h2>
 
@@ -157,8 +157,8 @@
                             <div class="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                             </div>
-                            <h3 class="font-medium text-lg">No active deals</h3>
-                            <p class="text-muted-foreground mb-6">This vendor doesn't have any deals active at the moment.</p>
+                            <h3 class="font-medium text-lg">No active offers</h3>
+                            <p class="text-muted-foreground mb-6">This vendor doesn't have any offers active at the moment.</p>
                             <a href="/search" class="text-primary hover:underline font-medium">Browse other deals</a>
                         </div>
                     @else
