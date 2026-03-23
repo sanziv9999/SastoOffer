@@ -226,25 +226,25 @@
                 @endif
 
                 {{-- Price --}}
-                <div class="bg-muted/50 p-5 rounded-xl mb-6">
-                    <div class="flex items-end gap-3 mb-2">
-                        <span class="text-3xl font-bold text-primary">
+                <div class="bg-muted/50 p-3 md:p-5 rounded-xl mb-6">
+                    <div class="flex items-end gap-1.5 md:gap-3 mb-2">
+                        <span class="text-xl md:text-3xl font-bold text-primary">
                             Rs. {{ number_format($discountedPrice, 2, '.', '') }}
                         </span>
                         @if($originalPrice > 0)
-                            <span class="text-lg text-muted-foreground line-through">
+                            <span class="text-sm md:text-lg text-muted-foreground line-through">
                                 Rs. {{ number_format($originalPrice, 2, '.', '') }}
                             </span>
                         @endif
                         @if($savingsAmount > 0)
-                            <span class="text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                            <span class="text-xs md:text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                                 Save Rs. {{ number_format($savingsAmount, 2, '.', '') }}
                             </span>
                         @endif
                     </div>
 
                     @if($timeLeft)
-                        <div class="flex items-center text-sm text-amber-600 mt-2">
+                        <div class="flex items-center text-xs md:text-sm text-amber-600 mt-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 mr-1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             <span>
                                 {{ $isExpired ? 'Offer expired' : 'Offer ends in ' . $timeLeft }}
