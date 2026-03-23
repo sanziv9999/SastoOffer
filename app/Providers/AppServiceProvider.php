@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         \App\Models\User::observe(\App\Observers\UserObserver::class);
 
-        View::composer('components.navbar', function ($view) {
+        View::composer(['components.navbar', 'components.layout'], function ($view) {
             // Top-level categories
             $parentCategories = Category::with(['children' => function ($query) {
                     $query->where('is_active', true)->orderBy('display_order');

@@ -168,24 +168,63 @@
                     </button>
                 </div>
                 <div class="overflow-y-auto h-[calc(100%-60px)]">
-                    @php
-                        $mobileCategories = [
-                            ['name' => 'Restaurants',     'slug' => 'food-dining'],
-                            ['name' => 'Beauty & Spa',    'slug' => 'beauty-spa'],
-                            ['name' => 'Activities',      'slug' => 'activities-events'],
-                            ['name' => 'Travel',          'slug' => 'travel'],
-                            ['name' => 'Electronics',     'slug' => 'electronics'],
-                            ['name' => 'Home Services',   'slug' => 'services'],
-                            ['name' => 'Health & Fitness','slug' => 'health-fitness'],
-                            ['name' => 'Education',       'slug' => 'education'],
-                        ];
-                    @endphp
-                    @foreach($mobileCategories as $cat)
-                        <div class="border-b">
-                            <a href="{{ route('search', ['category' => $cat['slug']]) }}" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50" @click="isOpen = false">
-                                <span class="font-medium">{{ $cat['name'] }}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
-                            </a>
+                    @foreach($parentCategories as $cat)
+                        <div class="border-b" x-data="{ open: false }">
+                            @if($cat->children->count() > 0)
+                                <button 
+                                    @click="open = !open"
+                                    class="flex items-center justify-between w-full px-4 py-3 hover:bg-gray-50 text-left transition-colors"
+                                >
+                                    <span class="font-medium text-foreground">{{ $cat->name }}</span>
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        width="16" height="16" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        stroke-width="2.5" 
+                                        stroke-linecap="round" 
+                                        stroke-linejoin="round" 
+                                        class="h-4 w-4 text-gray-400 transition-transform duration-300"
+                                        :class="open ? 'rotate-180' : ''"
+                                    >
+                                        <path d="m6 9 6 6 6-6"></path>
+                                    </svg>
+                                </button>
+                                
+                                <div 
+                                    x-show="open" 
+                                    x-cloak 
+                                    x-collapse
+                                    class="bg-muted/30 border-t border-border/10"
+                                >
+                                    <a 
+                                        href="{{ route('search', ['category' => $cat->slug]) }}" 
+                                        class="flex items-center px-8 py-2.5 text-sm font-semibold text-primary/80 hover:bg-muted/50"
+                                        @click="isOpen = false"
+                                    >
+                                        All in {{ $cat->name }}
+                                    </a>
+                                    @foreach($cat->children as $sub)
+                                        <a 
+                                            href="{{ route('search', ['category' => $cat->slug, 'subcategory' => $sub->slug]) }}" 
+                                            class="flex items-center px-8 py-2.5 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                                            @click="isOpen = false"
+                                        >
+                                            {{ $sub->name }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @else
+                                <a 
+                                    href="{{ route('search', ['category' => $cat->slug]) }}" 
+                                    class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors" 
+                                    @click="isOpen = false"
+                                >
+                                    <span class="font-medium text-foreground">{{ $cat->name }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-gray-400"><path d="m9 18 6-6-6-6"></path></svg>
+                                </a>
+                            @endif
                         </div>
                     @endforeach
                     <div class="p-4">
