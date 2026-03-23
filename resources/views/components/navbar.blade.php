@@ -1,9 +1,31 @@
 <header
-    class="bg-background shadow-sm"
+    class="bg-background shadow-sm sticky top-0 z-50 transition-all duration-300"
     x-data="{
         mobileMenuOpen: false,
         searchQuery: '{{ addslashes(request('q', '')) }}',
         selectedCity: '{{ addslashes(request('city', request('district', 'All Districts'))) }}',
+        showCategories: true,
+        lastScroll: 0,
+        scrollThreshold: 20,
+        
+        handleScroll() {
+            const currentScroll = window.pageYOffset;
+            
+            // Only toggle if we've moved more than the threshold to prevent flickering
+            if (Math.abs(currentScroll - this.lastScroll) < this.scrollThreshold) {
+                return;
+            }
+
+            if (currentScroll > this.lastScroll && currentScroll > 150) {
+                // Scrolling down
+                this.showCategories = false;
+            } else if (currentScroll < this.lastScroll) {
+                // Scrolling up
+                this.showCategories = true;
+            }
+            
+            this.lastScroll = currentScroll;
+        },
         submitSearch() {
             const params = new URLSearchParams(window.location.search);
             const query = this.searchQuery.trim();
@@ -23,6 +45,7 @@
             window.location.href = '{{ route('search') }}' + (params.toString() ? `?${params.toString()}` : '');
         }
     }"
+    @scroll.window.throttle.100ms="handleScroll()"
 >
     <div class="container mx-auto px-4">
         {{-- Full header with categories always visible --}}
@@ -346,11 +369,11 @@
             </div>
             
             <div 
-                class="relative group transition-all duration-300"
+                class="relative group transition-all duration-300 origin-top"
+                x-show="showCategories"
+                x-collapse
             >
-                <div 
-                    class="py-2"
-                >
+                <div class="py-2">
                     <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
                         @foreach($parentCategories as $category)
                             <div
