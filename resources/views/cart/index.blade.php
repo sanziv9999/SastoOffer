@@ -1,7 +1,7 @@
 <x-layout>
     @section('title', 'Your Cart - SastoOffer')
 
-    <div class="container py-10 pb-20" 
+    <div class="container pt-24 md:pt-12 pb-16 md:pb-24" 
         x-init="cart.items = {{ json_encode($items) }}; cart.total = {{ $total }};"
         x-data="{ 
             updating: null,
@@ -21,16 +21,16 @@
         }"
     >
         <div class="max-w-5xl mx-auto px-4">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b pb-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 border-b pb-4">
                 <div class="space-y-1">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="p-1.5 h-8 w-8 flex items-center justify-center bg-secondary/10 rounded-full text-secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <div class="p-1 h-6 w-6 flex items-center justify-center bg-secondary/10 rounded-full text-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
                         </div>
-                        <span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Ready to checkout</span>
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-widest">Ready to checkout</span>
                     </div>
-                    <h1 class="text-3xl font-extrabold tracking-tight text-teal-950">My Shopping Cart</h1>
-                    <p class="text-muted-foreground text-sm max-w-2xl leading-relaxed">
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-teal-950">My Shopping Cart</h1>
+                    <p class="text-muted-foreground text-xs md:text-sm max-w-2xl leading-relaxed">
                         Review your items and proceed to checkout.
                     </p>
                 </div>
@@ -51,8 +51,8 @@
                                 <div class="flex-1 flex flex-col justify-between">
                                     <div class="flex justify-between items-start gap-4">
                                         <div>
-                                            <a :href="item.url" class="text-lg font-bold text-teal-950 hover:text-primary transition-colors cursor-pointer" x-text="item.title"></a>
-                                            <p class="text-sm text-primary font-medium mt-1" x-text="item.typeLabel"></p>
+                                            <a :href="item.url" class="text-base md:text-lg font-bold text-teal-950 hover:text-primary transition-colors cursor-pointer" x-text="item.title"></a>
+                                            <p class="text-xs md:text-sm text-primary font-medium mt-1" x-text="item.typeLabel"></p>
                                         </div>
                                         <button @click="wrappedRemoveItem(item.id)" class="text-muted-foreground/40 hover:text-red-500 transition-colors p-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -78,7 +78,7 @@
                                         </div>
                                         <div class="text-right">
                                             <p class="text-[10px] text-muted-foreground/50 line-through mb-0.5" x-text="`Rs. ${item.originalPrice * item.quantity}`"></p>
-                                            <p class="text-lg font-bold text-teal-950 leading-none">
+                                            <p class="text-base md:text-lg font-bold text-teal-950 leading-none">
                                                 <span class="text-xs font-normal text-muted-foreground/70 mr-0.5">Rs.</span>
                                                 <span x-text="item.discountedPrice * item.quantity"></span>
                                             </p>
@@ -106,10 +106,10 @@
                                     <span class="text-primary font-bold uppercase text-[10px] tracking-wider">Free</span>
                                 </div>
                                 <div class="border-t border-border/60 pt-4 flex justify-between items-end">
-                                    <span class="text-base font-bold text-teal-950">Total</span>
+                                    <span class="text-sm md:text-base font-bold text-teal-950">Total</span>
                                     <div class="text-right">
                                         <span class="text-[10px] text-muted-foreground block leading-none mb-1">Net Amount</span>
-                                        <span class="text-2xl font-bold text-teal-950">
+                                        <span class="text-xl md:text-2xl font-bold text-teal-950">
                                             <span class="text-xs font-normal mr-0.5 opacity-70">Rs.</span><span x-text="cart.total"></span>
                                         </span>
                                     </div>
@@ -142,12 +142,12 @@
 
             {{-- Empty Shopping Cart View --}}
             <template x-if="cart.items.length === 0">
-                <div class="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted p-12 text-center bg-muted/10">
-                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-md mb-6 rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-muted-foreground opacity-40"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                <div class="flex min-h-[350px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-muted p-8 text-center bg-muted/10">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-md mb-5 rotate-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-muted-foreground opacity-40"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
                     </div>
-                    <h2 class="text-2xl font-bold text-teal-950 mb-3">Your cart is empty</h2>
-                    <p class="mb-8 text-muted-foreground text-sm max-w-md mx-auto">
+                    <h2 class="text-xl md:text-2xl font-bold text-teal-950 mb-2">Your cart is empty</h2>
+                    <p class="mb-6 text-muted-foreground text-xs md:text-sm max-w-md mx-auto">
                         Looks like you haven't added anything to your cart yet. Browse our amazing deals and start saving today!
                     </p>
                     <a 
