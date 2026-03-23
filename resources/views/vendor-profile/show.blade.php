@@ -46,9 +46,9 @@
                                 </h1>
                                 <div class="flex items-center mt-2 text-sm text-muted-foreground">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                    <span class="ml-1 font-medium">{{ $vendor->rating ?? 4.5 }}</span>
+                                    <span class="ml-1 font-medium">{{ number_format($vendor->reviews_avg_rating ?? 0, 1) }}</span>
                                     <span class="mx-1 opacity-50">•</span>
-                                    <span>{{ $vendor->review_count ?? 42 }} reviews</span>
+                                    <span>{{ $vendor->reviews_count ?? 0 }} reviews</span>
                                     @if($vendor->primaryCategory)
                                         <span class="mx-1 opacity-50">•</span>
                                         <span class="text-primary font-medium">{{ $vendor->primaryCategory->name }}</span>

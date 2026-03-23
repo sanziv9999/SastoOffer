@@ -231,7 +231,9 @@ class VendorProfileController extends Controller
             return redirect()->route('vendor-profile.show', ['vendorProfile' => $vendorProfile->slug], 301);
         }
 
-        $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images']);
+        $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images'])
+            ->loadAvg('reviews', 'rating')
+            ->loadCount('reviews');
         
         $logo = $vendorProfile->images?->firstWhere('attribute_name', 'logo')?->image_url;
         $cover = $vendorProfile->images?->firstWhere('attribute_name', 'cover')?->image_url;
