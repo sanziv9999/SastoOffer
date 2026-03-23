@@ -143,12 +143,17 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Main Content: Deals --}}
                 <div class="lg:col-span-2">
+                    @php
+                        $activeDeals = $deals?->where('status', 'active')->values() ?? collect();
+                        $expiredDeals = $deals?->where('status', 'expired')->values() ?? collect();
+                    @endphp
+
                     <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
                         Active Deals
-                        <span class="text-xs font-normal text-muted-foreground">({{ $deals->count() }})</span>
+                        <span class="text-xs font-normal text-muted-foreground">({{ $activeDeals->count() }})</span>
                     </h2>
 
-                    @if($deals->isEmpty())
+                    @if($activeDeals->isEmpty())
                         <div class="bg-card rounded-lg border border-dashed p-12 text-center">
                             <div class="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
@@ -159,7 +164,19 @@
                         </div>
                     @else
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            @foreach($deals as $deal)
+                            @foreach($activeDeals as $deal)
+                                <x-deal-card :deal="$deal" :featured="$deal['featured']" />
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if($expiredDeals->isNotEmpty())
+                        <h2 class="text-2xl font-bold mt-10 mb-6 flex items-center gap-2">
+                            Expired Deals
+                            <span class="text-xs font-normal text-muted-foreground">({{ $expiredDeals->count() }})</span>
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            @foreach($expiredDeals as $deal)
                                 <x-deal-card :deal="$deal" :featured="$deal['featured']" />
                             @endforeach
                         </div>
