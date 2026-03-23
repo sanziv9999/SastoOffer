@@ -134,25 +134,93 @@ const AppShell = () => {
                 <Route path="/vendor-profile/:slug" element={<VendorProfile />} />
             </Route>
 
-            {/* Dashboard routes with DashboardLayout (Sidebar) */}
-            <Route element={<DashboardLayout children={undefined} />}>
-                {/* Customer Dashboard */}
-                <Route path="/dashboard">
-                    <Route index element={
+            {/* Customer Dashboard (explicit routes to avoid client-side 404) */}
+            <Route
+                path="/dashboard"
+                element={
+                    <DashboardLayout>
                         <CustomerDashboard
                             stats={dummyStats.customer}
                             recommendations={deals.slice(0, 3)}
                             recentActivity={purchases.slice(0, 5)}
                             deals={deals}
                         />
-                    } />
-                    <Route path="favorites" element={<SavedDeals favoriteDeals={deals.slice(0, 2)} />} />
-                    <Route path="purchases" element={<MyPurchases purchases={purchases} deals={deals} />} />
-                    <Route path="purchases/:id" element={<VoucherDetail purchases={purchases} deals={deals} vendors={vendors} />} />
-                    <Route path="reviews" element={<Reviews reviews={reviews} deals={deals} />} />
-                    <Route path="reviews/edit/:id" element={<EditReview reviews={reviews} deals={deals} />} />
-                    <Route path="settings" element={<Settings />} />
-                </Route>
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/favorites"
+                element={
+                    <DashboardLayout>
+                        <SavedDeals favoriteDeals={deals.slice(0, 2)} />
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/purchases"
+                element={
+                    <DashboardLayout>
+                        <MyPurchases purchases={purchases} deals={deals} />
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/purchases/:id"
+                element={
+                    <DashboardLayout>
+                        <VoucherDetail purchases={purchases} deals={deals} vendors={vendors} />
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/reviews"
+                element={
+                    <DashboardLayout>
+                        <Reviews reviews={reviews} deals={deals} />
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/reviews/edit/:id"
+                element={
+                    <DashboardLayout>
+                        <EditReview reviews={reviews} deals={deals} />
+                    </DashboardLayout>
+                }
+            />
+            <Route
+                path="/dashboard/settings"
+                element={
+                    <DashboardLayout>
+                        <Settings />
+                    </DashboardLayout>
+                }
+            />
+
+            {/* Admin sidebar placeholders (avoid client-side NotFound in prototype router) */}
+            <Route
+                path="/admin/featured-ranking"
+                element={<DashboardLayout><div className="p-6 text-sm text-muted-foreground">Featured ranking page is not wired in the prototype router.</div></DashboardLayout>}
+            />
+            <Route
+                path="/admin/primary-categories"
+                element={<DashboardLayout><div className="p-6 text-sm text-muted-foreground">Primary categories page is not wired in the prototype router.</div></DashboardLayout>}
+            />
+            <Route
+                path="/admin/offer-types"
+                element={<DashboardLayout><div className="p-6 text-sm text-muted-foreground">Offer types page is not wired in the prototype router.</div></DashboardLayout>}
+            />
+            <Route
+                path="/admin/display-types"
+                element={<DashboardLayout><div className="p-6 text-sm text-muted-foreground">Display types page is not wired in the prototype router.</div></DashboardLayout>}
+            />
+            <Route
+                path="/admin/banners"
+                element={<DashboardLayout><div className="p-6 text-sm text-muted-foreground">Banners page is not wired in the prototype router.</div></DashboardLayout>}
+            />
+
+            {/* Dashboard routes with DashboardLayout (Sidebar) */}
+            <Route element={<DashboardLayout children={undefined} />}>
 
                 {/* Vendor Dashboard */}
                 <Route path="/vendor">
