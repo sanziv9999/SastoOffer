@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingBag, Mail, Calendar, Banknote, Receipt, Tag } from 'lucide-react';
+import { Search, Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingBag, Mail, Calendar, Banknote, Receipt, Tag, ExternalLink } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { router } from '@inertiajs/react';
@@ -14,6 +15,7 @@ interface OrderItemDetail {
   id: number;
   dealId: number | null;
   dealOfferTypeId: number | null;
+  dealSlug?: string | null;
   title: string;
   quantity: number;
   unitPrice: number;
@@ -35,6 +37,7 @@ interface VendorOrder {
   total: number;
   currencyCode: string;
   paymentMethod: string | null;
+  paymentReference?: string | null;
   paidAt: string | null;
   quantity: number;
   status: string;
@@ -100,12 +103,23 @@ const Orders = ({ orders }: OrdersProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500 text-white hover:bg-yellow-600 focus:bg-yellow-600';
+      case 'pending': return 'bg-amber-500 text-white hover:bg-amber-600 focus:bg-amber-600';
       case 'paid': return 'bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600';
-      case 'fulfilled': return 'bg-green-500 text-white hover:bg-green-600 focus:bg-green-600';
+      case 'fulfilled': return 'bg-emerald-500 text-white hover:bg-emerald-600 focus:bg-emerald-600';
       case 'cancelled': return 'bg-red-500 text-white hover:bg-red-600 focus:bg-red-600';
       case 'refunded': return 'bg-slate-500 text-white hover:bg-slate-600 focus:bg-slate-600';
       default: return '';
+    }
+  };
+
+  const rowStatusAccent = (status: string) => {
+    switch (status) {
+      case 'pending': return 'border-l-4 border-l-amber-400';
+      case 'paid': return 'border-l-4 border-l-blue-400';
+      case 'fulfilled': return 'border-l-4 border-l-emerald-400';
+      case 'cancelled': return 'border-l-4 border-l-red-400';
+      case 'refunded': return 'border-l-4 border-l-slate-400';
+      default: return 'border-l-4 border-l-transparent';
     }
   };
 
@@ -126,7 +140,7 @@ const Orders = ({ orders }: OrdersProps) => {
 
   const renderExpandedRow = (order: VendorOrder) => (
     <tr>
-      <td colSpan={7} className="p-0">
+      <td colSpan={8} className="p-0">
         <div className="bg-muted/30 border-t">
           {/* Customer & order meta */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-5 py-3 border-b bg-muted/20 text-xs text-muted-foreground">
@@ -144,6 +158,11 @@ const Orders = ({ orders }: OrdersProps) => {
                 {order.paymentMethod}
               </span>
             )}
+            {order.paymentReference && (
+              <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                Ref: {order.paymentReference}
+              </span>
+            )}
             {order.paidAt && (
               <span className="flex items-center gap-1.5">
                 <CheckCircle className="h-3 w-3 text-green-500" />
@@ -157,70 +176,83 @@ const Orders = ({ orders }: OrdersProps) => {
             )}
           </div>
 
+          <div className="flex items-center justify-between gap-2 px-5 py-2 border-b bg-muted/10">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Items in this order</span>
+            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-primary" asChild>
+              <Link href={route('vendor.orders.show', order.orderId)} onClick={(e) => e.stopPropagation()}>
+                Open full page
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
           {/* Items */}
           <div className="divide-y">
             {order.items?.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 px-5 py-3">
+              <div key={item.id} className="flex items-start gap-4 px-5 py-3.5">
                 {item.dealId ? (
                   <Link href={route('vendor.deals.view', item.dealId)} className="flex-shrink-0">
                     {item.image ? (
-                      <img src={item.image} alt={item.title} className="h-10 w-10 rounded-lg object-cover border hover:opacity-90 transition-opacity" />
+                      <img src={item.image} alt={item.title} className="h-14 w-14 rounded-xl object-cover border shadow-sm hover:opacity-90 transition-opacity" />
                     ) : (
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                      <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center border">
+                        <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
                   </Link>
                 ) : item.image ? (
-                  <img src={item.image} alt={item.title} className="h-10 w-10 rounded-lg object-cover flex-shrink-0 border" />
+                  <img src={item.image} alt={item.title} className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border shadow-sm" />
                 ) : (
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                    <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 border">
+                    <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   {item.dealId ? (
-                    <Link href={route('vendor.deals.view', item.dealId)} className="text-sm font-medium truncate block hover:text-primary transition-colors">
+                    <Link href={route('vendor.deals.view', item.dealId)} className="text-sm font-semibold leading-snug block hover:text-primary transition-colors">
                       {item.title}
                     </Link>
                   ) : (
-                    <p className="text-sm font-medium truncate">{item.title}</p>
+                    <p className="text-sm font-semibold leading-snug">{item.title}</p>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-1">
                     <span>{item.offerType}</span>
                     <span className="text-muted-foreground/40">·</span>
-                    <span>Qty: {item.quantity}</span>
+                    <span>Qty {item.quantity}</span>
                     {item.originalPrice > item.unitPrice && (
                       <>
                         <span className="text-muted-foreground/40">·</span>
                         <span className="line-through text-muted-foreground/50">Rs. {item.originalPrice.toFixed(2)}</span>
-                        <span className="text-green-600 font-medium">Rs. {item.unitPrice.toFixed(2)}</span>
+                        <span className="text-emerald-600 font-medium">Rs. {item.unitPrice.toFixed(2)} ea</span>
                       </>
                     )}
                   </div>
                 </div>
-                <p className="text-sm font-semibold flex-shrink-0">Rs. {item.lineTotal.toFixed(2)}</p>
+                <p className="text-sm font-bold tabular-nums flex-shrink-0 pt-0.5">Rs. {item.lineTotal.toFixed(2)}</p>
               </div>
             ))}
           </div>
 
           {/* Financial summary */}
-          <div className="flex flex-wrap gap-x-6 gap-y-1 px-5 py-3 border-t bg-muted/10 text-xs">
-            <span className="text-muted-foreground">
-              Subtotal: <span className="font-medium text-foreground">Rs. {order.subtotal.toFixed(2)}</span>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-6 gap-y-2 px-5 py-4 border-t bg-muted/15 text-sm">
+            <span className="text-muted-foreground col-span-2 sm:col-auto">
+              Subtotal{' '}
+              <span className="font-semibold text-foreground tabular-nums">Rs. {order.subtotal.toFixed(2)}</span>
             </span>
             {order.discountTotal > 0 && (
-              <span className="text-green-600">
-                Discount: <span className="font-medium">- Rs. {order.discountTotal.toFixed(2)}</span>
+              <span className="text-emerald-600">
+                Discount{' '}
+                <span className="font-semibold tabular-nums">− Rs. {order.discountTotal.toFixed(2)}</span>
               </span>
             )}
             {order.taxTotal > 0 && (
               <span className="text-muted-foreground">
-                Tax: <span className="font-medium text-foreground">Rs. {order.taxTotal.toFixed(2)}</span>
+                Tax <span className="font-semibold text-foreground tabular-nums">Rs. {order.taxTotal.toFixed(2)}</span>
               </span>
             )}
-            <span className="text-muted-foreground ml-auto">
-              Grand Total: <span className="font-bold text-foreground text-sm">Rs. {order.total.toFixed(2)}</span>
+            <span className="text-muted-foreground col-span-2 sm:ml-auto sm:col-auto border-t sm:border-t-0 pt-2 sm:pt-0 mt-1 sm:mt-0">
+              <span className="text-xs uppercase tracking-wide mr-2">Total</span>
+              <span className="font-bold text-foreground text-lg tabular-nums">Rs. {order.total.toFixed(2)}</span>
             </span>
           </div>
         </div>
@@ -229,66 +261,84 @@ const Orders = ({ orders }: OrdersProps) => {
   );
 
   const renderOrdersTable = (ordersList: VendorOrder[]) => (
-    <div className="rounded-md border overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="border-b bg-muted/50">
+    <div className="rounded-xl border border-border/80 bg-card shadow-sm overflow-x-auto">
+      <table className="w-full text-sm min-w-[720px]">
+        <thead className="border-b bg-muted/40">
           <tr>
-            <th className="h-10 px-4 text-left font-medium w-8"></th>
-            <th className="h-10 px-4 text-left font-medium">Order ID</th>
-            <th className="h-10 px-4 text-left font-medium">Customer</th>
-            <th className="h-10 px-4 text-left font-medium hidden lg:table-cell">Date</th>
-            <th className="h-10 px-4 text-left font-medium">Items</th>
-            <th className="h-10 px-4 text-left font-medium">Total</th>
-            <th className="h-10 px-4 text-left font-medium">Status</th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground w-10"></th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Order</th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Customer</th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Placed</th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Summary</th>
+            <th className="h-11 px-3 text-right font-semibold text-xs uppercase tracking-wide text-muted-foreground">Amount</th>
+            <th className="h-11 px-3 text-center font-semibold text-xs uppercase tracking-wide text-muted-foreground w-[100px]">View</th>
+            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground min-w-[140px]">Status</th>
           </tr>
         </thead>
         <tbody>
           {ordersList.map(order => {
             const isExpanded = expandedRows.has(order.id);
             return (
-              <>
-                <tr key={order.id} className={`border-b hover:bg-muted/50 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/30' : ''}`} onClick={() => toggleRow(order.id)}>
-                  <td className="p-4 w-8">
+              <Fragment key={order.id}>
+                <tr
+                  className={`border-b border-border/60 hover:bg-muted/40 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/25' : ''} ${rowStatusAccent(order.status)}`}
+                  onClick={() => toggleRow(order.id)}
+                >
+                  <td className="p-3 w-10 align-middle">
                     {isExpanded
                       ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
                       : <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     }
                   </td>
-                  <td className="p-4">
-                    <span className="font-mono text-xs">{order.id}</span>
+                  <td className="p-3 align-middle">
+                    <Link
+                      href={route('vendor.orders.show', order.orderId)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="font-mono text-sm font-semibold text-primary hover:underline"
+                    >
+                      {order.id}
+                    </Link>
                   </td>
-                  <td className="p-4">
-                    <div className="font-medium">{order.customer}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[180px]">{order.customerEmail}</div>
+                  <td className="p-3 align-middle">
+                    <div className="font-semibold text-foreground">{order.customer}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">{order.customerEmail}</div>
                   </td>
-                  <td className="p-4 hidden lg:table-cell">
-                    <div className="text-xs">
+                  <td className="p-3 align-middle hidden lg:table-cell">
+                    <div className="text-sm font-medium">
                       {order.date ? format(new Date(order.date), 'MMM d, yyyy') : '—'}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {order.date ? formatDistanceToNow(new Date(order.date), { addSuffix: true }) : ''}
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="font-medium">{order.quantity} item{order.quantity !== 1 ? 's' : ''}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[200px] hidden md:block">
+                  <td className="p-3 align-middle">
+                    <div className="font-medium">{order.quantity} line{order.items && order.items.length !== 1 ? 's' : ''}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[220px] hidden md:block" title={order.items?.map(i => i.title).join(', ')}>
                       {order.items?.map(i => i.title).join(', ')}
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="font-medium">Rs. {order.total?.toFixed(2)}</div>
+                  <td className="p-3 align-middle text-right">
+                    <div className="font-semibold tabular-nums">Rs. {order.total?.toFixed(2)}</div>
                     {order.discountTotal > 0 && (
-                      <div className="text-xs text-green-600">- Rs. {order.discountTotal.toFixed(2)} off</div>
+                      <div className="text-xs text-emerald-600 font-medium">− Rs. {order.discountTotal.toFixed(2)}</div>
                     )}
                   </td>
-                  <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="p-3 align-middle text-center" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="outline" size="sm" className="h-8 gap-1" asChild>
+                      <Link href={route('vendor.orders.show', order.orderId)}>
+                        View
+                        <ExternalLink className="h-3 w-3 opacity-70" />
+                      </Link>
+                    </Button>
+                  </td>
+                  <td className="p-3 align-middle" onClick={(e) => e.stopPropagation()}>
                     <Select
                       value={order.status}
                       onValueChange={(value) => updateOrderStatus(order, value as OrderStatus)}
                     >
                       <SelectTrigger
                         disabled={updatingOrderId === order.orderId}
-                        className={`w-[130px] h-8 rounded-full border-none shadow-none text-xs font-medium px-2.5 ${getStatusColor(order.status)}`}
+                        className={`w-full max-w-[150px] h-9 rounded-lg border-none shadow-none text-xs font-semibold ${getStatusColor(order.status)}`}
                       >
                         <div className="flex items-center gap-1.5 focus:outline-none">
                           {getStatusIcon(order.status)}
@@ -306,11 +356,11 @@ const Orders = ({ orders }: OrdersProps) => {
                   </td>
                 </tr>
                 {isExpanded && renderExpandedRow(order)}
-              </>
+              </Fragment>
             );
           })}
           {ordersList.length === 0 && (
-            <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No orders found</td></tr>
+            <tr><td colSpan={8} className="p-12 text-center text-muted-foreground">No orders match your filters.</td></tr>
           )}
         </tbody>
       </table>
@@ -368,7 +418,9 @@ const Orders = ({ orders }: OrdersProps) => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle>All Orders</CardTitle>
-              <CardDescription>Click any row to expand order details</CardDescription>
+              <CardDescription>
+                Click a row for a quick summary, or use <strong className="text-foreground font-medium">View</strong> for the full order page.
+              </CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

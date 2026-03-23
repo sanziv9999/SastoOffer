@@ -1,21 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CustomerProfileController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\DealController;
-use App\Http\Controllers\VendorProfileController;
-use App\Http\Controllers\VendorAnalyticsController;
-use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
-use App\Http\Controllers\Admin\OfferTypeCrudController;
 use App\Http\Controllers\Admin\DisplayTypeCrudController;
+use App\Http\Controllers\Admin\OfferTypeCrudController;
+use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CustomerProfileController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DealController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\VendorAnalyticsController;
+use App\Http\Controllers\VendorProfileController;
+use App\Http\Controllers\WishlistController;
+use Illuminate\Support\Facades\Route;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/vendor/analytics', [VendorAnalyticsController::class, 'index'])->name('vendor.analytics');
         Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
+        Route::get('/vendor/orders/{order}', [VendorAnalyticsController::class, 'showOrder'])->name('vendor.orders.show');
         Route::patch('/vendor/orders/{order}/status', [VendorAnalyticsController::class, 'updateOrderStatus'])->name('vendor.orders.status');
         Route::get('/vendor/customers', [VendorAnalyticsController::class, 'customers'])->name('vendor.customers');
         Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
