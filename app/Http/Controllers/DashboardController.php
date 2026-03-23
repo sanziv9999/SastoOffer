@@ -15,6 +15,28 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
+    protected function getUserWishlistDeals($user): Collection
+    {
+        if (! $user) {
+            return collect();
+        }
+
+        return Wishlist::where('user_id', $user->id)
+            ->with([
+                'dealOfferType.deal.category.parent',
+                'dealOfferType.deal.images',
+                'dealOfferType.deal.vendor.defaultAddress',
+                'dealOfferType.offerType',
+                'dealOfferType.displayTypes',
+            ])
+            ->latest()
+            ->get()
+            ->pluck('dealOfferType')
+            ->filter()
+            ->map(fn ($pivot) => $pivot->toCardData())
+            ->values();
+    }
+
     protected function buildCustomerDashboardPayload($user): array
     {
         if (! $user) {
@@ -139,10 +161,7 @@ class DashboardController extends Controller
 
         $totalSavings = (float) $orders->sum('discount_total');
 
-        $favoriteDealsCount = Wishlist::where('user_id', $user->id)
-            ->join('deal_offer_type', 'deal_offer_type.id', '=', 'wishlists.deal_offer_type_id')
-            ->distinct('deal_offer_type.deal_id')
-            ->count('deal_offer_type.deal_id');
+        $favoriteDealsCount = $this->getUserWishlistDeals($user)->count();
 
         $reviewsCount = Review::where('user_id', $user->id)->count();
         $activeCouponsCount = collect($purchaseGroups)->filter(fn ($p) => ! ($p['redeemed'] ?? false))->count();
@@ -185,8 +204,10 @@ class DashboardController extends Controller
 
     public function favorites()
     {
+        $favoriteDeals = $this->getUserWishlistDeals(auth()->user())->all();
+
         return Inertia::render('dashboard/SavedDeals', [
-            'favoriteDeals' => [],
+            'favoriteDeals' => $favoriteDeals,
         ]);
     }
 
