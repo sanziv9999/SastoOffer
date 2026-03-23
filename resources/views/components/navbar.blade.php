@@ -7,20 +7,37 @@
         showCategories: true,
         lastScroll: 0,
         scrollThreshold: 20,
+        suggestions: [],
+        showSuggestions: false,
+        searchLoading: false,
         
+        async fetchSuggestions() {
+            if (this.searchQuery.length < 2) {
+                this.suggestions = [];
+                this.showSuggestions = false;
+                return;
+            }
+            this.searchLoading = true;
+            try {
+                const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(this.searchQuery)}`);
+                this.suggestions = await res.json();
+                this.showSuggestions = true;
+            } catch (e) {
+                console.error('Fetch error:', e);
+            } finally {
+                this.searchLoading = false;
+            }
+        },
         handleScroll() {
             const currentScroll = window.pageYOffset;
             
-            // Only toggle if we've moved more than the threshold to prevent flickering
             if (Math.abs(currentScroll - this.lastScroll) < this.scrollThreshold) {
                 return;
             }
 
             if (currentScroll > this.lastScroll && currentScroll > 150) {
-                // Scrolling down
                 this.showCategories = false;
             } else if (currentScroll < this.lastScroll) {
-                // Scrolling up
                 this.showCategories = true;
             }
             
@@ -61,22 +78,74 @@
                     </div>
                 </a>
 
-                {{-- Desktop search bar --}}
-                <div class="hidden md:flex flex-1 max-w-xl mx-6">
-                    <form class="flex w-full bg-muted rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                <div class="hidden md:flex flex-1 max-w-xl mx-6 relative">
+                    <form 
+                        @submit.prevent="submitSearch()"
+                        class="flex w-full bg-muted rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+                    >
                         <div class="relative flex-grow">
                             <input
                                 type="search"
                                 placeholder="Search deals..."
                                 class="w-full pl-10 border-0 shadow-none bg-transparent rounded-lg h-10 text-sm outline-none"
                                 x-model="searchQuery"
+                                @input.debounce.300ms="fetchSuggestions()"
+                                @focus="if(suggestions.length > 0) showSuggestions = true"
+                                @click.outside="showSuggestions = false"
                             >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-3 h-4 w-4 text-muted-foreground"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                         </div>
                         <button type="submit" class="inline-flex items-center justify-center rounded-lg h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                            <svg x-show="!searchLoading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                            <div x-show="searchLoading" class="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" x-cloak></div>
                         </button>
                     </form>
+
+                    {{-- Suggestions Dropdown --}}
+                    <div 
+                        x-show="showSuggestions && (suggestions.length > 0 || (searchQuery.length >= 2 && !searchLoading))"
+                        class="absolute top-full left-0 right-0 mt-2 bg-background border border-border shadow-xl rounded-xl z-[60] overflow-hidden"
+                        @click.outside="showSuggestions = false"
+                        x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                    >
+                        <div class="p-2">
+                            <template x-if="suggestions.length > 0">
+                                <div>
+                                    <template x-for="item in suggestions" :key="item.id">
+                                        <a :href="item.url" class="flex items-center gap-3 p-2 hover:bg-muted rounded-lg transition-colors group">
+                                            <div class="h-10 w-10 bg-muted rounded overflow-hidden shrink-0">
+                                                <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-semibold truncate group-hover:text-primary transition-colors" x-text="item.title"></div>
+                                                <div class="text-xs text-primary font-bold" x-text="'Rs. ' + item.price"></div>
+                                            </div>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-if="suggestions.length === 0 && searchQuery.length >= 2 && !searchLoading">
+                                <div class="px-3 py-6 text-center">
+                                    <div class="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3 opacity-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                    </div>
+                                    <p class="text-sm font-medium text-muted-foreground">Not found</p>
+                                    <p class="text-xs text-muted-foreground/60 mt-1" x-text="'No results for &quot;' + searchQuery + '&quot;'"></p>
+                                </div>
+                            </template>
+                        </div>
+                        <template x-if="suggestions.length > 0">
+                            <button 
+                                @click="submitSearch()"
+                                class="w-full py-2 bg-muted/30 border-t border-border text-xs font-bold text-muted-foreground hover:bg-muted hover:text-primary transition-colors flex items-center justify-center gap-1"
+                            >
+                                View all <span x-text="suggestions.length"></span> matches
+                            </button>
+                        </template>
+                    </div>
                 </div>
 
                 {{-- Right side actions --}}
@@ -351,8 +420,11 @@
             </div>
 
             {{-- Mobile search --}}
-            <div class="md:hidden pb-3">
-                <form class="flex bg-muted rounded-lg border border-border overflow-hidden focus-within:border-primary">
+            <div class="md:hidden pb-3 relative">
+                <form 
+                    @submit.prevent="submitSearch()"
+                    class="flex bg-muted rounded-lg border border-border overflow-hidden focus-within:border-primary"
+                >
                     <div class="relative flex-grow flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 h-4 w-4 text-muted-foreground"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                         <input
@@ -360,12 +432,46 @@
                             placeholder="Search deals..."
                             class="w-full pl-10 border-0 shadow-none bg-transparent h-9 rounded-lg text-sm outline-none"
                             x-model="searchQuery"
+                            @input.debounce.300ms="fetchSuggestions()"
+                            @focus="if(suggestions.length > 0) showSuggestions = true"
                         >
                     </div>
                     <button type="submit" class="inline-flex items-center justify-center rounded-lg h-9 w-9 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                        <svg x-show="!searchLoading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                        <div x-show="searchLoading" class="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" x-cloak></div>
                     </button>
                 </form>
+
+                {{-- Mobile Suggestions --}}
+                <div 
+                    x-show="showSuggestions && (suggestions.length > 0 || (searchQuery.length >= 2 && !searchLoading))"
+                    class="absolute top-full left-0 right-0 mt-1 bg-background border border-border shadow-xl rounded-xl z-[60] overflow-hidden"
+                    @click.outside="showSuggestions = false"
+                    x-cloak
+                >
+                    <div class="p-2">
+                        <template x-if="suggestions.length > 0">
+                            <div class="max-h-[300px] overflow-y-auto">
+                                <template x-for="item in suggestions" :key="item.id">
+                                    <a :href="item.url" class="flex items-center gap-3 p-2 hover:bg-muted rounded-lg transition-colors">
+                                        <div class="h-10 w-10 bg-muted rounded overflow-hidden shrink-0">
+                                            <img :src="item.image" :alt="item.title" class="h-full w-full object-cover">
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-xs font-bold truncate" x-text="item.title"></div>
+                                            <div class="text-[10px] text-primary font-bold" x-text="'Rs. ' + item.price"></div>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="suggestions.length === 0 && searchQuery.length >= 2 && !searchLoading">
+                            <div class="px-2 py-4 text-center">
+                                <p class="text-xs font-bold text-muted-foreground">Not found</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
             
             <div 

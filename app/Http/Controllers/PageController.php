@@ -43,6 +43,33 @@ class PageController extends Controller
         return view('home', compact('featuredDeals', 'recentOffers', 'categories', 'topRatedVendors'));
     }
 
+    public function suggestions(Request $request)
+    {
+        $query = $request->query('q', '');
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $suggestions = DealOfferType::where('status', 'active')
+            ->whereHas('deal', function($q) use ($query) {
+                $q->where('title', 'like', '%' . $query . '%');
+            })
+            ->with(['deal.images', 'offerType'])
+            ->take(6)
+            ->get()
+            ->map(function($offer) {
+                return [
+                    'id'    => $offer->id,
+                    'title' => $offer->deal->title,
+                    'price' => (float) $offer->final_price,
+                    'image' => $offer->deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&fit=crop'),
+                    'url'   => route('deals.show.by-deal', ['deal' => $offer->deal->slug ?? $offer->deal->id]) . '?offer=' . $offer->id,
+                ];
+            });
+
+        return response()->json($suggestions);
+    }
+
     public function search(Request $request)
     {
         $sortByOptions = [
