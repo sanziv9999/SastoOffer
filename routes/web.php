@@ -61,6 +61,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // ——— Customer dashboard (auth) ———
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/data', [DashboardController::class, 'customerDashboardData'])->name('dashboard.data');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
     Route::get('/dashboard/purchases', [CheckoutController::class, 'myOrders'])->name('dashboard.purchases');
     Route::patch('/dashboard/purchases/{orderNumber}/cancel', [CheckoutController::class, 'cancelOrderGroup'])->name('dashboard.purchases.cancel');

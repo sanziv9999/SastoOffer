@@ -25,25 +25,52 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { deals, purchases } from '@/data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
 const UserDashboard = () => {
   const { user } = useAuth();
-  const [userPurchases, setUserPurchases] = useState(purchases);
+  const [stats, setStats] = useState<any>(null);
+  const [deals, setDeals] = useState<any[]>([]);
+  const [userPurchases, setUserPurchases] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      // Filter purchases for the current user in a real app
-      setIsLoading(false);
-    }, 1000);
+    setIsLoading(true);
+
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const res = await fetch('/dashboard/data', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to load dashboard data (${res.status})`);
+        }
+
+        const json = await res.json();
+        setStats(json.stats || null);
+        setDeals(Array.isArray(json.deals) ? json.deals : []);
+        setUserPurchases(Array.isArray(json.purchases) ? json.purchases : []);
+      } catch (e) {
+        // If the API isn't reachable, keep rendering an empty dashboard state
+        setStats(null);
+        setDeals([]);
+        setUserPurchases([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => controller.abort();
   }, [user]);
 
-  const getDealById = (dealId: string) => {
+  const getDealById = (dealId: string | number) => {
     return deals.find(deal => deal.id === dealId);
   };
 
@@ -54,9 +81,8 @@ const UserDashboard = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would filter from the backend
-    // For now, we'll just log the search term
-    console.log('Searching for:', searchTerm);
+    // Local filter can be added later if needed.
+    // For now, keep behavior as a no-op to avoid breaking UX.
   };
 
   return (
@@ -92,9 +118,9 @@ const UserDashboard = () => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userPurchases.length}</div>
+            <div className="text-2xl font-bold">{stats?.totalPurchases ?? userPurchases.length}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              Purchases across all deals
             </p>
           </CardContent>
         </Card>
@@ -106,9 +132,7 @@ const UserDashboard = () => {
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {userPurchases.filter(p => !p.redeemed).length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.activeCoupons ?? userPurchases.filter(p => !p.redeemed).length}</div>
             <p className="text-xs text-muted-foreground">
               Ready to redeem
             </p>
@@ -122,7 +146,7 @@ const UserDashboard = () => {
             <div className="h-4 w-4 text-muted-foreground">Rs.</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. 180.50</div>
+            <div className="text-2xl font-bold">Rs. {typeof stats?.totalSavings === 'number' ? stats.totalSavings.toFixed(2) : '0.00'}</div>
             <p className="text-xs text-muted-foreground">
               Total savings from all deals
             </p>
@@ -136,9 +160,9 @@ const UserDashboard = () => {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">{stats?.reviewsCount ?? 0}</div>
             <p className="text-xs text-muted-foreground">
-              You've left 2 reviews
+              You've left {stats?.reviewsCount ?? 0} reviews
             </p>
           </CardContent>
         </Card>
@@ -189,7 +213,7 @@ const UserDashboard = () => {
                   </thead>
                   <tbody>
                     {userPurchases.map(purchase => {
-                      const purchaseDeal = getDealById(purchase.dealId);
+                          const purchaseDeal = getDealById(purchase.dealId);
                       return (
                         <tr
                           key={purchase.id}
