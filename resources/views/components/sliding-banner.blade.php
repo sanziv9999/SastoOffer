@@ -1,50 +1,90 @@
+@php
+    $realBanners = [
+        [
+            'id' => 1,
+            'title' => "Summer Deals",
+            'description' => "Up to 70% off on selected summer items",
+            'imageUrl' => "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format",
+            'link' => route('search', ['category' => 'summer'])
+        ],
+        [
+            'id' => 2,
+            'title' => "Tech Sale",
+            'description' => "Latest gadgets at unbeatable prices",
+            'imageUrl' => "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format",
+            'link' => route('search', ['category' => 'tech'])
+        ],
+        [
+            'id' => 3,
+            'title' => "Travel Offers",
+            'description' => "Exclusive holiday packages",
+            'imageUrl' => "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&auto=format",
+            'link' => route('search', ['category' => 'travel'])
+        ]
+    ];
+
+    // Build the set with clones for seamless looping: [Last, 1, 2, 3, First]
+    $banners = array_merge([$realBanners[count($realBanners)-1]], $realBanners, [$realBanners[0]]);
+    $realCount = count($realBanners);
+@endphp
+
 <section 
     class="relative w-full py-4 bg-white" 
     x-data="{ 
-        currentBanner: 0, 
-        bannersCount: 3,
+        currentBanner: 1, 
+        realCount: {{ $realCount }},
+        isTransitioning: true,
         autoPlay: true,
-        init() {
-            if (this.autoPlay) {
-                setInterval(() => {
-                    this.currentBanner = (this.currentBanner + 1) % this.bannersCount;
-                }, 5000);
+        interval: null,
+        
+        next() {
+            if (this.currentBanner >= this.realCount + 1) return;
+            this.isTransitioning = true;
+            this.currentBanner++;
+            
+            if (this.currentBanner === this.realCount + 1) {
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                    this.currentBanner = 1;
+                }, 500);
             }
+        },
+        prev() {
+            if (this.currentBanner <= 0) return;
+            this.isTransitioning = true;
+            this.currentBanner--;
+            
+            if (this.currentBanner === 0) {
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                    this.currentBanner = this.realCount;
+                }, 500);
+            }
+        },
+        startAutoPlay() {
+            if (this.autoPlay) {
+                this.interval = setInterval(() => this.next(), 6000);
+            }
+        },
+        stopAutoPlay() {
+            if (this.interval) clearInterval(this.interval);
+        },
+        init() {
+            this.startAutoPlay();
         }
     }"
 >
     <div class="container mx-auto px-4">
-        <div class="relative w-full overflow-hidden rounded-lg group">
+        <div 
+            class="relative w-full overflow-hidden rounded-lg group"
+            @mouseenter="stopAutoPlay()"
+            @mouseleave="startAutoPlay()"
+        >
             <div 
-                class="flex transition-transform duration-500 ease-in-out"
+                class="flex transition-all duration-500 ease-in-out"
+                :class="{ 'transition-none': !isTransitioning }"
                 :style="`transform: translateX(-${currentBanner * 100}%)`"
             >
-                @php
-                    $banners = [
-                        [
-                            'id' => 1,
-                            'title' => "Summer Deals",
-                            'description' => "Up to 70% off on selected summer items",
-                            'imageUrl' => "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format",
-                            'link' => route('search', ['category' => 'summer'])
-                        ],
-                        [
-                            'id' => 2,
-                            'title' => "Tech Sale",
-                            'description' => "Latest gadgets at unbeatable prices",
-                            'imageUrl' => "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format",
-                            'link' => route('search', ['category' => 'tech'])
-                        ],
-                        [
-                            'id' => 3,
-                            'title' => "Travel Offers",
-                            'description' => "Exclusive holiday packages",
-                            'imageUrl' => "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&auto=format",
-                            'link' => route('search', ['category' => 'travel'])
-                        ]
-                    ];
-                @endphp
-
                 @foreach($banners as $banner)
                     <div class="w-full flex-shrink-0">
                         <a href="{{ $banner['link'] }}" class="block relative overflow-hidden">
@@ -70,19 +110,30 @@
 
             {{-- Previous Button --}}
             <button 
-                @click="currentBanner = currentBanner === 0 ? bannersCount - 1 : currentBanner - 1"
-                class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-white transition-all"
+                @click="prev()"
+                class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-white transition-all opacity-0 group-hover:opacity-100"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5"><path d="m15 18-6-6 6-6"></path></svg>
             </button>
 
             {{-- Next Button --}}
             <button 
-                @click="currentBanner = (currentBanner + 1) % bannersCount"
-                class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-white transition-all"
+                @click="next()"
+                class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-white transition-all opacity-0 group-hover:opacity-100"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5"><path d="m9 18 6-6-6-6"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5 rotate-180"><path d="m15 18-6-6 6-6"></path></svg>
             </button>
+            
+            {{-- Dots Indicator --}}
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full">
+                @foreach($realBanners as $idx => $b)
+                    <button 
+                        @click="isTransitioning = true; currentBanner = {{ $idx + 1 }}"
+                        class="h-1.5 rounded-full transition-all duration-300"
+                        :class="((currentBanner-1 + realCount) % realCount === {{ $idx }}) ? 'w-6 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'"
+                    ></button>
+                @endforeach
+            </div>
         </div>
     </div>
 </section>
