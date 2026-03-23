@@ -161,7 +161,7 @@ class PageController extends Controller
             $offerQuery->whereHas('offerType', fn ($q) => $q->whereIn('slug', $typeSlugs)->orWhereIn('name', $typeSlugs));
         }
 
-        // Pull a reasonable working set and group in memory (pivot-driven).
+        // Pull a reasonable working set (pivot-driven), then group in memory by parent deal.
         $rawOffers = $offerQuery->take(500)->get();
 
         // Sorting (each row = one offer card)
@@ -172,7 +172,7 @@ class PageController extends Controller
             default        => $rawOffers->sortByDesc(fn ($p) => optional($p->deal)->created_at)->values(),
         };
 
-        $mappedDeals = $rawOffers->take(60)->map(function (DealOfferType $pivot) {
+        $mappedOffers = $rawOffers->take(120)->map(function (DealOfferType $pivot) {
             $deal = $pivot->deal;
             $discountPct = (float) ($pivot->savings_percent ?? $pivot->discount_percent ?? 0);
             $address = $deal?->vendor?->defaultAddress;
@@ -184,7 +184,7 @@ class PageController extends Controller
             ])->filter()->implode(', ');
 
             return [
-                'id'                => $deal?->id,
+                'dealId'            => $deal?->id,
                 'offerPivotId'      => $pivot->id,
                 'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
@@ -196,7 +196,10 @@ class PageController extends Controller
                 'image'             => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
                 'featured'          => (bool) $isOfferFeatured,
                 'type'              => $pivot->offerType?->name ?? $pivot->offerType?->slug ?? 'offer',
-                'offerTypeTitle'    => $pivot->offerType?->display_name ?? null,
+                'offerTypeTitle'    => $pivot->offerType?->display_name
+                    ?? $pivot->offerType?->name
+                    ?? $pivot->offerType?->slug
+                    ?? null,
                 'locationLabel'     => $locationLabel ?: 'Location',
                 'location'          => [
                     'district' => $address?->district,
@@ -210,7 +213,7 @@ class PageController extends Controller
         });
 
         $availableMinPrice = 0;
-        $availableMaxPrice = (int) ceil($mappedDeals->max('discountedPrice') ?? 100000);
+        $availableMaxPrice = (int) ceil($mappedOffers->max('discountedPrice') ?? 100000);
         
         if ($availableMaxPrice <= $availableMinPrice) {
             $availableMaxPrice = $availableMinPrice + 100;
@@ -219,13 +222,63 @@ class PageController extends Controller
         $minPrice = $reqMinPrice !== null ? (int) $reqMinPrice : $availableMinPrice;
         $maxPrice = $reqMaxPrice !== null ? (int) $reqMaxPrice : $availableMaxPrice;
 
-        $deals = $mappedDeals
-            ->filter(function ($deal) use ($minPrice, $maxPrice) {
-                $price = $deal['discountedPrice'] ?? 0;
+        $filteredOffers = $mappedOffers
+            ->filter(function ($offer) use ($minPrice, $maxPrice) {
+                $price = $offer['discountedPrice'] ?? 0;
                 return $price >= $minPrice && $price <= $maxPrice;
             })
             ->values()
             ->all();
+
+        // Group offers by parent deal and preserve the order from the sorted offer list.
+        $groupedByDeal = [];
+        $dealOrder = [];
+        foreach ($filteredOffers as $offer) {
+            $dealId = $offer['dealId'] ?? null;
+            if (!$dealId) {
+                continue;
+            }
+            if (!isset($groupedByDeal[$dealId])) {
+                $dealOrder[] = $dealId;
+                $groupedByDeal[$dealId] = [
+                    'id' => $dealId,
+                    'dealSlug' => $offer['dealSlug'] ?? null,
+                    'title' => $offer['title'] ?? null,
+                    'categorySlug' => $offer['categorySlug'] ?? null,
+                    'categoryName' => $offer['categoryName'] ?? null,
+                    'image' => $offer['image'] ?? null,
+                    'featured' => false,
+                    // Use the first (sorted) offer as the "display offer" for the parent card.
+                    'displayOffer' => $offer,
+                    'offers' => [],
+                ];
+            }
+
+            if (!empty($offer['featured'])) {
+                $groupedByDeal[$dealId]['featured'] = true;
+            }
+            $groupedByDeal[$dealId]['offers'][] = $offer;
+        }
+
+        $deals = collect($dealOrder)->map(function ($dealId) use ($groupedByDeal) {
+            $group = $groupedByDeal[$dealId];
+            $group['offers'] = collect($group['offers'])->take(8)->values()->all();
+            $display = $group['displayOffer'];
+
+            // Map to the shape expected by <x-deal-card> (parent deal card),
+            // while still using a single offer pivot for wishlist/cart actions.
+            $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? $dealId;
+            $group['offerPivotId'] = $display['offerPivotId'] ?? null;
+            $group['discountedPrice'] = $display['discountedPrice'] ?? 0;
+            $group['originalPrice'] = $display['originalPrice'] ?? 0;
+            $group['discountPercentage'] = $display['discountPercentage'] ?? null;
+            $group['offerTypeTitle'] = $display['offerTypeTitle'] ?? null;
+            $group['timeLeft'] = $display['timeLeft'] ?? null;
+            $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
+            $group['offersCount'] = count($group['offers']);
+
+            return $group;
+        })->values()->all();
 
         $categories = Category::where('is_active', true)
             ->whereNull('parent_id')

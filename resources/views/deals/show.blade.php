@@ -225,6 +225,76 @@
                     </div>
                 @endif
 
+                {{-- Offer selector (Groupon-style) --}}
+                @if(isset($deal['offers']) && is_array($deal['offers']) && count($deal['offers']) > 0)
+                    <div class="bg-muted/50 p-4 md:p-5 rounded-xl border mb-6">
+                        <div class="text-sm font-medium text-muted-foreground mb-3">Select Option:</div>
+
+                        <div class="space-y-3">
+                            @foreach($deal['offers'] as $offer)
+                                @php
+                                    $pivotId = $offer['offerPivotId']
+                                        ?? ($offer['pivot']['pivot_id'] ?? null)
+                                        ?? ($offer['pivot']['id'] ?? null);
+                                    $isSelected = isset($deal['offerPivotId']) && $pivotId !== null && (string)$pivotId === (string)$deal['offerPivotId'];
+
+                                    $finalPrice = (float) ($offer['pivot']['final_price'] ?? $offer['final_price'] ?? 0);
+                                    $originalPriceForOffer = (float) ($offer['pivot']['original_price'] ?? $offer['original_price'] ?? 0);
+                                    $pctOff = $originalPriceForOffer > 0
+                                        ? (int) round((($originalPriceForOffer - $finalPrice) / $originalPriceForOffer) * 100)
+                                        : 0;
+
+                                    $offerUrl = $pivotId !== null ? (route('deals.show.by-deal', ['deal' => $deal['id']]) . '?offer=' . $pivotId) : null;
+                                @endphp
+
+                                <div
+                                    class="block transition-colors rounded-lg border p-3 md:p-3 hover:bg-background/60
+                                        {{ $isSelected ? 'border-primary/50 ring-2 ring-primary/20 bg-background' : 'border-border bg-background' }}"
+                                >
+                                    @if($offerUrl)
+                                        <a href="{{ $offerUrl }}" class="block">
+                                    @endif
+
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="flex items-start gap-3 min-w-0">
+                                            <span
+                                                class="mt-1 inline-flex h-4 w-4 rounded-full border
+                                                {{ $isSelected ? 'border-primary bg-primary' : 'border-muted-foreground bg-background' }}"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <div class="min-w-0">
+                                                <div class="text-sm font-semibold line-clamp-1">
+                                                    {{ $offer['display_name'] ?? $offer['name'] ?? 'Offer' }}
+                                                </div>
+                                                @if($pctOff > 0)
+                                                    <div class="text-xs text-green-700 bg-green-600/10 px-2 py-0.5 rounded mt-1 inline-block">
+                                                        {{ $pctOff }}% off
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="text-right">
+                                            <div class="text-sm font-semibold text-primary">
+                                                Rs. {{ number_format($finalPrice, 2, '.', '') }}
+                                            </div>
+                                            @if($originalPriceForOffer > 0)
+                                                <div class="text-xs text-muted-foreground line-through">
+                                                    Rs. {{ number_format($originalPriceForOffer, 2, '.', '') }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if($offerUrl)
+                                        </a>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Price --}}
                 <div class="bg-muted/50 p-3 md:p-5 rounded-xl mb-6">
                     <div class="flex items-end gap-1.5 md:gap-3 mb-2">

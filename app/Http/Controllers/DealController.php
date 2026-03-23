@@ -308,20 +308,23 @@ class DealController extends Controller
                     'originalPrice' => $selectedPivot->original_price !== null ? (float) $selectedPivot->original_price : $base,
                     'discountPercent' => $selectedPivot->discount_percent !== null ? (float) $selectedPivot->discount_percent : null,
                     'offerTypeTitle' => $selectedPivot->offerType?->display_name,
-                    'offers' => $deal->offerTypes->map(function ($ot) {
+                    'offers' => $deal->activeOfferTypes->map(function ($ot) {
+                        $pivot = $ot->pivot;
                         return [
                             'id' => $ot->id,
                             'name' => $ot->name,
                             'display_name' => $ot->display_name,
+                            // Expose pivot id at top-level so the blade can build links reliably.
+                            'offerPivotId' => $pivot?->id,
                             'pivot' => [
-                                'pivot_id' => $ot->pivot?->id,
-                                'original_price' => $ot->pivot?->original_price,
-                                'final_price' => $ot->pivot?->final_price,
-                                'currency_code' => $ot->pivot?->currency_code,
-                                'status' => $ot->pivot?->status,
-                                'params' => $ot->pivot?->params,
-                                'starts_at' => $ot->pivot?->starts_at?->toIso8601String(),
-                                'ends_at' => $ot->pivot?->ends_at?->toIso8601String(),
+                                'pivot_id' => $pivot?->id,
+                                'original_price' => $pivot?->original_price,
+                                'final_price' => $pivot?->final_price,
+                                'currency_code' => $pivot?->currency_code,
+                                'status' => $pivot?->status,
+                                'params' => $pivot?->params,
+                                'starts_at' => $pivot?->starts_at?->toIso8601String(),
+                                'ends_at' => $pivot?->ends_at?->toIso8601String(),
                             ],
                         ];
                     })->values()->toArray(),
