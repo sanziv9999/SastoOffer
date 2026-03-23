@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateDealRequest;
+use App\Models\Category;
 use App\Models\Deal;
 use App\Models\DealOfferType;
+use App\Models\DealOfferType as DealOfferTypePivot;
 use App\Models\OfferType;
 use App\Models\VendorProfile;
-use App\Models\Category;
-use App\Models\DealOfferType as DealOfferTypePivot;
 use App\Services\DealOfferService;
-use App\Http\Requests\StoreDealRequest;
-use App\Http\Requests\UpdateDealRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DealController extends Controller
 {
@@ -57,7 +56,7 @@ class DealController extends Controller
         $user = auth()->user();
         $vendor = $user->vendorProfile;
 
-        if (!$vendor) {
+        if (! $vendor) {
             return \Inertia\Inertia::render('VendorDashboard', [
                 'vendor' => null,
                 'stats' => null,
@@ -97,27 +96,27 @@ class DealController extends Controller
                     ->sum('quantity');
 
                 return [
-                    'id'             => $deal->id,
-                    'title'          => $deal->title,
-                    'status'         => $deal->status,
-                    'discountedPrice'=> $offer ? (float) $offer->final_price : $base,
-                    'originalPrice'  => $offer ? (float) $offer->original_price : $base,
-                    'quantitySold'   => $quantitySold,
-                    'maxQuantity'    => $deal->total_inventory,
-                    'endDate'        => $offer?->ends_at?->toIso8601String(),
-                    'image'          => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'status' => $deal->status,
+                    'discountedPrice' => $offer ? (float) $offer->final_price : $base,
+                    'originalPrice' => $offer ? (float) $offer->original_price : $base,
+                    'quantitySold' => $quantitySold,
+                    'maxQuantity' => $deal->total_inventory,
+                    'endDate' => $offer?->ends_at?->toIso8601String(),
+                    'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
                 ];
             });
 
         $stats = [
-            'totalRevenue'    => $totalRevenue,
-            'totalSales'      => $totalSales,
-            'totalOrders'     => $totalOrders,
+            'totalRevenue' => $totalRevenue,
+            'totalSales' => $totalSales,
+            'totalOrders' => $totalOrders,
             'uniqueCustomers' => $uniqueCustomers,
-            'activeDeals'     => $deals->where('status', 'active')->count(),
-            'totalDeals'      => $deals->count(),
-            'totalReviews'    => $totalReviews,
-            'avgRating'       => $avgVendorRating,
+            'activeDeals' => $deals->where('status', 'active')->count(),
+            'totalDeals' => $deals->count(),
+            'totalReviews' => $totalReviews,
+            'avgRating' => $avgVendorRating,
         ];
 
         $recentOrders = $orders->sortByDesc('created_at')->take(5)->values()->map(fn (\App\Models\Order $o) => [
@@ -132,7 +131,7 @@ class DealController extends Controller
         $monthlySales = $orders->groupBy(fn ($o) => $o->created_at->format('Y-m'))
             ->sortKeys()
             ->map(fn ($group, $key) => [
-                'month' => \Carbon\Carbon::parse($key . '-01')->format('M'),
+                'month' => \Carbon\Carbon::parse($key.'-01')->format('M'),
                 'amount' => round((float) $group->sum('grand_total'), 2),
                 'orders' => $group->count(),
             ])
@@ -154,7 +153,7 @@ class DealController extends Controller
         $user = auth()->user();
         $vendor = $user->vendorProfile;
 
-        if (!$vendor) {
+        if (! $vendor) {
             return redirect()->route('vendor.dashboard')->with('error', 'Vendor profile not found.');
         }
 
@@ -173,21 +172,22 @@ class DealController extends Controller
             ->pluck('sold_qty', 'deal_id');
 
         $deals = $dealModels->map(function ($deal) use ($salesByDeal) {
-                $base = (float) ($deal->base_price ?? 0);
-                return [
-                    'id' => $deal->id,
-                    'title' => $deal->title,
-                    'status' => $deal->status,
-                    // Manage Deals list should show only deal table data (base price),
-                    // offers are managed separately in the Offers screen.
-                    'price' => $base,
-                    // Parent-deal sales = sum of all sold quantities across its offer purchases.
-                    'quantitySold' => (int) ($salesByDeal[$deal->id] ?? 0),
-                    'maxQuantity' => $deal->total_inventory,
-                    'endDate' => null,
-                    'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
-                ];
-            });
+            $base = (float) ($deal->base_price ?? 0);
+
+            return [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'status' => $deal->status,
+                // Manage Deals list should show only deal table data (base price),
+                // offers are managed separately in the Offers screen.
+                'price' => $base,
+                // Parent-deal sales = sum of all sold quantities across its offer purchases.
+                'quantitySold' => (int) ($salesByDeal[$deal->id] ?? 0),
+                'maxQuantity' => $deal->total_inventory,
+                'endDate' => null,
+                'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
+            ];
+        });
 
         return \Inertia\Inertia::render('vendor/ManageDeals', [
             'deals' => $deals,
@@ -208,14 +208,14 @@ class DealController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!$user || !$user->hasRole('vendor')) {
+        if (! $user || ! $user->hasRole('vendor')) {
             return back()->withErrors(['error' => 'Unauthorized. Only vendors can create deals.']);
         }
 
         $vendor = $user->vendorProfile;
-        if (!$vendor) {
-             // Fallback for demo/early stage
-             $vendor = VendorProfile::first(); 
+        if (! $vendor) {
+            // Fallback for demo/early stage
+            $vendor = VendorProfile::first();
         }
 
         $data = $request->all();
@@ -235,10 +235,9 @@ class DealController extends Controller
             'short_description' => $data['shortDesc'] ?? null,
             'long_description' => $data['description'] ?? null,
             'status' => $data['status'] ?? 'active',
-            'total_inventory' => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
+            'total_inventory' => ! empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
             'highlights' => is_array($data['tags'] ?? []) ? $data['tags'] ?? [] : [$data['tags'] ?? ''],
         ];
-
 
         $deal = Deal::create($dealData);
         $this->syncDealImagesFromRequest($request, $deal, false);
@@ -263,7 +262,7 @@ class DealController extends Controller
             ]);
 
             $deal = $dealOfferType->deal;
-            if (!$deal) {
+            if (! $deal) {
                 return view('deals.show', ['deal' => null]);
             }
 
@@ -273,7 +272,7 @@ class DealController extends Controller
             // Fetch Similar Deals (same category)
             $similarDeals = DealOfferType::where('status', 'active')
                 ->where('id', '!=', $selectedPivot->id)
-                ->whereHas('deal', function($q) use ($deal) {
+                ->whereHas('deal', function ($q) use ($deal) {
                     $q->where('category_id', $deal->category_id);
                 })
                 ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
@@ -285,31 +284,31 @@ class DealController extends Controller
                 $featuredPadding = DealOfferType::where('status', 'active')
                     ->where('id', '!=', $selectedPivot->id)
                     ->whereNotIn('id', $similarDeals->pluck('id'))
-                    ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
+                    ->whereHas('displayTypes', fn ($q) => $q->where('name', 'featured'))
                     ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
                     ->take(8 - $similarDeals->count())
                     ->get();
                 $similarDeals = $similarDeals->concat($featuredPadding);
             }
 
-            $mappedSimilarDeals = $similarDeals->map(fn($offer) => $offer->toCardData());
+            $mappedSimilarDeals = $similarDeals->map(fn ($offer) => $offer->toCardData());
 
             return view('deals.show', [
                 'deal' => [
-                    'id'               => $deal->id,
-                    'offerPivotId'     => $selectedPivot->id,
-                    'title'            => $deal->title,
+                    'id' => $deal->id,
+                    'offerPivotId' => $selectedPivot->id,
+                    'title' => $deal->title,
                     'short_description' => $deal->short_description,
                     'long_description' => $deal->long_description,
-                    'status'           => $deal->status,
-                    'highlights'       => is_array($deal->highlights) ? $deal->highlights : [],
-                    'ends_at'          => $selectedPivot->ends_at?->toIso8601String(),
-                    'is_featured'      => (bool) $deal->is_featured,
-                    'discountedPrice'  => $selectedPivot->final_price !== null ? (float) $selectedPivot->final_price : $base,
-                    'originalPrice'    => $selectedPivot->original_price !== null ? (float) $selectedPivot->original_price : $base,
-                    'discountPercent'  => $selectedPivot->discount_percent !== null ? (float) $selectedPivot->discount_percent : null,
-                    'offerTypeTitle'   => $selectedPivot->offerType?->display_name,
-                    'offers'           => $deal->offerTypes->map(function ($ot) {
+                    'status' => $deal->status,
+                    'highlights' => is_array($deal->highlights) ? $deal->highlights : [],
+                    'ends_at' => $selectedPivot->ends_at?->toIso8601String(),
+                    'is_featured' => (bool) $deal->is_featured,
+                    'discountedPrice' => $selectedPivot->final_price !== null ? (float) $selectedPivot->final_price : $base,
+                    'originalPrice' => $selectedPivot->original_price !== null ? (float) $selectedPivot->original_price : $base,
+                    'discountPercent' => $selectedPivot->discount_percent !== null ? (float) $selectedPivot->discount_percent : null,
+                    'offerTypeTitle' => $selectedPivot->offerType?->display_name,
+                    'offers' => $deal->offerTypes->map(function ($ot) {
                         return [
                             'id' => $ot->id,
                             'name' => $ot->name,
@@ -326,21 +325,21 @@ class DealController extends Controller
                             ],
                         ];
                     })->values()->toArray(),
-                    'images'           => $deal->images->map(fn($img) => [
-                        'id'             => $img->id,
-                        'image_url'      => $img->image_url,
+                    'images' => $deal->images->map(fn ($img) => [
+                        'id' => $img->id,
+                        'image_url' => $img->image_url,
                         'attribute_name' => $img->attribute_name,
-                    'sort_order'     => $img->sort_order,
+                        'sort_order' => $img->sort_order,
                     ])->toArray(),
-                    'vendor'           => $deal->vendor ? [
-                        'id'            => $deal->vendor->id,
-                        'slug'          => $deal->vendor->slug,
+                    'vendor' => $deal->vendor ? [
+                        'id' => $deal->vendor->id,
+                        'slug' => $deal->vendor->slug,
                         'business_name' => $deal->vendor->business_name,
-                        'rating'        => round($deal->vendor->reviews()->avg('rating') ?? 0, 1),
-                        'reviewCount'   => $deal->vendor->reviews()->count(),
+                        'rating' => round($deal->vendor->reviews()->avg('rating') ?? 0, 1),
+                        'reviewCount' => $deal->vendor->reviews()->count(),
                     ] : null,
-                    'category'      => $deal->category ? [
-                        'id'   => $deal->category->id,
+                    'category' => $deal->category ? [
+                        'id' => $deal->category->id,
                         'name' => $deal->category->name,
                     ] : null,
                 ],
@@ -362,11 +361,12 @@ class DealController extends Controller
                 'userReview' => auth()->check()
                     ? $selectedPivot->reviews()->where('user_id', auth()->id())->first()?->only(['id', 'rating', 'comment'])
                     : null,
-                'similarDeals' => $mappedSimilarDeals
+                'similarDeals' => $mappedSimilarDeals,
             ]);
         } catch (\Exception $e) {
             // Log the exception for debugging
-            \Illuminate\Support\Facades\Log::error("Error in showDeal: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error in showDeal: '.$e->getMessage());
+
             // Redirect to a safe page or show an error
             return redirect()->route('home')->with('error', 'Could not load deal details.');
         }
@@ -382,15 +382,16 @@ class DealController extends Controller
             ->orWhere('id', is_numeric($deal) ? (int) $deal : 0)
             ->first();
 
-        if (!$dealModel) {
+        if (! $dealModel) {
             return view('deals.show', ['deal' => null]);
         }
 
         if ((string) $deal !== (string) $dealModel->slug) {
             $canonicalUrl = route('deals.show.by-deal', ['deal' => $dealModel->slug]);
             if ($request->filled('offer')) {
-                $canonicalUrl .= '?offer=' . $request->query('offer');
+                $canonicalUrl .= '?offer='.$request->query('offer');
             }
+
             return redirect()->to($canonicalUrl);
         }
 
@@ -432,7 +433,7 @@ class DealController extends Controller
                 'discountPercent' => null,
                 'offerTypeTitle' => null,
                 'offers' => [],
-                'images' => $dealModel->images()->get()->map(fn($img) => [
+                'images' => $dealModel->images()->get()->map(fn ($img) => [
                     'id' => $img->id,
                     'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
@@ -471,22 +472,22 @@ class DealController extends Controller
         $offer = $deal->offerTypes->first()?->pivot;
 
         return \Inertia\Inertia::render('vendor/EditDeal', [
-            'deal'       => [
-                'id'               => $deal->id,
-                'title'            => $deal->title,
-                'shortDesc'        => $deal->short_description,
-                'description'      => $deal->long_description,
-                'categoryId'       => $deal->category_id,
-                'basePrice'        => $deal->base_price ? (string) $deal->base_price : '',
-                'tags'             => $deal->highlights ?? [],
-                'maxQuantity'      => $deal->total_inventory ? (string) $deal->total_inventory : '',
-                'requestFeatured'  => (bool) $deal->is_featured,
-                'status'           => $deal->status,
-                'images'           => $deal->images->map(fn($img) => [
-                    'id'             => $img->id,
-                    'image_url'      => $img->image_url,
+            'deal' => [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'shortDesc' => $deal->short_description,
+                'description' => $deal->long_description,
+                'categoryId' => $deal->category_id,
+                'basePrice' => $deal->base_price ? (string) $deal->base_price : '',
+                'tags' => $deal->highlights ?? [],
+                'maxQuantity' => $deal->total_inventory ? (string) $deal->total_inventory : '',
+                'requestFeatured' => (bool) $deal->is_featured,
+                'status' => $deal->status,
+                'images' => $deal->images->map(fn ($img) => [
+                    'id' => $img->id,
+                    'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
-                    'sort_order'     => $img->sort_order,
+                    'sort_order' => $img->sort_order,
                 ]),
             ],
             'categories' => $categories,
@@ -523,7 +524,7 @@ class DealController extends Controller
                         'name' => $deal->category->parent->name,
                     ] : null,
                 ] : null,
-                'images' => $deal->images->map(fn($img) => [
+                'images' => $deal->images->map(fn ($img) => [
                     'id' => $img->id,
                     'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
@@ -531,6 +532,7 @@ class DealController extends Controller
                 ])->values()->toArray(),
                 'offers' => $deal->offerTypes->map(function ($ot) {
                     $pct = (float) ($ot->pivot?->savings_percent ?? $ot->pivot?->discount_percent ?? 0);
+
                     return [
                         'id' => $ot->id,
                         'name' => $ot->name,
@@ -557,7 +559,7 @@ class DealController extends Controller
      */
     public function updateDeal(Request $request, Deal $deal)
     {
-        $user   = auth()->user();
+        $user = auth()->user();
         $vendor = $user->vendorProfile;
 
         if ($vendor && $deal->vendor_id !== $vendor->id) {
@@ -569,15 +571,15 @@ class DealController extends Controller
         $oldBasePrice = $deal->base_price !== null ? (float) $deal->base_price : null;
 
         $deal->update([
-            'category_id'              => (int) ($data['categoryId'] ?? $deal->category_id),
-            'title'                    => $data['title'] ?? $deal->title,
-            'slug'                     => $this->generateUniqueDealSlug((string) ($data['title'] ?? $deal->title), $deal->id),
-            'base_price'               => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : $deal->base_price,
-            'short_description'        => $data['shortDesc'] ?? $deal->short_description,
-            'long_description'         => $data['description'] ?? $deal->long_description,
-            'total_inventory'          => !empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
-            'highlights'               => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
-            'status'                   => $data['status'] ?? $deal->status,
+            'category_id' => (int) ($data['categoryId'] ?? $deal->category_id),
+            'title' => $data['title'] ?? $deal->title,
+            'slug' => $this->generateUniqueDealSlug((string) ($data['title'] ?? $deal->title), $deal->id),
+            'base_price' => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : $deal->base_price,
+            'short_description' => $data['shortDesc'] ?? $deal->short_description,
+            'long_description' => $data['description'] ?? $deal->long_description,
+            'total_inventory' => ! empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
+            'highlights' => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
+            'status' => $data['status'] ?? $deal->status,
         ]);
 
         // If base price changes, keep all offers in sync and recalculate their final prices.
@@ -611,14 +613,27 @@ class DealController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $deal->load(['offerTypes']);
+        $deal->load(['offerTypes', 'images']);
         $offerTypes = OfferType::where('is_active', true)->orderBy('display_name')->get(['id', 'name', 'display_name']);
+
+        $shortDescription = $deal->short_description
+            ? Str::limit(trim(strip_tags($deal->short_description)), 200)
+            : null;
 
         return \Inertia\Inertia::render('vendor/DealOffers', [
             'deal' => [
                 'id' => $deal->id,
                 'title' => $deal->title,
-                'basePrice' => $deal->base_price,
+                'slug' => $deal->slug,
+                'basePrice' => $deal->base_price !== null ? (float) $deal->base_price : null,
+                'status' => $deal->status,
+                'shortDescription' => $shortDescription,
+                'featuredImage' => $deal->featuredImageUrl(),
+                'images' => $deal->images->map(fn ($img) => [
+                    'id' => $img->id,
+                    'url' => $img->image_url,
+                    'label' => $img->attribute_name,
+                ])->values()->all(),
             ],
             'offerTypes' => $offerTypes,
             'attachedOffers' => $deal->offerTypes->map(function ($ot) {
@@ -664,7 +679,7 @@ class DealController extends Controller
             'offer_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        if (!isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
+        if (! isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
             if ($deal->base_price === null) {
                 return back()->withErrors(['original_price' => 'Set a base price on the deal before adding offers.']);
             }
@@ -711,7 +726,7 @@ class DealController extends Controller
             'offer_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        if (!isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
+        if (! isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
             if ($deal->base_price === null) {
                 return back()->withErrors(['original_price' => 'Set a base price on the deal before updating offers.']);
             }
@@ -825,9 +840,9 @@ class DealController extends Controller
             $params = array_filter($params, fn ($v) => $v !== '' && $v !== null);
             $data = [
                 'original_price' => $originalPrice,
-                'currency_code'  => $payload['currency_code'] ?? 'NPR',
-                'params'         => $params,
-                'status'         => $payload['status'] ?? 'active',
+                'currency_code' => $payload['currency_code'] ?? 'NPR',
+                'params' => $params,
+                'status' => $payload['status'] ?? 'active',
             ];
             $pivot = DealOfferType::where('deal_id', $deal->id)->where('offer_type_id', $offerTypeId)->first();
             if ($pivot) {
@@ -862,8 +877,8 @@ class DealController extends Controller
         ));
 
         $existingImages = $deal->images()->orderBy('sort_order')->orderBy('id')->get();
-        $existingKeys = $existingImages->map(fn ($img) => 'existing:' . $img->id)->values()->all();
-        $uploadedKeys = array_map(fn ($idx) => 'new:' . $idx, array_keys($uploadedFiles));
+        $existingKeys = $existingImages->map(fn ($img) => 'existing:'.$img->id)->values()->all();
+        $uploadedKeys = array_map(fn ($idx) => 'new:'.$idx, array_keys($uploadedFiles));
 
         $order = $this->normalizeImageOrder(
             $request->input('image_order'),
@@ -887,7 +902,7 @@ class DealController extends Controller
 
         foreach ($uploadedFiles as $idx => $file) {
             $path = $file->store('deals/gallery', 'public');
-            $uploadedUrlByKey['new:' . $idx] = '/storage/' . $path;
+            $uploadedUrlByKey['new:'.$idx] = '/storage/'.$path;
         }
 
         foreach ($order as $position => $key) {
@@ -905,6 +920,7 @@ class DealController extends Controller
                 $img->attribute_name = $attributeName;
                 $img->sort_order = $position;
                 $img->save();
+
                 continue;
             }
 

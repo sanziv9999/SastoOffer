@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, useForm, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import Link from '@/components/Link';
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { ChevronRight, ImageIcon, Package, ExternalLink } from 'lucide-react';
 
 const toUIType = (offerTypeName: string): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' => {
   if (offerTypeName === 'percentage_discount') return 'percentage';
@@ -33,9 +35,55 @@ const getPivotParamNumber = (pivot: any, key: string): number | null => {
   return null;
 };
 
+interface DealImageRow {
+  id: number;
+  url: string;
+  label?: string | null;
+}
+
+interface DealContext {
+  id: number;
+  title: string;
+  slug?: string;
+  basePrice: number | null;
+  status?: string;
+  shortDescription?: string | null;
+  featuredImage?: string;
+  images?: DealImageRow[];
+}
+
+const formatRs = (n: number | null | undefined) => {
+  if (n == null || Number.isNaN(Number(n))) return '—';
+  return `Rs. ${Number(n).toFixed(2)}`;
+};
+
 const DealOffers = () => {
-  const { deal, offerTypes, attachedOffers } = usePage().props as any;
+  const { deal: dealProp, offerTypes, attachedOffers } = usePage().props as {
+    deal: DealContext;
+    offerTypes: any[];
+    attachedOffers: any[];
+  };
+  const deal = dealProp;
   const basePrice = Number(deal?.basePrice ?? 0);
+
+  const dealImages = useMemo(() => {
+    const list = deal?.images;
+    if (Array.isArray(list) && list.length > 0) {
+      return list.filter((im: DealImageRow) => im?.url);
+    }
+    if (deal?.featuredImage) {
+      return [{ id: 0, url: deal.featuredImage, label: 'Featured' }];
+    }
+    return [];
+  }, [deal]);
+
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveImageIdx(0);
+  }, [deal?.id]);
+
+  const activeImageUrl = dealImages[activeImageIdx]?.url ?? '';
 
   const offerTypesById = useMemo(() => {
     const map = new Map<number, any>();
@@ -181,19 +229,140 @@ const DealOffers = () => {
     });
   };
 
+  const dealStatus = deal?.status ?? 'draft';
+  const statusVariant =
+    dealStatus === 'active' ? 'default' : dealStatus === 'draft' ? 'secondary' : 'outline';
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Manage Offers</h1>
-          <p className="text-muted-foreground">
-            Deal: <span className="font-medium text-foreground">{deal?.title}</span>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2 min-w-0">
+          <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+            <Link href="/vendor/deals" className="hover:text-foreground transition-colors">
+              Manage deals
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-60" />
+            <span className="text-foreground font-medium truncate max-w-[min(100%,28rem)]" title={deal?.title}>
+              {deal?.title}
+            </span>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-60" />
+            <span className="text-foreground">Offers</span>
+          </nav>
+          <h1 className="text-2xl font-bold tracking-tight">Offer management</h1>
+          <p className="text-muted-foreground text-sm max-w-2xl">
+            Configure promotion types and prices for this deal. Your catalog base price is the anchor for all calculations below.
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/vendor/deals">Back</Link>
+        <Button variant="outline" className="shrink-0" asChild>
+          <Link href="/vendor/deals">Back to deals</Link>
         </Button>
       </div>
+
+      <Card className="overflow-hidden border-border/80 shadow-md">
+        <CardContent className="p-0">
+          <div className="grid lg:grid-cols-12 gap-0">
+            <div className="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-border/80 bg-muted/25">
+              <div className="p-5 sm:p-6 lg:p-8 space-y-4">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-inner">
+                  {activeImageUrl ? (
+                    <img
+                      src={activeImageUrl}
+                      alt={deal?.title ? `${deal.title} — product` : 'Deal product'}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground p-6 text-center">
+                      <Package className="h-12 w-12 opacity-40" />
+                      <p className="text-sm">No product images yet</p>
+                      <Button variant="secondary" size="sm" asChild>
+                        <Link href={route('vendor.deals.edit', deal.id)}>Add images in deal editor</Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {dealImages.length > 1 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      Gallery
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                      {dealImages.map((im, idx) => (
+                        <button
+                          key={`${im.id}-${idx}`}
+                          type="button"
+                          title={im.label ? String(im.label) : `Image ${idx + 1}`}
+                          onClick={() => setActiveImageIdx(idx)}
+                          className={cn(
+                            'relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                            idx === activeImageIdx
+                              ? 'border-primary ring-2 ring-primary/20'
+                              : 'border-transparent opacity-80 hover:opacity-100'
+                          )}
+                        >
+                          <img src={im.url} alt="" className="h-full w-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 p-5 sm:p-6 lg:p-8 flex flex-col justify-center gap-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Parent product
+                </p>
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground leading-tight">
+                  {deal?.title}
+                </h2>
+                {deal?.shortDescription && (
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    {deal.shortDescription}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={statusVariant} className="capitalize">
+                  {dealStatus}
+                </Badge>
+                <span className="text-xs text-muted-foreground font-mono">ID #{deal?.id}</span>
+              </div>
+
+              <div className="rounded-2xl border border-border/80 bg-gradient-to-br from-muted/60 via-muted/30 to-background p-5 sm:p-6 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  Catalog base price
+                </p>
+                <p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight text-foreground">
+                  {formatRs(deal?.basePrice)}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed max-w-md">
+                  Percentage discounts and final offer prices are calculated from this figure. Update it in deal details if your product price changes.
+                </p>
+                {deal?.basePrice == null && (
+                  <p className="mt-3 text-sm text-amber-700 dark:text-amber-300 font-medium">
+                    Set a base price on the deal before offers can compute correctly.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button variant="default" asChild>
+                  <Link href={route('vendor.deals.edit', deal.id)}>Edit deal details</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href={route('vendor.deals.view', deal.id)} className="inline-flex items-center gap-1.5">
+                    Preview deal
+                    <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -477,7 +646,7 @@ const DealOffers = () => {
                 {processing ? 'Adding...' : 'Add Offer'}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link href={`/vendor/deals/${deal.id}/edit`}>Edit deal details</Link>
+                <Link href={route('vendor.deals.edit', deal.id)}>Edit deal details</Link>
               </Button>
             </div>
           </form>
