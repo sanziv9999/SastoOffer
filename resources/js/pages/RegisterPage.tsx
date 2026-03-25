@@ -51,7 +51,7 @@ const RegisterPage = () => {
         </CardHeader>
         <CardContent>
           {/* Social Login Options */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          {/* <div className="grid grid-cols-3 gap-3 mb-6">
             <Button
               variant="outline"
               className="w-full"
@@ -100,7 +100,7 @@ const RegisterPage = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-white px-2 text-sm text-gray-500">OR</span>
             </div>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
