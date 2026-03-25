@@ -37,18 +37,93 @@ return new class extends Migration
                     ->delete();
             });
 
-        Schema::table('wishlists', function (Blueprint $table) {
-            if (Schema::hasColumn('wishlists', 'deal_id')) {
-                $table->foreign('deal_id')->references('id')->on('deals')->cascadeOnDelete();
-                $table->unique(['user_id', 'deal_id']);
-            }
-        });
+        // Ensure FK/unique are added only if they don't already exist (idempotent for re-runs).
+        $dbName = config('database.connections.mysql.database');
+        $dealIdFkExists = DB::table('information_schema.key_column_usage')
+            ->where('table_schema', $dbName)
+            ->where('table_name', 'wishlists')
+            ->where('column_name', 'deal_id')
+            ->where('referenced_table_name', 'deals')
+            ->whereNotNull('constraint_name')
+            ->exists();
 
-        Schema::table('wishlists', function (Blueprint $table) {
-            if (Schema::hasColumn('wishlists', 'deal_offer_type_id')) {
-                $table->dropConstrainedForeignId('deal_offer_type_id');
+        $expectedUniqueIndexName = 'wishlists_user_id_deal_id_unique';
+        $uniqueIndexExists = DB::table('information_schema.statistics')
+            ->where('table_schema', $dbName)
+            ->where('table_name', 'wishlists')
+            ->where('index_name', $expectedUniqueIndexName)
+            ->exists();
+
+        // Fallback heuristic: detect any unique index that covers both columns.
+        if (! $uniqueIndexExists) {
+            $uniqueIndexExists = DB::table('information_schema.statistics')
+                ->select('index_name', 'column_name')
+                ->where('table_schema', $dbName)
+                ->where('table_name', 'wishlists')
+                ->where('non_unique', 0)
+                ->whereIn('column_name', ['user_id', 'deal_id'])
+                ->get()
+                ->groupBy('index_name')
+                ->filter(function ($rows) {
+                    $cols = $rows->pluck('column_name')->unique()->values();
+                    return $cols->count() === 2 && $cols->contains('user_id') && $cols->contains('deal_id');
+                })
+                ->isNotEmpty();
+        }
+
+        if (! $dealIdFkExists || ! $uniqueIndexExists) {
+            Schema::table('wishlists', function (Blueprint $table) use ($dealIdFkExists, $uniqueIndexExists) {
+                if (! $dealIdFkExists) {
+                    $table->foreign('deal_id')->references('id')->on('deals')->cascadeOnDelete();
+                }
+                if (! $uniqueIndexExists) {
+                    $table->unique(['user_id', 'deal_id']);
+                }
+            });
+        }
+
+        // Make this step idempotent:
+        // MySQL in this environment may not support `DROP ... IF EXISTS`, so we check the column/FK first.
+        $dbName = config('database.connections.mysql.database');
+        $columnExists = DB::table('information_schema.columns')
+            ->where('table_schema', $dbName)
+            ->where('table_name', 'wishlists')
+            ->where('column_name', 'deal_offer_type_id')
+            ->exists();
+
+        if ($columnExists) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+            // Drop only real FOREIGN KEY constraints (not unique indexes).
+            // We join with TABLE_CONSTRAINTS to ensure constraint_type='FOREIGN KEY'.
+            $fkNames = DB::table('information_schema.key_column_usage as kcu')
+                ->join('information_schema.table_constraints as tc', function ($join) {
+                    $join->on('tc.constraint_name', '=', 'kcu.constraint_name');
+                })
+                ->where('kcu.table_schema', $dbName)
+                ->where('kcu.table_name', 'wishlists')
+                ->where('kcu.column_name', 'deal_offer_type_id')
+                ->where('tc.constraint_type', 'FOREIGN KEY')
+                ->whereNotNull('kcu.constraint_name')
+                ->pluck('kcu.constraint_name')
+                ->values()
+                ->all();
+
+            foreach ($fkNames as $fkName) {
+                try {
+                    DB::statement("ALTER TABLE wishlists DROP FOREIGN KEY `$fkName`");
+                } catch (\Throwable $e) {
+                    // In case the schema is partially migrated and FK already gone.
+                }
             }
-        });
+            // Column might already be gone in partially migrated environments.
+            try {
+                DB::statement('ALTER TABLE wishlists DROP COLUMN deal_offer_type_id');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
 
     public function down(): void
