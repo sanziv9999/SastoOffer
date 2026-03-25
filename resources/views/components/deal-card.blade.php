@@ -26,7 +26,7 @@
                 <img 
                     src="{{ $deal['image'] }}" 
                     alt="{{ $deal['title'] }}" 
-                    class="h-28 sm:h-32 md:h-36 w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    class="h-48 sm:h-32 md:h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105" 
                     loading="lazy"
                 />
                 <div class="absolute top-1.5 right-1.5 z-10 flex flex-col gap-1 items-end">
@@ -67,16 +67,16 @@
                     </div>
                 </div>
             </div>
-            <div class="p-2.5 sm:p-3">
-                <div class="flex items-center mb-1 text-[10px] sm:text-xs text-muted-foreground">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-2.5 w-2.5 mr-1 text-primary"><path d="m15 5 4 4"/><path d="M13 7 8.5 15.5c-.4.7-1.3.9-2 .5s-.9-1.3-.5-2L10.5 5.5l.3-.4c.3-.5.9-.9 1.5-.9h4.5z"/></svg>
+            <div class="p-3 sm:p-4">
+                <div class="flex items-center mb-1.5 text-xs text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1 text-primary"><path d="m15 5 4 4"/><path d="M13 7 8.5 15.5c-.4.7-1.3.9-2 .5s-.9-1.3-.5-2L10.5 5.5l.3-.4c.3-.5.9-.9 1.5-.9h4.5z"/></svg>
                     <span>{{ $deal['categoryName'] ?? 'Uncategorized' }}</span>
                 </div>
-                <h3 class="font-medium text-teal-800 text-xs sm:text-sm line-clamp-2 mb-1.5 group-hover:text-teal-600 transition-colors">
+                <h3 class="font-semibold text-teal-800 text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-teal-600 transition-colors">
                     {{ $deal['title'] }}
                 </h3>
-                <div class="flex items-baseline gap-1.5">
-                    <span class="text-sm sm:text-base font-bold text-primary">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-base sm:text-lg font-bold text-primary">
                         Rs. {{ $deal['discountedPrice'] }}
                     </span>
                     @if($showDiscount && $originalPrice > $discountedPrice && $originalPrice > 0)
