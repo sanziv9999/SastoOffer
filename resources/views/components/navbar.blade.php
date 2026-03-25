@@ -475,7 +475,7 @@
             </div>
             
             <div 
-                class="relative group transition-all duration-300 origin-top"
+                class="relative group transition-all duration-300 origin-top hidden md:block"
                 x-show="showCategories"
                 x-collapse
             >
