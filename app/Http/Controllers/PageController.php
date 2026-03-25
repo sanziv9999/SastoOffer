@@ -124,6 +124,14 @@ class PageController extends Controller
         $reqMinPrice = $request->query('minPrice');
         $reqMaxPrice = $request->query('maxPrice');
 
+        // Normalize keyword for matching tags saved in `deals.highlights` (JSON array of kebab-case strings).
+        $tagNeedle = '';
+        if (is_string($query) && trim($query) !== '') {
+            $tagNeedle = mb_strtolower(trim($query));
+            $tagNeedle = preg_replace('/[^a-z0-9]+/u', '-', $tagNeedle);
+            $tagNeedle = trim((string) $tagNeedle, '-');
+        }
+
         $offerQuery = DealOfferType::query()
             ->with([
                 'deal.category.parent',
@@ -133,8 +141,19 @@ class PageController extends Controller
                 'displayTypes',
             ])
             ->where('status', 'active')
-            ->whereHas('deal', function ($q) use ($query, $subSlug, $categorySlugs, $locationSlugs) {
-                $q->when($query !== '', fn ($qq) => $qq->where('title', 'like', '%' . $query . '%'))
+            ->whereHas('deal', function ($q) use ($query, $tagNeedle, $subSlug, $categorySlugs, $locationSlugs) {
+                $q->when($query !== '', function ($qq) use ($query, $tagNeedle) {
+                    $qq->where(function ($w) use ($query, $tagNeedle) {
+                        $w->where('title', 'like', '%' . $query . '%')
+                            ->orWhere('short_description', 'like', '%' . $query . '%')
+                            ->orWhere('long_description', 'like', '%' . $query . '%');
+
+                        // Match keyword against highlight tags (stored as JSON array).
+                        if ($tagNeedle !== '') {
+                            $w->orWhereRaw("JSON_CONTAINS(deals.highlights, JSON_QUOTE(?))", [$tagNeedle]);
+                        }
+                    });
+                })
                     ->when($subSlug, fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $subSlug)))
                     ->when(!$subSlug && count($categorySlugs) > 0, function ($qq) use ($categorySlugs) {
                         $qq->where(function ($w) use ($categorySlugs) {
