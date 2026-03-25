@@ -196,6 +196,41 @@
                     </span>
                 @endif
             </div>
+
+            {{-- Ratings + Sold (used on search listing) --}}
+            @php
+                $vendorRating = $deal['vendorRating'] ?? null;
+                $vendorReviewCount = $deal['vendorReviewCount'] ?? null;
+                $quantitySold = $deal['quantitySold'] ?? null;
+            @endphp
+            @if($vendorRating !== null || $vendorReviewCount !== null || ($quantitySold !== null && (int) $quantitySold > 0))
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mb-3">
+                    @if($vendorRating !== null)
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-500">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>
+                            <span class="font-medium text-foreground">{{ number_format((float) $vendorRating, 1) }}</span>
+                            @if((int) ($vendorReviewCount ?? 0) > 0)
+                                <span>({{ (int) $vendorReviewCount }} reviews)</span>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if($quantitySold !== null && (int) $quantitySold > 0)
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                <path d="M7 7h10" />
+                                <path d="M7 17h10" />
+                                <path d="M6 7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2" />
+                                <path d="M18 7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2" />
+                                <path d="M9 7a3 3 0 0 1 6 0" />
+                            </svg>
+                            <span>Sold {{ (int) $quantitySold }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
             
             {{-- Time Left --}}
             @if($showTimeLeft)

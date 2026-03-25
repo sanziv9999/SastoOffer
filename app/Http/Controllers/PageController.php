@@ -315,6 +315,9 @@ class PageController extends Controller
                 $address?->tole,
             ])->filter()->implode(', ');
 
+            $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
+            $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
+
             return [
                 'dealId'            => $deal?->id,
                 'basePrice'        => $deal?->base_price !== null ? (float) $deal->base_price : 0,
@@ -340,6 +343,8 @@ class PageController extends Controller
                     'city' => $address?->district ?? 'Location',
                 ],
                 'cityName'          => $locationLabel ?: 'Location',
+                'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
+                'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
                 'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $pivot->id,
             ];
@@ -393,7 +398,20 @@ class PageController extends Controller
             $groupedByDeal[$dealId]['offers'][] = $offer;
         }
 
-        $deals = collect($dealOrder)->map(function ($dealId) use ($groupedByDeal) {
+        // Bulk sales aggregation for "Sold" stats on search cards.
+        $dealIdsForSales = array_values(array_filter($dealOrder));
+        $soldByDealId = [];
+        if (!empty($dealIdsForSales)) {
+            $soldByDealId = \App\Models\OrderItem::query()
+                ->selectRaw('deal_id, SUM(quantity) as quantitySold')
+                ->whereIn('deal_id', $dealIdsForSales)
+                ->whereHas('order', fn ($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
+                ->groupBy('deal_id')
+                ->pluck('quantitySold', 'deal_id')
+                ->all();
+        }
+
+        $deals = collect($dealOrder)->map(function ($dealId) use ($groupedByDeal, $soldByDealId) {
             $group = $groupedByDeal[$dealId];
             $group['offers'] = collect($group['offers'])->take(8)->values()->all();
             $display = $group['displayOffer'];
@@ -412,6 +430,14 @@ class PageController extends Controller
             $group['status'] = 'active';
             $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
             $group['offersCount'] = count($group['offers']);
+
+            // Ensure parent card shows location + rating + sales stats.
+            $group['locationLabel'] = $display['locationLabel'] ?? null;
+            $group['location'] = $display['location'] ?? null;
+            $group['cityName'] = $display['cityName'] ?? null;
+            $group['vendorRating'] = $display['vendorRating'] ?? null;
+            $group['vendorReviewCount'] = $display['vendorReviewCount'] ?? null;
+            $group['quantitySold'] = (int) ($soldByDealId[$dealId] ?? 0);
 
             return $group;
         })->values()->all();
