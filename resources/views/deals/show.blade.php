@@ -1,4 +1,8 @@
 @php
+    // Always define so Blade's js helper never receives a null expression.
+    $timeLeft = null;
+    $offersForJs = [];
+    $sortedImagesForJs = [];
     if ($deal) {
         $discountedPrice = $deal['discountedPrice'] ?? 0;
         $originalPrice = $deal['originalPrice'] ?? 0;
@@ -8,13 +12,13 @@
         $sortedImages = collect($deal['images'] ?? [])
             ->sortBy(fn ($img) => (int) ($img['sort_order'] ?? 0))
             ->values();
+        $sortedImagesForJs = $sortedImages->toArray();
         $featureImage = $sortedImages->firstWhere('attribute_name', 'feature_photo') ?? $sortedImages->first();
         $galleryImages = $sortedImages->filter(fn($img) => ($img['id'] ?? null) !== ($featureImage['id'] ?? null))->values();
 
         $endsAt = isset($deal['ends_at']) ? new \DateTime($deal['ends_at']) : null;
         $isExpired = $endsAt && new \DateTime() > $endsAt;
         
-        $timeLeft = null;
         if ($endsAt) {
             $now = new \DateTime();
             if ($now < $endsAt) {
@@ -25,6 +29,9 @@
                 else $timeLeft = "just now";
             }
         }
+
+        // Pass a safe array into the Blade js helper (never use complex expressions inside the directive).
+        $offersForJs = is_array($deal['offers'] ?? null) ? ($deal['offers'] ?? []) : [];
     }
 @endphp
 
@@ -45,56 +52,77 @@
             dealId: {{ (int) ($deal['id'] ?? 0) }},
             quantity: 1,
             selectedOfferPivotId: @json($deal['offerPivotId'] ?? null),
-            offers: @js($deal['offers'] ?? []),
+            offers: @js($offersForJs),
             baseDiscountedPrice: {{ (float) ($discountedPrice ?? 0) }},
             baseOriginalPrice: {{ (float) ($originalPrice ?? 0) }},
             baseSavingsAmount: {{ (float) ($savingsAmount ?? 0) }},
-            baseTimeLeft: @json($timeLeft ?? null),
+            // Use Blade js helper so JSON strings are safely escaped inside the HTML attribute.
+            baseTimeLeft: @js($timeLeft),
 
             selectedOffer() {
                 if (!this.selectedOfferPivotId) return null;
-                return (this.offers || []).find(o => {
-                    const pivotId = o?.offerPivotId ?? o?.pivot?.pivot_id ?? o?.pivot?.id ?? null;
-                    return pivotId != null && String(pivotId) === String(this.selectedOfferPivotId);
-                }) || null;
+                var offers = this.offers || [];
+                for (var i = 0; i < offers.length; i++) {
+                    var o = offers[i];
+                    var pivotId = null;
+                    if (o && o.offerPivotId != null) pivotId = o.offerPivotId;
+                    else if (o && o.pivot && o.pivot.pivot_id != null) pivotId = o.pivot.pivot_id;
+                    else if (o && o.pivot && o.pivot.id != null) pivotId = o.pivot.id;
+
+                    if (pivotId != null && String(pivotId) === String(this.selectedOfferPivotId)) {
+                        return o;
+                    }
+                }
+                return null;
             },
             selectedFinalPrice() {
-                const o = this.selectedOffer();
-                return o ? Number(o?.pivot?.final_price ?? o?.final_price ?? 0) : this.baseDiscountedPrice;
+                var o = this.selectedOffer();
+                if (!o) return this.baseDiscountedPrice;
+                var v = 0;
+                if (o.pivot && o.pivot.final_price != null) v = o.pivot.final_price;
+                else if (o.final_price != null) v = o.final_price;
+                return Number(v || 0);
             },
             selectedOriginalPrice() {
-                const o = this.selectedOffer();
-                return o ? Number(o?.pivot?.original_price ?? o?.original_price ?? 0) : this.baseOriginalPrice;
+                var o = this.selectedOffer();
+                if (!o) return this.baseOriginalPrice;
+                var v = 0;
+                if (o.pivot && o.pivot.original_price != null) v = o.pivot.original_price;
+                else if (o.original_price != null) v = o.original_price;
+                return Number(v || 0);
             },
             selectedSavingsAmount() {
-                const orig = this.selectedOriginalPrice();
-                const fin = this.selectedFinalPrice();
-                const delta = orig - fin;
+                var orig = this.selectedOriginalPrice();
+                var fin = this.selectedFinalPrice();
+                var delta = orig - fin;
                 return delta > 0 ? delta : 0;
             },
             selectedTimeLeftText() {
-                const o = this.selectedOffer();
+                var o = this.selectedOffer();
                 if (!o) return '';
-                const endsAt = o?.pivot?.ends_at ?? o?.ends_at ?? null;
+                var endsAt = null;
+                if (o.pivot && o.pivot.ends_at != null) endsAt = o.pivot.ends_at;
+                else if (o.ends_at != null) endsAt = o.ends_at;
                 if (!endsAt) return '';
-                const end = new Date(endsAt);
-                const now = new Date();
-                const diffMs = end.getTime() - now.getTime();
+
+                var end = new Date(endsAt);
+                var now = new Date();
+                var diffMs = end.getTime() - now.getTime();
                 if (Number.isNaN(diffMs)) return '';
                 if (diffMs <= 0) return 'Offer expired';
 
-                const minutes = Math.floor(diffMs / (1000 * 60));
-                const hours = Math.floor(minutes / 60);
-                const days = Math.floor(hours / 24);
+                var minutes = Math.floor(diffMs / (1000 * 60));
+                var hours = Math.floor(minutes / 60);
+                var days = Math.floor(hours / 24);
 
-                if (days > 0) return `Offer ends in ${days} ${days > 1 ? 'days' : 'day'}`;
-                if (hours > 0) return `Offer ends in ${hours} ${hours > 1 ? 'hours' : 'hour'}`;
-                if (minutes > 0) return `Offer ends in ${minutes} ${minutes > 1 ? 'minutes' : 'minute'}`;
+                if (days > 0) return 'Offer ends in ' + days + ' ' + (days > 1 ? 'days' : 'day');
+                if (hours > 0) return 'Offer ends in ' + hours + ' ' + (hours > 1 ? 'hours' : 'hour');
+                if (minutes > 0) return 'Offer ends in ' + minutes + ' ' + (minutes > 1 ? 'minutes' : 'minute');
                 return 'Offer ends in just now';
             },
             showImageModal: false,
             activeImageIndex: 0,
-            allImages: @js($sortedImages->toArray()),
+            allImages: @js($sortedImagesForJs),
             
             openModal(index) {
                 this.activeImageIndex = index;

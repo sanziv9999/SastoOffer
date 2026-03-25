@@ -230,6 +230,15 @@
                         </div>
                     @endif
                 </div>
+
+                @if($dealUrl)
+                    <a href="{{ $dealUrl }}#reviews" class="text-xs text-primary hover:underline block">
+                        See reviews
+                        @if($vendorReviewCount !== null && (int) $vendorReviewCount > 0)
+                            ({{ (int) $vendorReviewCount }})
+                        @endif
+                    </a>
+                @endif
             @endif
             
             {{-- Time Left --}}

@@ -576,10 +576,42 @@ class DealController extends Controller
             'reviewCount' => $dealModel->vendor->reviews()->count(),
         ] : null;
 
+        // Default reviews: when no `?offer=` query is provided, previously we returned
+        // `offerPivotId = null` which hides the reviews section on `deals/show`.
+        // Load reviews for the first active offer pivot so the UI always shows them.
+        $defaultPivot = $dealModel->activeOfferTypes->first()?->pivot;
+        $defaultPivotId = $defaultPivot?->id;
+
+        $reviews = [];
+        $userReview = null;
+        if ($defaultPivotId) {
+            $reviews = $defaultPivot->reviews()
+                ->where('is_hidden', false)
+                ->with('user')
+                ->latest()
+                ->get()
+                ->map(fn (\App\Models\Review $r) => [
+                    'id' => $r->id,
+                    'userName' => $r->user?->name ?? 'Anonymous',
+                    'rating' => $r->rating,
+                    'comment' => $r->comment,
+                    'vendorReply' => $r->vendor_reply,
+                    'vendorRepliedAt' => $r->vendor_replied_at?->toIso8601String(),
+                    'createdAt' => $r->created_at->toIso8601String(),
+                    'isOwn' => auth()->check() && (int) $r->user_id === (int) auth()->id(),
+                ]);
+
+            $userReview = auth()->check()
+                ? $defaultPivot->reviews()
+                    ->where('user_id', auth()->id())
+                    ->first()?->only(['id', 'rating', 'comment'])
+                : null;
+        }
+
         return view('deals.show', [
             'deal' => [
                 'id' => $dealModel->id,
-                'offerPivotId' => null,
+                'offerPivotId' => $defaultPivotId,
                 'title' => $dealModel->title,
                 'short_description' => $dealModel->short_description,
                 'long_description' => $dealModel->long_description,
@@ -604,8 +636,8 @@ class DealController extends Controller
                     'name' => $dealModel->category->name,
                 ] : null,
             ],
-            'reviews' => [],
-            'userReview' => null,
+            'reviews' => $reviews,
+            'userReview' => $userReview,
             'similarDeals' => [],
         ]);
     }

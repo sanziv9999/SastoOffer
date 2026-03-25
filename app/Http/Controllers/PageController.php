@@ -429,6 +429,12 @@ class PageController extends Controller
             $group['timeLeft'] = null;
             $group['status'] = 'active';
             $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
+            // Important: reviews on the deal page are tied to a specific offer pivot (?offer=...).
+            // On search listing, we always prefer the first display offer pivot so the
+            // "reviews" section is available on the details page.
+            if (! empty($group['offerPivotId'])) {
+                $group['url'] .= '?offer=' . $group['offerPivotId'];
+            }
             $group['offersCount'] = count($group['offers']);
 
             // Ensure parent card shows location + rating + sales stats.
