@@ -24,7 +24,7 @@ Route::get('/api/search/suggestions', [PageController::class, 'suggestions'])->n
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
 Route::get('/checkout', fn () => redirect()->route('cart.index'))->name('checkout');
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-Route::post('/wishlist/toggle/{offerPivotId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+Route::post('/wishlist/toggle/{dealId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
 // ——— Cart ———
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

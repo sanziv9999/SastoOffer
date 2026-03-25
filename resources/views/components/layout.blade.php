@@ -28,7 +28,7 @@
 <body 
     class="font-sans antialiased bg-muted/30"
     x-data="{ 
-        wishlistedIds: {{ auth()->check() ? json_encode(auth()->user()->wishlist()->pluck('deal_offer_type_id')->toArray()) : '[]' }},
+        wishlistedIds: {{ auth()->check() ? json_encode(auth()->user()->wishlist()->pluck('deal_id')->toArray()) : '[]' }},
         cart: {
             items: [],
             count: {{ auth()->check() ? auth()->user()->cartItems()->count() : 0 }},
@@ -109,7 +109,11 @@
                 window.location.href = '/login';
                 return;
             }
-            fetch(`/wishlist/toggle/${id}`, {
+            const numericId = Number(id);
+            if (!Number.isFinite(numericId) || numericId <= 0) {
+                return;
+            }
+            fetch(`/wishlist/toggle/${numericId}`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -120,9 +124,11 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'added') {
-                    this.wishlistedIds.push(id);
+                    if (!this.wishlistedIds.includes(numericId)) {
+                        this.wishlistedIds.push(numericId);
+                    }
                 } else {
-                    this.wishlistedIds = this.wishlistedIds.filter(i => i !== id);
+                    this.wishlistedIds = this.wishlistedIds.filter(i => Number(i) !== numericId);
                     if (window.location.pathname === '/wishlist') {
                         // Refresh or remove from DOM if we are on the wishlist page
                         window.location.reload();

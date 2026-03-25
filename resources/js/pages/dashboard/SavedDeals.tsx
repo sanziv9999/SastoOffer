@@ -39,8 +39,8 @@ const SavedDeals = ({ favoriteDeals }: SavedDealsProps) => {
     });
 
   const handleRemove = async (deal: any) => {
-    const offerPivotId = deal?.offerPivotId;
-    if (!offerPivotId) {
+    const dealId = deal?.id;
+    if (!dealId) {
       toast.error('This saved deal cannot be removed right now.');
       return;
     }
@@ -49,9 +49,9 @@ const SavedDeals = ({ favoriteDeals }: SavedDealsProps) => {
     if (!shouldRemove) return;
 
     try {
-      await (window as any).axios.post(`/wishlist/toggle/${offerPivotId}`);
+      await (window as any).axios.post(`/wishlist/toggle/${dealId}`);
 
-      setSavedDeals((prev) => prev.filter((d) => d.id !== deal.id || d.offerPivotId !== offerPivotId));
+      setSavedDeals((prev) => prev.filter((d) => d.id !== dealId));
       toast.success('Removed from wishlist.');
     } catch {
       toast.error('Could not remove this deal. Please try again.');
@@ -68,7 +68,7 @@ const SavedDeals = ({ favoriteDeals }: SavedDealsProps) => {
       {savedDeals?.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {savedDeals.map((deal: any, index: number) => (
-            <Card key={`${deal.offerPivotId ?? 'offer'}-${deal.id ?? 'deal'}-${index}`} className="hover:shadow-md transition-shadow">
+            <Card key={`${deal.id ?? 'deal'}-${index}`} className="hover:shadow-md transition-shadow">
               <div className="aspect-video relative overflow-hidden rounded-t-lg">
                 <img src={deal.image} alt={deal.title} className="w-full h-full object-cover" />
                 <Badge className="absolute top-2 right-2 bg-red-500">

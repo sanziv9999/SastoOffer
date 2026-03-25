@@ -33,7 +33,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 @foreach($deals as $deal)
                     <div class="relative group animate-in fade-in slide-in-from-bottom-4 duration-500 stagger-{{ ($loop->index % 10) * 100 }}">
-                        <x-deal-card :deal="$deal" :featured="$deal['featured']" />
+                        <x-deal-card
+                            :deal="$deal"
+                            :featured="$deal['featured']"
+                            :showOfferType="false"
+                            :showTimeLeft="false"
+                        />
                     </div>
                 @endforeach
             </div>

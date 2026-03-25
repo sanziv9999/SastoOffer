@@ -42,6 +42,7 @@
     @else
     <div class="container py-8 max-w-7xl mx-auto px-4"
         x-data="{ 
+            dealId: {{ (int) ($deal['id'] ?? 0) }},
             quantity: 1,
             selectedOfferPivotId: @json($deal['offerPivotId'] ?? null),
             offers: @js($deal['offers'] ?? []),
@@ -418,27 +419,25 @@
 
                     <div class="flex gap-1">
                         <button
-                            x-show="selectedOfferPivotId"
-                            @click="toggleWishlist(selectedOfferPivotId)"
-                            :disabled="!selectedOfferPivotId"
+                            @click="toggleWishlist(dealId)"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 transition-colors duration-200"
-                            :class="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'"
+                            :class="wishlistedIds.includes(Number(dealId)) ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="16" height="16"
                                 viewBox="0 0 24 24"
-                                :fill="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'currentColor' : 'none'"
+                                :fill="wishlistedIds.includes(Number(dealId)) ? 'currentColor' : 'none'"
                                 stroke="currentColor"
                                 stroke-width="2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 class="mr-1.5 h-4 w-4 transition-all"
-                                :class="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'fill-destructive scale-110' : ''"
+                                :class="wishlistedIds.includes(Number(dealId)) ? 'fill-destructive scale-110' : ''"
                             >
                                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                             </svg>
-                            <span x-text="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'Saved' : 'Save'"></span>
+                            <span x-text="wishlistedIds.includes(Number(dealId)) ? 'Saved' : 'Save'"></span>
                         </button>
                         <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 text-muted-foreground hover:text-foreground">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 h-4 w-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>

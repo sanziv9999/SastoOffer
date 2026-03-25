@@ -23,18 +23,49 @@ class DashboardController extends Controller
 
         return Wishlist::where('user_id', $user->id)
             ->with([
-                'dealOfferType.deal.category.parent',
-                'dealOfferType.deal.images',
-                'dealOfferType.deal.vendor.defaultAddress',
-                'dealOfferType.offerType',
-                'dealOfferType.displayTypes',
+                'deal.category.parent',
+                'deal.images',
+                'deal.vendor.defaultAddress',
+                'deal.activeOfferPivots',
             ])
             ->latest()
             ->get()
-            ->pluck('dealOfferType')
+            ->pluck('deal')
             ->filter()
-            ->map(fn ($pivot) => $pivot->toCardData())
+            ->map(fn (Deal $deal) => $this->mapWishlistedDeal($deal))
             ->values();
+    }
+
+    protected function mapWishlistedDeal(Deal $deal): array
+    {
+        $base = (float) ($deal->base_price ?? 0);
+
+        $address = $deal->vendor?->defaultAddress;
+        $locationLabel = collect([
+            $address?->district,
+            $address?->tole,
+        ])->filter()->implode(', ');
+        if ($locationLabel === '') {
+            $locationLabel = 'Location';
+        }
+
+        return [
+            'id' => $deal->id,
+            'title' => $deal->title,
+            'dealSlug' => $deal->slug,
+            'categorySlug' => optional($deal->category?->parent)->slug ?? ($deal->category?->slug ?? 'uncategorized'),
+            'categoryName' => optional($deal->category?->parent)->name ?? ($deal->category?->name ?? 'Uncategorized'),
+            'originalPrice' => 0,
+            'discountedPrice' => $base,
+            'discountPercentage' => 0,
+            'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&fit=crop'),
+            'featured' => (bool) ($deal->is_featured ?? false),
+            'offerTypeTitle' => null,
+            'timeLeft' => null,
+            'status' => $deal->status,
+            'locationLabel' => $locationLabel,
+            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?? $deal->id]),
+        ];
     }
 
     protected function buildCustomerDashboardPayload($user): array

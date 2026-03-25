@@ -17,6 +17,8 @@
     }
     $featured = $featured || (isset($deal['featured']) && $deal['featured']);
     $dealUrl = $deal['url'] ?? route('deals.show.by-deal', ['deal' => $deal['dealSlug'] ?? $deal['id']]);
+    // Cart actions expect an offer pivot id (deal_offer_type.id), not the parent deal id.
+    $pivotId = $deal['offerPivotId'] ?? $deal['id'];
 @endphp
 
 @if($compact)
@@ -35,10 +37,10 @@
                             {{ $discountPercentage }}% OFF
                         </span>
                     @endif
-                    @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
+                    @php $dealId = $deal['id'] ?? null; @endphp
                     <div class="flex flex-col gap-1">
                         <button 
-                            @click.prevent="toggleWishlist({{ $pivotId }})"
+                            @click.prevent="toggleWishlist({{ $dealId }})"
                             class="bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-white transition-all transform active:scale-95 group/heart"
                             title="Save to wishlist"
                         >
@@ -46,13 +48,13 @@
                                 xmlns="http://www.w3.org/2000/svg" 
                                 width="14" height="14" 
                                 viewBox="0 0 24 24" 
-                                :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
+                                :fill="wishlistedIds.includes({{ $dealId }}) ? 'currentColor' : 'none'" 
                                 stroke="currentColor" 
                                 stroke-width="2.5" 
                                 stroke-linecap="round" 
                                 stroke-linejoin="round"
                                 class="h-3.5 w-3.5 transition-colors"
-                                :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive' : 'text-gray-400 group-hover/heart:text-destructive'"
+                                :class="wishlistedIds.includes({{ $dealId }}) ? 'text-destructive fill-destructive' : 'text-gray-400 group-hover/heart:text-destructive'"
                             >
                                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                             </svg>
@@ -108,10 +110,10 @@
             @endif
 
             {{-- Actions --}}
-            @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
+            @php $dealId = $deal['id'] ?? null; @endphp
             <div class="flex flex-col gap-2">
                 <button 
-                    @click.prevent="toggleWishlist({{ $pivotId }})"
+                    @click.prevent="toggleWishlist({{ $dealId }})"
                     class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all transform active:scale-95 group/heart"
                     title="Save to wishlist"
                 >
@@ -119,13 +121,13 @@
                         xmlns="http://www.w3.org/2000/svg" 
                         width="20" height="20" 
                         viewBox="0 0 24 24" 
-                        :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
+                        :fill="wishlistedIds.includes({{ $dealId }}) ? 'currentColor' : 'none'" 
                         stroke="currentColor" 
                         stroke-width="2" 
                         stroke-linecap="round" 
                         stroke-linejoin="round"
                         class="h-5 w-5 transition-colors"
-                        :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive fill-destructive animate-in zoom-in duration-300' : 'text-gray-400 group-hover/heart:text-destructive'"
+                        :class="wishlistedIds.includes({{ $dealId }}) ? 'text-destructive fill-destructive animate-in zoom-in duration-300' : 'text-gray-400 group-hover/heart:text-destructive'"
                     >
                         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                     </svg>
