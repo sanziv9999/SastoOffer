@@ -185,6 +185,7 @@ class PageController extends Controller
 
             return [
                 'dealId'            => $deal?->id,
+                'basePrice'        => $deal?->base_price !== null ? (float) $deal->base_price : 0,
                 'offerPivotId'      => $pivot->id,
                 'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
@@ -269,11 +270,14 @@ class PageController extends Controller
             // while still using a single offer pivot for wishlist/cart actions.
             $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? $dealId;
             $group['offerPivotId'] = $display['offerPivotId'] ?? null;
-            $group['discountedPrice'] = $display['discountedPrice'] ?? 0;
-            $group['originalPrice'] = $display['originalPrice'] ?? 0;
-            $group['discountPercentage'] = $display['discountPercentage'] ?? null;
-            $group['offerTypeTitle'] = $display['offerTypeTitle'] ?? null;
-            $group['timeLeft'] = $display['timeLeft'] ?? null;
+            // Search must show parent deal with base price only (no offer discounts/time).
+            $basePrice = $display['basePrice'] ?? 0;
+            $group['discountedPrice'] = $basePrice;
+            $group['originalPrice'] = 0;
+            $group['discountPercentage'] = 0;
+            $group['offerTypeTitle'] = null;
+            $group['timeLeft'] = null;
+            $group['status'] = 'active';
             $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
             $group['offersCount'] = count($group['offers']);
 

@@ -60,6 +60,7 @@ class Deal extends Model
         return $this->belongsToMany(OfferType::class, 'deal_offer_type')
             ->using(DealOfferType::class)
             ->withPivot([
+                'id',
                 'original_price',
                 'discount_percent',
                 'discount_amount',

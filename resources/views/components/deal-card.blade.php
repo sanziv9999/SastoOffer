@@ -1,4 +1,12 @@
-@props(['deal', 'featured' => false, 'compact' => false])
+@props([
+    'deal',
+    'featured' => false,
+    'compact' => false,
+    // Search/UI tuning
+    'showDiscount' => true,
+    'showOfferType' => true,
+    'showTimeLeft' => true,
+])
 
 @php
     $originalPrice = $deal['originalPrice'] ?? 0;
@@ -22,9 +30,11 @@
                     loading="lazy"
                 />
                 <div class="absolute top-1.5 right-1.5 z-10 flex flex-col gap-1 items-end">
-                    <span class="inline-flex items-center rounded-md border border-transparent bg-green-600 text-white shadow text-[10px] sm:text-xs px-1.5 py-0.5 font-semibold">
-                        {{ $discountPercentage }}% OFF
-                    </span>
+                    @if($showDiscount && $discountPercentage > 0)
+                        <span class="inline-flex items-center rounded-md border border-transparent bg-green-600 text-white shadow text-[10px] sm:text-xs px-1.5 py-0.5 font-semibold">
+                            {{ $discountPercentage }}% OFF
+                        </span>
+                    @endif
                     @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
                     <div class="flex flex-col gap-1">
                         <button 
@@ -69,9 +79,11 @@
                     <span class="text-sm sm:text-base font-bold text-primary">
                         Rs. {{ $deal['discountedPrice'] }}
                     </span>
-                    <span class="text-[10px] sm:text-xs line-through text-gray-400">
-                        Rs. {{ $deal['originalPrice'] }}
-                    </span>
+                    @if($showDiscount && $originalPrice > $discountedPrice && $originalPrice > 0)
+                        <span class="text-[10px] sm:text-xs line-through text-gray-400">
+                            Rs. {{ $deal['originalPrice'] }}
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -89,9 +101,11 @@
         
         {{-- Discount & Actions Badge --}}
         <div class="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
-            <span class="inline-flex items-center rounded-md border border-transparent bg-green-600 text-white shadow hover:bg-green-700 px-2.5 py-0.5 text-xs font-semibold">
-                {{ $discountPercentage }}% OFF
-            </span>
+            @if($showDiscount && $discountPercentage > 0)
+                <span class="inline-flex items-center rounded-md border border-transparent bg-green-600 text-white shadow hover:bg-green-700 px-2.5 py-0.5 text-xs font-semibold">
+                    {{ $discountPercentage }}% OFF
+                </span>
+            @endif
 
             {{-- Actions --}}
             @php $pivotId = $deal['offerPivotId'] ?? $deal['id']; @endphp
@@ -152,7 +166,7 @@
                 @endif
             </div>
 
-            @if(!empty($deal['offerTypeTitle']))
+            @if($showOfferType && !empty($deal['offerTypeTitle']))
                 <div class="mb-2">
                     <span class="inline-flex items-center rounded-md border border-transparent bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
                         {{ $deal['offerTypeTitle'] }}
@@ -174,22 +188,26 @@
                 <span class="text-lg font-bold text-primary mr-2">
                     Rs. {{ $deal['discountedPrice'] }}
                 </span>
-                <span class="text-sm line-through text-gray-400">
-                    Rs. {{ $deal['originalPrice'] }}
-                </span>
+                @if($showDiscount && $originalPrice > $discountedPrice && $originalPrice > 0)
+                    <span class="text-sm line-through text-gray-400">
+                        Rs. {{ $deal['originalPrice'] }}
+                    </span>
+                @endif
             </div>
             
             {{-- Time Left --}}
-            @if(($deal['status'] ?? null) === 'expired')
-                <div class="flex items-center text-xs text-destructive mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
-                    <span>Offer expired</span>
-                </div>
-            @else
-                <div class="flex items-center text-xs text-amber-600 mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>Ends {{ isset($deal['timeLeft']) ? $deal['timeLeft'] : 'soon' }}</span>
-                </div>
+            @if($showTimeLeft)
+                @if(($deal['status'] ?? null) === 'expired')
+                    <div class="flex items-center text-xs text-destructive mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+                        <span>Offer expired</span>
+                    </div>
+                @else
+                    <div class="flex items-center text-xs text-amber-600 mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Ends {{ isset($deal['timeLeft']) ? $deal['timeLeft'] : 'soon' }}</span>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

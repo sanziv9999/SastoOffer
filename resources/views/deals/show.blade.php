@@ -43,6 +43,54 @@
     <div class="container py-8 max-w-7xl mx-auto px-4"
         x-data="{ 
             quantity: 1,
+            selectedOfferPivotId: @json($deal['offerPivotId'] ?? null),
+            offers: @js($deal['offers'] ?? []),
+            baseDiscountedPrice: {{ (float) ($discountedPrice ?? 0) }},
+            baseOriginalPrice: {{ (float) ($originalPrice ?? 0) }},
+            baseSavingsAmount: {{ (float) ($savingsAmount ?? 0) }},
+            baseTimeLeft: @json($timeLeft ?? null),
+
+            selectedOffer() {
+                if (!this.selectedOfferPivotId) return null;
+                return (this.offers || []).find(o => {
+                    const pivotId = o?.offerPivotId ?? o?.pivot?.pivot_id ?? o?.pivot?.id ?? null;
+                    return pivotId != null && String(pivotId) === String(this.selectedOfferPivotId);
+                }) || null;
+            },
+            selectedFinalPrice() {
+                const o = this.selectedOffer();
+                return o ? Number(o?.pivot?.final_price ?? o?.final_price ?? 0) : this.baseDiscountedPrice;
+            },
+            selectedOriginalPrice() {
+                const o = this.selectedOffer();
+                return o ? Number(o?.pivot?.original_price ?? o?.original_price ?? 0) : this.baseOriginalPrice;
+            },
+            selectedSavingsAmount() {
+                const orig = this.selectedOriginalPrice();
+                const fin = this.selectedFinalPrice();
+                const delta = orig - fin;
+                return delta > 0 ? delta : 0;
+            },
+            selectedTimeLeftText() {
+                const o = this.selectedOffer();
+                if (!o) return '';
+                const endsAt = o?.pivot?.ends_at ?? o?.ends_at ?? null;
+                if (!endsAt) return '';
+                const end = new Date(endsAt);
+                const now = new Date();
+                const diffMs = end.getTime() - now.getTime();
+                if (Number.isNaN(diffMs)) return '';
+                if (diffMs <= 0) return 'Offer expired';
+
+                const minutes = Math.floor(diffMs / (1000 * 60));
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+
+                if (days > 0) return `Offer ends in ${days} ${days > 1 ? 'days' : 'day'}`;
+                if (hours > 0) return `Offer ends in ${hours} ${hours > 1 ? 'hours' : 'hour'}`;
+                if (minutes > 0) return `Offer ends in ${minutes} ${minutes > 1 ? 'minutes' : 'minute'}`;
+                return 'Offer ends in just now';
+            },
             showImageModal: false,
             activeImageIndex: 0,
             allImages: @js($sortedImages->toArray()),
@@ -63,10 +111,12 @@
                 this.activeImageIndex = (this.activeImageIndex - 1 + this.allImages.length) % this.allImages.length;
             },
             handleAddToCart() {
-                this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
+                if (!this.selectedOfferPivotId) return;
+                this.cart.addItem(this.selectedOfferPivotId, this.quantity);
             },
             async handleBuyNow() {
-                await this.cart.addItem({{ $deal['offerPivotId'] }}, this.quantity);
+                if (!this.selectedOfferPivotId) return;
+                await this.cart.addItem(this.selectedOfferPivotId, this.quantity);
                 window.location.href = '/cart';
             }
         }"
@@ -236,59 +286,62 @@
                                     $pivotId = $offer['offerPivotId']
                                         ?? ($offer['pivot']['pivot_id'] ?? null)
                                         ?? ($offer['pivot']['id'] ?? null);
-                                    $isSelected = isset($deal['offerPivotId']) && $pivotId !== null && (string)$pivotId === (string)$deal['offerPivotId'];
-
                                     $finalPrice = (float) ($offer['pivot']['final_price'] ?? $offer['final_price'] ?? 0);
                                     $originalPriceForOffer = (float) ($offer['pivot']['original_price'] ?? $offer['original_price'] ?? 0);
                                     $pctOff = $originalPriceForOffer > 0
                                         ? (int) round((($originalPriceForOffer - $finalPrice) / $originalPriceForOffer) * 100)
                                         : 0;
-
-                                    $offerUrl = $pivotId !== null ? (route('deals.show.by-deal', ['deal' => $deal['id']]) . '?offer=' . $pivotId) : null;
                                 @endphp
 
                                 <div
-                                    class="block transition-colors rounded-lg border p-3 md:p-3 hover:bg-background/60
-                                        {{ $isSelected ? 'border-primary/50 ring-2 ring-primary/20 bg-background' : 'border-border bg-background' }}"
+                                    class="block transition-colors rounded-lg border p-3 md:p-3 hover:bg-background/60"
+                                    :class="String(selectedOfferPivotId) === '{{ $pivotId }}'
+                                        ? 'border-primary/50 ring-2 ring-primary/20 bg-background'
+                                        : 'border-border bg-background'"
                                 >
-                                    @if($offerUrl)
-                                        <a href="{{ $offerUrl }}" class="block">
-                                    @endif
-
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="flex items-start gap-3 min-w-0">
-                                            <span
-                                                class="mt-1 inline-flex h-4 w-4 rounded-full border
-                                                {{ $isSelected ? 'border-primary bg-primary' : 'border-muted-foreground bg-background' }}"
-                                                aria-hidden="true"
-                                            ></span>
-                                            <div class="min-w-0">
-                                                <div class="text-sm font-semibold line-clamp-1">
-                                                    {{ $offer['display_name'] ?? $offer['name'] ?? 'Offer' }}
+                                    <button
+                                        type="button"
+                                        class="w-full text-left"
+                                        @if($pivotId !== null)
+                                            @click="selectedOfferPivotId = {{ $pivotId }}"
+                                        @else
+                                            disabled
+                                            aria-disabled="true"
+                                        @endif
+                                    >
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div class="flex items-start gap-3 min-w-0">
+                                                <span
+                                                    class="mt-1 inline-flex h-4 w-4 rounded-full border"
+                                                    :class="String(selectedOfferPivotId) === '{{ $pivotId }}'
+                                                        ? 'border-primary bg-primary'
+                                                        : 'border-muted-foreground bg-background'"
+                                                    aria-hidden="true"
+                                                ></span>
+                                                <div class="min-w-0">
+                                                    <div class="text-sm font-semibold line-clamp-1">
+                                                        {{ $offer['display_name'] ?? $offer['name'] ?? 'Offer' }}
+                                                    </div>
+                                                    @if($pctOff > 0)
+                                                        <div class="text-xs text-green-700 bg-green-600/10 px-2 py-0.5 rounded mt-1 inline-block">
+                                                            {{ $pctOff }}% off
+                                                        </div>
+                                                    @endif
                                                 </div>
-                                                @if($pctOff > 0)
-                                                    <div class="text-xs text-green-700 bg-green-600/10 px-2 py-0.5 rounded mt-1 inline-block">
-                                                        {{ $pctOff }}% off
+                                            </div>
+
+                                            <div class="text-right">
+                                                <div class="text-sm font-semibold text-primary">
+                                                    Rs. {{ number_format($finalPrice, 2, '.', '') }}
+                                                </div>
+                                                @if($originalPriceForOffer > 0)
+                                                    <div class="text-xs text-muted-foreground line-through">
+                                                        Rs. {{ number_format($originalPriceForOffer, 2, '.', '') }}
                                                     </div>
                                                 @endif
                                             </div>
                                         </div>
-
-                                        <div class="text-right">
-                                            <div class="text-sm font-semibold text-primary">
-                                                Rs. {{ number_format($finalPrice, 2, '.', '') }}
-                                            </div>
-                                            @if($originalPriceForOffer > 0)
-                                                <div class="text-xs text-muted-foreground line-through">
-                                                    Rs. {{ number_format($originalPriceForOffer, 2, '.', '') }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    @if($offerUrl)
-                                        </a>
-                                    @endif
+                                    </button>
                                 </div>
                             @endforeach
                         </div>
@@ -299,28 +352,29 @@
                 <div class="bg-muted/50 p-3 md:p-5 rounded-xl mb-6">
                     <div class="flex items-end gap-1.5 md:gap-3 mb-2">
                         <span class="text-xl md:text-3xl font-bold text-primary">
-                            Rs. {{ number_format($discountedPrice, 2, '.', '') }}
+                            Rs. <span x-text="selectedFinalPrice().toFixed(2)"></span>
                         </span>
-                        @if($originalPrice > 0)
-                            <span class="text-sm md:text-lg text-muted-foreground line-through">
-                                Rs. {{ number_format($originalPrice, 2, '.', '') }}
-                            </span>
-                        @endif
-                        @if($savingsAmount > 0)
-                            <span class="text-xs md:text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                Save Rs. {{ number_format($savingsAmount, 2, '.', '') }}
-                            </span>
-                        @endif
+                        <span
+                            class="text-sm md:text-lg text-muted-foreground line-through"
+                            x-show="selectedOriginalPrice() > selectedFinalPrice()"
+                        >
+                            Rs. <span x-text="selectedOriginalPrice().toFixed(2)"></span>
+                        </span>
+                        <span
+                            class="text-xs md:text-sm font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full"
+                            x-show="selectedSavingsAmount() > 0"
+                        >
+                            Save Rs. <span x-text="selectedSavingsAmount().toFixed(2)"></span>
+                        </span>
                     </div>
 
-                    @if($timeLeft)
-                        <div class="flex items-center text-xs md:text-sm text-amber-600 mt-1">
+                    <div
+                        class="flex items-center text-xs md:text-sm text-amber-600 mt-1"
+                        x-show="selectedOfferPivotId && selectedTimeLeftText() !== ''"
+                    >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 mr-1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            <span>
-                                {{ $isExpired ? 'Offer expired' : 'Offer ends in ' . $timeLeft }}
-                            </span>
-                        </div>
-                    @endif
+                            <span x-text="selectedTimeLeftText()"></span>
+                    </div>
                 </div>
 
                 {{-- Quantity + Actions --}}
@@ -347,6 +401,7 @@
                     <div class="flex flex-wrap gap-3">
                         <button 
                             @click="handleAddToCart"
+                            :disabled="!selectedOfferPivotId"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 flex-1 min-w-[140px]"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
@@ -354,6 +409,7 @@
                         </button>
                         <button 
                             @click="handleBuyNow"
+                            :disabled="!selectedOfferPivotId"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2 flex-1 min-w-[140px]"
                         >
                             Buy Now
@@ -361,27 +417,28 @@
                     </div>
 
                     <div class="flex gap-1">
-                        @php $pivotId = $deal['offerPivotId']; @endphp
-                        <button 
-                            @click="toggleWishlist({{ $pivotId }})"
+                        <button
+                            x-show="selectedOfferPivotId"
+                            @click="toggleWishlist(selectedOfferPivotId)"
+                            :disabled="!selectedOfferPivotId"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 transition-colors duration-200"
-                            :class="wishlistedIds.includes({{ $pivotId }}) ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'"
+                            :class="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'"
                         >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" height="16" 
-                                viewBox="0 0 24 24" 
-                                :fill="wishlistedIds.includes({{ $pivotId }}) ? 'currentColor' : 'none'" 
-                                stroke="currentColor" 
-                                stroke-width="2" 
-                                stroke-linecap="round" 
-                                stroke-linejoin="round" 
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16" height="16"
+                                viewBox="0 0 24 24"
+                                :fill="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'currentColor' : 'none'"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 class="mr-1.5 h-4 w-4 transition-all"
-                                :class="wishlistedIds.includes({{ $pivotId }}) ? 'fill-destructive scale-110' : ''"
+                                :class="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'fill-destructive scale-110' : ''"
                             >
                                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                             </svg>
-                            <span x-text="wishlistedIds.includes({{ $pivotId }}) ? 'Saved' : 'Save'"></span>
+                            <span x-text="wishlistedIds.includes(Number(selectedOfferPivotId)) ? 'Saved' : 'Save'"></span>
                         </button>
                         <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 text-muted-foreground hover:text-foreground">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5 h-4 w-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -471,15 +528,17 @@
         </div>
 
         {{-- Reviews Section --}}
-        <div class="mt-16" id="reviews">
-            <h2 class="text-2xl font-bold mb-6">Customer Reviews</h2>
-            <x-review-list
-                :reviews="$reviews"
-                :user-review="$userReview"
-                reviewable-type="deal_offer"
-                :reviewable-id="$deal['offerPivotId']"
-            />
-        </div>
+        @if(!empty($deal['offerPivotId']))
+            <div class="mt-16" id="reviews">
+                <h2 class="text-2xl font-bold mb-6">Customer Reviews</h2>
+                <x-review-list
+                    :reviews="$reviews"
+                    :user-review="$userReview"
+                    reviewable-type="deal_offer"
+                    :reviewable-id="$deal['offerPivotId']"
+                />
+            </div>
+        @endif
 
         {{-- Similar Deals --}}
         @if(count($similarDeals) > 0)

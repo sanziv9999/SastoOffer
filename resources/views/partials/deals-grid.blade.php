@@ -25,7 +25,13 @@
     @if(count($deals) > 0)
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($deals as $deal)
-                <x-deal-card :deal="$deal" :featured="$deal['featured']" />
+                <x-deal-card
+                    :deal="$deal"
+                    :featured="$deal['featured']"
+                    :showDiscount="false"
+                    :showOfferType="false"
+                    :showTimeLeft="false"
+                />
             @endforeach
         </div>
     @else

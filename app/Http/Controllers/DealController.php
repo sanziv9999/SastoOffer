@@ -400,26 +400,65 @@ class DealController extends Controller
 
         $requestedOfferPivotId = $request->query('offer');
         $pivot = null;
-        if (is_numeric($requestedOfferPivotId)) {
+        if ($request->filled('offer') && is_numeric($requestedOfferPivotId)) {
+            $requested = (int) $requestedOfferPivotId;
+
+            // 1) Most common: ?offer points to deal_offer_type.id (pivot id)
             $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
                 ->where('status', 'active')
-                ->where('id', (int) $requestedOfferPivotId)
+                ->where('id', $requested)
                 ->first();
+
+            // 2) Fallback: some UI paths might pass offer_type_id instead of pivot id
+            if (! $pivot) {
+                $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                    ->where('status', 'active')
+                    ->where('offer_type_id', $requested)
+                    ->first();
+            }
         }
 
-        if (! $pivot) {
-            $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-                ->where('status', 'active')
-                ->orderBy('final_price')
-                ->first();
-        }
-
+        // If an offer is explicitly selected, render the selected offer context.
         if ($pivot) {
-            // Keep canonical slug URL and render the selected active offer in-place.
             return $this->showDeal($pivot);
         }
 
-        // No offers: show deal with base price fallback (no pivot context)
+        // No offer selected: render primary deal (base price) + list of offers (nothing selected).
+        $dealModel->load([
+            'vendor',
+            'category.parent',
+            'images',
+            'activeOfferTypes',
+        ]);
+
+        $activeOffers = $dealModel->activeOfferTypes->map(function ($ot) {
+            $pivotRow = $ot->pivot;
+            return [
+                'id' => $ot->id,
+                'name' => $ot->name,
+                'display_name' => $ot->display_name,
+                'offerPivotId' => $pivotRow?->id,
+                'pivot' => [
+                    'pivot_id' => $pivotRow?->id,
+                    'original_price' => $pivotRow?->original_price,
+                    'final_price' => $pivotRow?->final_price,
+                    'currency_code' => $pivotRow?->currency_code,
+                    'status' => $pivotRow?->status,
+                    'params' => $pivotRow?->params,
+                    'starts_at' => $pivotRow?->starts_at?->toIso8601String(),
+                    'ends_at' => $pivotRow?->ends_at?->toIso8601String(),
+                ],
+            ];
+        })->values()->toArray();
+
+        $vendor = $dealModel->vendor ? [
+            'id' => $dealModel->vendor->id,
+            'slug' => $dealModel->vendor->slug,
+            'business_name' => $dealModel->vendor->business_name,
+            'rating' => round((float) ($dealModel->vendor->reviews()->avg('rating') ?? 0), 1),
+            'reviewCount' => $dealModel->vendor->reviews()->count(),
+        ] : null;
+
         return view('deals.show', [
             'deal' => [
                 'id' => $dealModel->id,
@@ -435,24 +474,22 @@ class DealController extends Controller
                 'originalPrice' => $dealModel->base_price !== null ? (float) $dealModel->base_price : 0,
                 'discountPercent' => null,
                 'offerTypeTitle' => null,
-                'offers' => [],
-                'images' => $dealModel->images()->get()->map(fn ($img) => [
+                'offers' => $activeOffers,
+                'images' => $dealModel->images->map(fn ($img) => [
                     'id' => $img->id,
                     'image_url' => $img->image_url,
                     'attribute_name' => $img->attribute_name,
                     'sort_order' => $img->sort_order,
                 ])->toArray(),
-                'vendor' => $dealModel->vendor ? [
-                    'id' => $dealModel->vendor->id,
-                    'business_name' => $dealModel->vendor->business_name,
-                    'rating' => 4.8,
-                    'reviewCount' => 42,
-                ] : null,
+                'vendor' => $vendor,
                 'category' => $dealModel->category ? [
                     'id' => $dealModel->category->id,
                     'name' => $dealModel->category->name,
                 ] : null,
             ],
+            'reviews' => [],
+            'userReview' => null,
+            'similarDeals' => [],
         ]);
     }
 
