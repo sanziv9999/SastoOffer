@@ -9,6 +9,7 @@ use App\Models\DealOfferType;
 use App\Models\DealOfferType as DealOfferTypePivot;
 use App\Models\OfferType;
 use App\Models\VendorProfile;
+use App\Services\DealMetadataSuggestionService;
 use App\Services\DealOfferService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -196,12 +197,79 @@ class DealController extends Controller
 
     public function create()
     {
+        $authUser = auth()->user();
+        $vendorProfile = $authUser?->vendorProfile;
+        $defaultAddress = $vendorProfile?->defaultAddress;
+
         $vendors = VendorProfile::orderBy('business_name')->get();
         $categories = Category::where('is_active', true)->orderBy('display_order')->orderBy('name')->get();
 
         return \Inertia\Inertia::render('vendor/CreateDeal', [
             'vendors' => $vendors,
             'categories' => $categories,
+            'vendorDefaults' => $vendorProfile ? [
+                'businessType' => $vendorProfile->business_type,
+                'district' => $defaultAddress?->district,
+                'tole' => $defaultAddress?->tole,
+                'categoryId' => $vendorProfile->category_id,
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Vendor: suggest deal metadata from title/description.
+     */
+    public function suggestDealMetadata(Request $request)
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('vendor')) {
+            return response()->json(['error' => 'unauthorized'], 401);
+        }
+
+        $vendor = $user->vendorProfile;
+
+        $title = (string) ($request->input('title') ?? '');
+        $description = $request->input('description');
+
+        $service = app(DealMetadataSuggestionService::class);
+        $suggestion = $service->suggest($title, is_string($description) ? $description : null);
+
+        // Fallbacks: if inference can't detect district/tole, use vendor defaults.
+        // This ensures address tags show up even when the vendor didn't type location keywords.
+        $defaultAddress = $vendor?->defaultAddress;
+        if (empty($suggestion['district']) && $defaultAddress?->district) {
+            $suggestion['district'] = $defaultAddress->district;
+        }
+        if (empty($suggestion['tole']) && $defaultAddress?->tole) {
+            $suggestion['tole'] = $defaultAddress->tole;
+        }
+        if (empty($suggestion['province']) && $defaultAddress?->province) {
+            $suggestion['province'] = $defaultAddress->province;
+        }
+        if (empty($suggestion['municipality']) && $defaultAddress?->municipality) {
+            $suggestion['municipality'] = $defaultAddress->municipality;
+        }
+        if (empty($suggestion['businessType']) && $vendor?->business_type) {
+            $suggestion['businessType'] = $vendor->business_type;
+        }
+
+        // Merge fallback tags (kebab-case) into the suggested tags list.
+        $extraTags = [];
+        foreach (['businessType', 'province', 'district', 'municipality', 'tole'] as $key) {
+            $v = $suggestion[$key] ?? null;
+            if (! is_string($v) || trim($v) === '') continue;
+            $extraTags[] = \Illuminate\Support\Str::of($v)
+                ->lower()
+                ->replaceMatches('/[^a-z0-9]+/i', '-')
+                ->trim('-')
+                ->__toString();
+        }
+        $suggestionTags = is_array($suggestion['tags'] ?? null) ? $suggestion['tags'] : [];
+        $suggestion['tags'] = array_values(array_unique(array_filter(array_merge($suggestionTags, $extraTags))));
+
+        return response()->json([
+            'status' => 'ok',
+            'suggestion' => $suggestion,
         ]);
     }
 
@@ -219,16 +287,65 @@ class DealController extends Controller
         }
 
         $data = $request->all();
+
+        // Auto-suggest deal metadata from title/description, so category/address/business_type
+        // can improve later searching and filtering.
+        $titleForAI = (string) ($data['title'] ?? '');
+        $descriptionForAI = $data['description'] ?? null;
+        $service = app(DealMetadataSuggestionService::class);
+        $suggestion = $service->suggest($titleForAI, is_string($descriptionForAI) ? $descriptionForAI : null);
+
+        $categoryId = (int) ($suggestion['categoryId'] ?? 0);
+        if ($categoryId <= 0) {
+            $categoryId = (int) ($data['categoryId'] ?? 0);
+        }
+
+        // Preference order:
+        // 1) Suggested values (from title/description)
+        // 2) Request values (if suggestion couldn't infer anything)
+        $businessType = $suggestion['businessType'] ?? ($data['business_type'] ?? null);
+        $district = $suggestion['district'] ?? ($data['district'] ?? null);
+        $tole = $suggestion['tole'] ?? ($data['tole'] ?? null);
+
+        $requestTags = $data['tags'] ?? [];
+        if (! is_array($requestTags)) {
+            $requestTags = [$requestTags];
+        }
+        $requestTags = array_values(array_filter(array_map(function ($t) {
+            return is_string($t) ? trim($t) : (string) $t;
+        }, $requestTags)));
+
+        $suggestedTags = is_array($suggestion['tags'] ?? null) ? $suggestion['tags'] : [];
+        $finalTags = array_slice(array_values(array_unique(array_merge($requestTags, $suggestedTags))), 0, 15);
+
         \Illuminate\Support\Facades\Log::info('Deal Creation Request:', [
             'data' => array_keys($data),
             'files' => array_keys($request->allFiles()),
             'has_images' => $request->hasFile('images'),
         ]);
 
+        // Update vendor profile metadata and default address for better search.
+        if (! empty($businessType) && in_array($businessType, ['service', 'product', 'hybrid'], true)) {
+            $vendor->business_type = $businessType;
+        }
+
+        if (! empty($suggestion['primaryCategoryId']) && (int) $suggestion['primaryCategoryId'] > 0) {
+            $vendor->category_id = (int) $suggestion['primaryCategoryId'];
+        }
+
+        if ($vendor->defaultAddress) {
+            $addr = $vendor->defaultAddress;
+            if (! empty($district)) $addr->district = (string) $district;
+            if (! empty($tole)) $addr->tole = (string) $tole;
+            if ($addr->isDirty()) $addr->saveQuietly();
+        }
+
+        $vendor->saveQuietly();
+
         // Map React fields to DB fields (core deal only; offers added separately)
         $dealData = [
             'vendor_id' => $vendor->id,
-            'category_id' => (int) ($data['categoryId'] ?? 0),
+            'category_id' => $categoryId,
             'title' => $data['title'] ?? 'Untitled Deal',
             'slug' => $this->generateUniqueDealSlug((string) ($data['title'] ?? 'untitled')),
             'base_price' => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : null,
@@ -236,7 +353,7 @@ class DealController extends Controller
             'long_description' => $data['description'] ?? null,
             'status' => $data['status'] ?? 'active',
             'total_inventory' => ! empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
-            'highlights' => is_array($data['tags'] ?? []) ? $data['tags'] ?? [] : [$data['tags'] ?? ''],
+            'highlights' => $finalTags,
         ];
 
         $deal = Deal::create($dealData);
@@ -509,6 +626,8 @@ class DealController extends Controller
         $categories = Category::where('is_active', true)->orderBy('display_order')->orderBy('name')->get();
         $deal->load(['offerTypes', 'images']);
 
+        $defaultAddress = $vendor?->defaultAddress;
+
         $offer = $deal->offerTypes->first()?->pivot;
 
         return \Inertia\Inertia::render('vendor/EditDeal', [
@@ -531,6 +650,12 @@ class DealController extends Controller
                 ]),
             ],
             'categories' => $categories,
+            'vendorDefaults' => $vendor ? [
+                'businessType' => $vendor->business_type,
+                'district' => $defaultAddress?->district,
+                'tole' => $defaultAddress?->tole,
+                'categoryId' => $vendor->category_id,
+            ] : null,
         ]);
     }
 
@@ -621,6 +746,25 @@ class DealController extends Controller
             'highlights' => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
             'status' => $data['status'] ?? $deal->status,
         ]);
+
+        // Persist suggested business metadata so searching can use it later.
+        if ($vendor) {
+            $businessType = $data['business_type'] ?? null;
+            if (! empty($businessType) && in_array($businessType, ['service', 'product', 'hybrid'], true)) {
+                $vendor->business_type = $businessType;
+            }
+
+            $district = $data['district'] ?? null;
+            $tole = $data['tole'] ?? null;
+            $addr = $vendor->defaultAddress;
+            if ($addr) {
+                if (! empty($district)) $addr->district = (string) $district;
+                if (! empty($tole)) $addr->tole = (string) $tole;
+                if ($addr->isDirty()) $addr->saveQuietly();
+            }
+
+            $vendor->saveQuietly();
+        }
 
         // If base price changes, keep all offers in sync and recalculate their final prices.
         $newBasePrice = $deal->base_price !== null ? (float) $deal->base_price : null;

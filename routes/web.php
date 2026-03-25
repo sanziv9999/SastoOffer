@@ -89,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vendor/deals', [DealController::class, 'manageDeals'])->name('vendor.deals.index');
         Route::get('/vendor/deals/create', [DealController::class, 'create'])->name('vendor.deals.create');
         Route::post('/vendor/deals', [DealController::class, 'store'])->name('vendor.deals.store');
+        Route::post('/vendor/deals/suggest-metadata', [DealController::class, 'suggestDealMetadata'])->name('vendor.deals.suggest.metadata');
         Route::get('/vendor/deals/{deal}', [DealController::class, 'viewDeal'])->name('vendor.deals.view');
         Route::get('/vendor/deals/{deal}/edit', [DealController::class, 'editDeal'])->name('vendor.deals.edit');
         Route::put('/vendor/deals/{deal}', [DealController::class, 'updateDeal'])->name('vendor.deals.update');

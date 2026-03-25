@@ -16,21 +16,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
-const SUGGESTED_TAGS_MAP: Record<string, string[]> = {
-  food: ['restaurant', 'dining', 'gourmet', 'lunch', 'dinner', 'brunch', 'takeout', 'delivery', 'cuisine', 'foodie'],
-  beauty: ['spa', 'salon', 'skincare', 'wellness', 'massage', 'facial', 'haircut', 'manicure', 'grooming', 'beauty-treatment'],
-  travel: ['hotel', 'vacation', 'getaway', 'resort', 'flight', 'booking', 'adventure', 'tourism', 'weekend-trip', 'staycation'],
-  electronics: ['gadget', 'tech', 'smartphone', 'laptop', 'accessories', 'smart-home', 'wearable', 'audio', 'gaming', 'tablet'],
-  entertainment: ['movies', 'concert', 'event', 'tickets', 'show', 'fun', 'nightlife', 'experience', 'activity', 'theme-park'],
-};
-
-const DEAL_TYPE_TAGS: Record<string, string[]> = {
-  percentage: ['discount', 'percent-off', 'savings'],
-  fixed: ['flat-price', 'fixed-deal', 'value-deal'],
-  bogo: ['buy-one-get-one', 'bogo', '2-for-1'],
-  bundle: ['combo', 'bundle-deal', 'package'],
-  flash: ['flash-sale', 'limited-time', 'urgent', 'today-only'],
-};
+// Keep AI Suggest deterministic: tags should come from backend inference (title/description + vendor address).
 
 type LocalDealImage = {
   id: string;
@@ -39,12 +25,15 @@ type LocalDealImage = {
 };
 
 const CreateDeal = () => {
-  const { categories } = usePage().props as any;
+  const { categories, vendorDefaults } = usePage().props as any;
   const { data, setData, processing } = useForm({
     title: '',
     shortDesc: '',
     description: '',
     categoryId: categories?.[0]?.id || '',
+    businessType: vendorDefaults?.businessType ?? '',
+    district: vendorDefaults?.district ?? '',
+    tole: vendorDefaults?.tole ?? '',
     tags: [] as string[],
     basePrice: '',
     maxQuantity: '',
@@ -114,19 +103,72 @@ const CreateDeal = () => {
 
   const generateAITags = useCallback(async () => {
     setIsGeneratingTags(true);
-    await new Promise(r => setTimeout(r, 800));
 
-    const selectedCategory = categories?.find((c: any) => c.id.toString() === data.categoryId.toString());
-    const categorySlug = selectedCategory?.slug || 'food';
-    const catTags = SUGGESTED_TAGS_MAP[categorySlug] || SUGGESTED_TAGS_MAP.food;
-    const typeTags = DEAL_TYPE_TAGS.percentage;
-    const titleWords = data.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const allSuggestions = [...new Set([...typeTags, ...catTags.slice(0, 5), ...titleWords.slice(0, 3)])];
-    const newTags = allSuggestions.filter(t => !data.tags.includes(t));
-    setData('tags', [...new Set([...data.tags, ...newTags])].slice(0, 15));
-    setIsGeneratingTags(false);
-    toast.success(`${newTags.length} AI-suggested tags added.`);
-  }, [data.categoryId, data.title, data.tags, categories]);
+    const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content;
+
+    try {
+      const res = await fetch('/vendor/deals/suggest-metadata', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrf || '',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`AI suggest failed: ${res.status}`);
+
+      const json = await res.json();
+      const suggestion = json?.suggestion;
+
+      if (suggestion?.categoryId) {
+        setData('categoryId', suggestion.categoryId.toString());
+      }
+
+      if (suggestion?.businessType) {
+        setData('businessType', suggestion.businessType);
+      }
+
+      if (suggestion?.district) {
+        setData('district', suggestion.district);
+      }
+
+      if (suggestion?.tole) {
+        setData('tole', suggestion.tole);
+      }
+
+      if (Array.isArray(suggestion?.tags)) {
+        const merged = [...data.tags, ...suggestion.tags].map((t) => t.toString()).map((t) => t.trim()).filter(Boolean);
+        setData('tags', [...new Set(merged)].slice(0, 15));
+      }
+
+      toast.success('AI metadata suggested (tags/category/location).');
+    } catch (e) {
+      // Minimal fallback: add address/business type tags (do not use static chips).
+      const normalize = (v: string) =>
+        v
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '');
+
+      const addressTags = [data.businessType, data.district, data.tole]
+        .filter(Boolean)
+        .map((v) => normalize(v as string))
+        .filter(Boolean);
+
+      setData('tags', [...new Set([...data.tags, ...addressTags])].slice(0, 15));
+      toast.error('AI suggest failed, added only address tags.');
+    } finally {
+      setIsGeneratingTags(false);
+    }
+
+  }, [data.categoryId, data.title, data.description, data.tags, data.businessType, data.district, data.tole]);
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase().replace(/\s+/g, '-');
@@ -181,6 +223,9 @@ const CreateDeal = () => {
     fd.append('locationAddress', data.locationAddress ?? '');
     fd.append('redemptionInstructions', data.redemptionInstructions ?? '');
     fd.append('termsConditions', data.termsConditions ?? '');
+    fd.append('business_type', data.businessType ?? '');
+    fd.append('district', data.district ?? '');
+    fd.append('tole', data.tole ?? '');
     orderedImages.forEach((img, i) => fd.append(`images[${i}]`, img.file));
     fd.append('image_order', JSON.stringify(imageOrder));
     fd.append('featured_image_key', featuredKey);
