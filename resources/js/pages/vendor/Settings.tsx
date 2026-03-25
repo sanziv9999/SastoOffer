@@ -395,21 +395,21 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                             <CardContent className="space-y-6">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="businessName">Business Name</Label>
+                                        <Label htmlFor="businessName">Business Name<span className="text-destructive ml-1">*</span></Label>
                                         <Input 
                                             id="businessName" 
                                             value={data.business_name} 
                                             onChange={e => setData('business_name', e.target.value)} 
                                         />
-                                        {errors.business_name && <p className="text-xs text-red-500">{errors.business_name}</p>}
+                                        {errors.business_name && <p className="text-xs text-red-500 mt-1">{errors.business_name}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="category">Category</Label>
+                                        <Label htmlFor="category">Category<span className="text-destructive ml-1">*</span></Label>
                                         <Select 
                                             value={data.category_id?.toString()} 
                                             onValueChange={val => setData('category_id', val)}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger id="category">
                                                 <SelectValue placeholder="Select Category" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -418,9 +418,10 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {errors.category_id && <p className="text-xs text-red-500 mt-1">{errors.category_id}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Business Type</Label>
+                                        <Label>Business Type<span className="text-destructive ml-1">*</span></Label>
                                         <Select 
                                             value={data.business_type} 
                                             onValueChange={val => setData('business_type', val)}
@@ -434,17 +435,19 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                                                 <SelectItem value="hybrid">Hybrid</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {errors.business_type && <p className="text-xs text-red-500 mt-1">{errors.business_type}</p>}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">About Your Business</Label>
+                                    <Label htmlFor="description">About Your Business<span className="text-destructive ml-1">*</span></Label>
                                     <Textarea
                                         id="description"
                                         className="min-h-[120px]"
                                         value={data.description}
                                         onChange={e => setData('description', e.target.value)}
                                     />
+                                    {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
                                 </div>
 
                                 <Separator />
@@ -494,18 +497,20 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                             <CardContent className="space-y-4">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">Public Contact Email</Label>
+                                        <Label htmlFor="email">Public Contact Email<span className="text-destructive ml-1">*</span></Label>
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input id="email" className="pl-9" value={data.public_email} onChange={e => setData('public_email', e.target.value)} />
                                         </div>
+                                        {errors.public_email && <p className="text-xs text-red-500 mt-1">{errors.public_email}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Public Phone Number</Label>
+                                        <Label htmlFor="phone">Public Phone Number<span className="text-destructive ml-1">*</span></Label>
                                         <div className="relative">
                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input id="phone" className="pl-9" value={data.public_phone} onChange={e => setData('public_phone', e.target.value)} />
                                         </div>
+                                        {errors.public_phone && <p className="text-xs text-red-500 mt-1">{errors.public_phone}</p>}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -531,12 +536,12 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                             <CardContent className="space-y-6">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="province">Province</Label>
+                                        <Label htmlFor="province">Province<span className="text-destructive ml-1">*</span></Label>
                                         <Select
                                             value={data.province}
                                             onValueChange={(val) => setData('province', val)}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger id="province">
                                                 <SelectValue placeholder="Select province" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -549,28 +554,31 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                                                 <SelectItem value="sudurpashchim">Sudurpashchim</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {errors.province && <p className="text-xs text-red-500 mt-1">{errors.province}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="district">District</Label>
+                                        <Label htmlFor="district">District<span className="text-destructive ml-1">*</span></Label>
                                         <Input
                                             id="district"
                                             placeholder="e.g. Kathmandu"
                                             value={data.district}
                                             onChange={(e) => setData('district', e.target.value)}
                                         />
+                                        {errors.district && <p className="text-xs text-red-500 mt-1">{errors.district}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="local_level">Municipality / Rural Municipality</Label>
+                                        <Label htmlFor="local_level">Municipality / Rural Municipality<span className="text-destructive ml-1">*</span></Label>
                                         <Input
                                             id="local_level"
                                             placeholder="e.g. Kathmandu Metropolitan City"
                                             value={data.municipality}
                                             onChange={(e) => setData('municipality', e.target.value)}
                                         />
+                                        {errors.municipality && <p className="text-xs text-red-500 mt-1">{errors.municipality}</p>}
                                     </div>
                                     <div className="space-y-2 flex gap-4">
                                         <div className="flex-1 space-y-2">
-                                            <Label htmlFor="ward">Ward No.</Label>
+                                            <Label htmlFor="ward">Ward No.<span className="text-destructive ml-1">*</span></Label>
                                             <Input
                                                 id="ward"
                                                 type="number"
@@ -578,15 +586,17 @@ const VendorSettings = ({ vendorProfile, primaryCategories }: {
                                                 value={data.ward_no}
                                                 onChange={(e) => setData('ward_no', e.target.value)}
                                             />
+                                            {errors.ward_no && <p className="text-xs text-red-500 mt-1">{errors.ward_no}</p>}
                                         </div>
                                         <div className="flex-[2] space-y-2">
-                                            <Label htmlFor="tole">Tole / Street</Label>
+                                            <Label htmlFor="tole">Tole / Street<span className="text-destructive ml-1">*</span></Label>
                                             <Input
                                                 id="tole"
                                                 placeholder="e.g. Thamel"
                                                 value={data.tole}
                                                 onChange={(e) => setData('tole', e.target.value)}
                                             />
+                                            {errors.tole && <p className="text-xs text-red-500 mt-1">{errors.tole}</p>}
                                         </div>
                                     </div>
                                 </div>

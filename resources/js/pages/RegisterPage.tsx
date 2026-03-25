@@ -127,7 +127,7 @@ const RegisterPage = () => {
                 {errors.role && <p className="text-xs text-destructive">{errors.role}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium">Name</label>
+                <label htmlFor="name" className="text-sm font-medium">Name<span className="text-destructive ml-1">*</span></label>
                 <Input
                   id="name"
                   type="text"
@@ -140,7 +140,7 @@ const RegisterPage = () => {
                 {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">Email</label>
+                <label htmlFor="email" className="text-sm font-medium">Email<span className="text-destructive ml-1">*</span></label>
                 <Input
                   id="email"
                   type="email"
@@ -153,7 +153,7 @@ const RegisterPage = () => {
                 {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">Password</label>
+                <label htmlFor="password" className="text-sm font-medium">Password<span className="text-destructive ml-1">*</span></label>
                 <Input
                   id="password"
                   type="password"
@@ -166,7 +166,7 @@ const RegisterPage = () => {
                 {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="password_confirmation" className="text-sm font-medium">Confirm Password</label>
+                <label htmlFor="password_confirmation" className="text-sm font-medium">Confirm Password<span className="text-destructive ml-1">*</span></label>
                 <Input
                   id="password_confirmation"
                   type="password"
