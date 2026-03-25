@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Deal;
 use App\Models\Category;
 use App\Models\DealOfferType;
+use App\Models\Address;
+use Illuminate\Support\Str;
 
 class PageController extends Controller
 {
@@ -124,12 +126,107 @@ class PageController extends Controller
         $reqMinPrice = $request->query('minPrice');
         $reqMaxPrice = $request->query('maxPrice');
 
-        // Normalize keyword for matching tags saved in `deals.highlights` (JSON array of kebab-case strings).
-        $tagNeedle = '';
+        // Tokenize keyword for matching highlights saved in `deals.highlights` (JSON array of kebab-case strings).
+        // Example: "event ticket near Kathmandu" should match:
+        // - highlight tokens: "event", "ticket", "kathmandu", ...
+        // - district/location inference: "kathmandu"
+        $wordTokens = []; // tokens for title/description matching
+        $tagTokens = []; // potential highlight values (kebab-case)
+        $locationTokens = []; // candidate district tokens for location inference
+
         if (is_string($query) && trim($query) !== '') {
-            $tagNeedle = mb_strtolower(trim($query));
-            $tagNeedle = preg_replace('/[^a-z0-9]+/u', '-', $tagNeedle);
-            $tagNeedle = trim((string) $tagNeedle, '-');
+            $q = mb_strtolower(trim($query));
+
+            // Keep only letters/numbers; split on anything else.
+            $rawTokens = preg_split('/[^\p{L}\p{N}]+/u', $q, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+            // Lightweight stopwords to avoid generating noisy location/tag tokens.
+            $stopwords = [
+                'and', 'or', 'the', 'a', 'an', 'near', 'around', 'nearby',
+                'for', 'with', 'without', 'of', 'to', 'in', 'at', 'from',
+            ];
+
+            $wordTokens = array_values(array_filter($rawTokens, function ($t) use ($stopwords) {
+                $t = trim((string) $t);
+                if ($t === '' || in_array($t, $stopwords, true)) return false;
+                // Too short tokens create lots of false matches.
+                return mb_strlen($t) >= 3;
+            }));
+
+            // Convert whole query into kebab-case (helps when highlights are multiword kebab strings).
+            $kebabQuery = Str::slug($q);
+
+            // Add each token and common n-gram kebab strings as highlight candidates.
+            $tagWordTokens = array_values(array_unique(array_filter(array_map(fn ($t) => Str::slug($t), $wordTokens), fn ($t) => $t !== '')));
+            $tagTokens = $tagWordTokens;
+            if ($kebabQuery !== '') {
+                $tagTokens[] = $kebabQuery;
+            }
+
+            $maxNgrams = 3; // "kathmandu metropolitan city" -> "kathmandu-metropolitan-city"
+            $maxTagCandidates = 10;
+            for ($n = 2; $n <= $maxNgrams; $n++) {
+                for ($i = 0; $i + $n <= count($tagWordTokens); $i++) {
+                    $candidate = implode('-', array_slice($tagWordTokens, $i, $n));
+                    if ($candidate !== '') $tagTokens[] = $candidate;
+                    if (count($tagTokens) >= $maxTagCandidates) break 2;
+                }
+            }
+
+            $tagTokens = array_values(array_unique(array_filter($tagTokens, fn ($t) => $t !== '')));
+
+            // For location inference (district/city), use only "long enough" tokens.
+            $locationTokens = array_values(array_unique(array_filter($tagWordTokens, function ($t) {
+                return mb_strlen($t) >= 4; // avoid too generic location tokens
+            })));
+        }
+
+        // If user typed location words inside the search query (e.g. "near Kathmandu"),
+        // infer matching districts automatically when no explicit location filter is chosen.
+        if (count($locationSlugs) === 0 && count($locationTokens) > 0) {
+            $lowerLocationTokens = array_map('mb_strtolower', $locationTokens);
+            $placeholders = implode(',', array_fill(0, count($lowerLocationTokens), '?'));
+
+            $inferredDistricts = Address::query()
+                ->select('district')
+                ->whereRaw("LOWER(district) IN ({$placeholders})", $lowerLocationTokens)
+                ->distinct()
+                ->pluck('district')
+                ->all();
+
+            if (!empty($inferredDistricts)) {
+                $locationSlugs = array_map('trim', array_values(array_unique($inferredDistricts)));
+            } else {
+                // Fallback: partial match when user provides only "Kathmandu" but district is stored as
+                // "Kathmandu Metropolitan City" (exact `IN` would fail).
+                $likeTokens = array_slice($lowerLocationTokens, 0, 3); // keep it cheap
+                $inferredDistricts = Address::query()
+                    ->select('district')
+                    ->where(function ($aq) use ($likeTokens) {
+                        foreach ($likeTokens as $lt) {
+                            if ($lt === '') continue;
+                            $aq->orWhereRaw('LOWER(district) LIKE ?', ['%' . $lt . '%']);
+                        }
+                    })
+                    ->distinct()
+                    ->pluck('district')
+                    ->all();
+
+                if (!empty($inferredDistricts)) {
+                    $locationSlugs = array_map('trim', array_values(array_unique($inferredDistricts)));
+                }
+            }
+        }
+
+        // If the query contained a location word, also add inferred districts as highlight candidates.
+        if (count($locationSlugs) > 0) {
+            foreach ($locationSlugs as $dl) {
+                $dl = mb_strtolower(trim((string) $dl));
+                $dl = preg_replace('/[^a-z0-9]+/u', '-', $dl);
+                $dl = trim((string) $dl, '-');
+                if ($dl !== '') $tagTokens[] = $dl;
+            }
+            $tagTokens = array_values(array_unique(array_filter($tagTokens, fn ($t) => $t !== '')));
         }
 
         $offerQuery = DealOfferType::query()
@@ -141,16 +238,32 @@ class PageController extends Controller
                 'displayTypes',
             ])
             ->where('status', 'active')
-            ->whereHas('deal', function ($q) use ($query, $tagNeedle, $subSlug, $categorySlugs, $locationSlugs) {
-                $q->when($query !== '', function ($qq) use ($query, $tagNeedle) {
-                    $qq->where(function ($w) use ($query, $tagNeedle) {
+            ->whereHas('deal', function ($q) use ($query, $wordTokens, $tagTokens, $subSlug, $categorySlugs, $locationSlugs) {
+                $q->when(is_string($query) && trim($query) !== '' && (count($wordTokens) > 0 || count($tagTokens) > 0), function ($qq) use ($query, $wordTokens, $tagTokens) {
+                    $qq->where(function ($w) use ($query, $wordTokens, $tagTokens) {
+                        // Keep full-phrase matching as a broad recall boost.
                         $w->where('title', 'like', '%' . $query . '%')
                             ->orWhere('short_description', 'like', '%' . $query . '%')
                             ->orWhere('long_description', 'like', '%' . $query . '%');
 
-                        // Match keyword against highlight tags (stored as JSON array).
-                        if ($tagNeedle !== '') {
-                            $w->orWhereRaw("JSON_CONTAINS(deals.highlights, JSON_QUOTE(?))", [$tagNeedle]);
+                        // Then match per-token to reduce "no results" for sentence searches.
+                        foreach ($wordTokens as $token) {
+                            $token = trim((string) $token);
+                            if ($token === '') continue;
+
+                            $w->orWhere(function ($tw) use ($token) {
+                                $like = '%' . $token . '%';
+                                $tw->where('title', 'like', $like)
+                                    ->orWhere('short_description', 'like', $like)
+                                    ->orWhere('long_description', 'like', $like);
+                            });
+                        }
+
+                        // And match against highlight tags (JSON array of kebab-case strings).
+                        foreach ($tagTokens as $tagToken) {
+                            $tagToken = trim((string) $tagToken);
+                            if ($tagToken === '') continue;
+                            $w->orWhereRaw("JSON_CONTAINS(deals.highlights, JSON_QUOTE(?))", [$tagToken]);
                         }
                     });
                 })
