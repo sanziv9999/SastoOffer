@@ -24,17 +24,19 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # Step 1: Deploy everything except public folder to root
+      # Step 1: Deploy Laravel root files (excluding public)
       - name: Deploy Laravel root files
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          local-dir: ./        # Laravel root
-          server-dir: /        # FTP root
+          protocol: sftp             # Use SFTP for reliability
+          port: 22
+          local-dir: ./              # Laravel project root
+          server-dir: /home/sastooffer
           exclude: |
-            public/**         # exclude public folder
+            public/**
 
       # Step 2: Deploy public folder contents to public_html
       - name: Deploy public folder
@@ -43,5 +45,7 @@ jobs:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          local-dir: ./public  # only public folder
-          server-dir: /public_html
+          protocol: sftp
+          port: 22
+          local-dir: ./public
+          server-dir: /home/sastooffer/public_html
