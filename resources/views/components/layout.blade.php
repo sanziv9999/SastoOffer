@@ -89,10 +89,14 @@
                         return { success: true };
                     }
 
-                    this.$root.showToast('error', this.getErrorMessage(data));
+                    window.dispatchEvent(new CustomEvent('sasto-toast', {
+                        detail: { type: 'error', message: this.getErrorMessage(data) }
+                    }));
                     return { success: false, message: this.getErrorMessage(data) };
                 } catch (e) {
-                    this.$root.showToast('error', 'Could not add this item to cart. Please try again.');
+                    window.dispatchEvent(new CustomEvent('sasto-toast', {
+                        detail: { type: 'error', message: 'Could not add this item to cart. Please try again.' }
+                    }));
                     return { success: false };
                 }
             },
@@ -110,7 +114,9 @@
                     this.total = data.cartTotal;
                     this.count = data.cartCount;
                 } else {
-                    this.$root.showToast('error', this.getErrorMessage(data, 'Could not remove this item. Please try again.'));
+                    window.dispatchEvent(new CustomEvent('sasto-toast', {
+                        detail: { type: 'error', message: this.getErrorMessage(data, 'Could not remove this item. Please try again.') }
+                    }));
                 }
             },
             async updateQty(itemId, newQty) {
@@ -136,9 +142,13 @@
                         return;
                     }
 
-                    this.$root.showToast('error', this.getErrorMessage(data));
+                    window.dispatchEvent(new CustomEvent('sasto-toast', {
+                        detail: { type: 'error', message: this.getErrorMessage(data) }
+                    }));
                 } catch (e) {
-                    this.$root.showToast('error', 'Could not update quantity. Please try again.');
+                    window.dispatchEvent(new CustomEvent('sasto-toast', {
+                        detail: { type: 'error', message: 'Could not update quantity. Please try again.' }
+                    }));
                 }
             }
         },
@@ -175,6 +185,7 @@
             });
         }
     }"
+    x-init="window.addEventListener('sasto-toast', (e) => { showToast(e.detail.type, e.detail.message) })"
 >
     <div class="min-h-screen flex flex-col">
         <div class="fixed top-0 left-0 right-0 z-50">
