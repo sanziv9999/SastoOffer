@@ -3,29 +3,45 @@ on:
   push:
     branches:
       - main
+
 jobs:
-  FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+  deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.1.0
-      with:
-        fetch-depth: 2 
-    - name: Build assets
-      run: npm install && npm run build
+      - uses: actions/checkout@v2.1.0
+        with:
+          fetch-depth: 2
 
-    - name: Install PHP and Composer
-      uses: shivammathur/setup-php@v2
-      with:
-          php-version: '8.4' # Adjust to match the PHP version used by your Laravel project
+      - name: Build assets
+        run: npm install && npm run build
+
+      - name: Install PHP and Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
           tools: 'composer'
 
-    - name: Install PHP dependencies
-      run: composer install --no-dev --optimize-autoloader
-        
-    - name: FTP-Deploy-Action
-      uses: SamKirkland/FTP-Deploy-Action@4.3.3
-      with:
-        server: ${{ secrets.SERVER }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      # Step 1: Deploy everything except public folder to root
+      - name: Deploy Laravel root files
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.SERVER }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          local-dir: ./        # Laravel root
+          server-dir: /        # FTP root
+          exclude: |
+            public/**         # exclude public folder
+
+      # Step 2: Deploy public folder contents to public_html
+      - name: Deploy public folder
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.SERVER }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          local-dir: ./public  # only public folder
+          server-dir: /public_html
