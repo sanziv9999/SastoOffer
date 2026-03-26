@@ -1,4 +1,4 @@
-@props(['categories', 'locations' => [], 'currentCategory', 'currentLocation' => '', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'isMobile' => false])
+@props(['categories', 'locations' => [], 'currentCategory', 'currentLocation' => '', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'minRating' => null, 'isMobile' => false])
 
 <div
     class="{{ $isMobile ? 'space-y-6' : 'bg-card shadow-sm rounded-lg p-5 sticky top-20 border' }}"
@@ -12,6 +12,7 @@
         if (typeof selectedLocations === 'undefined') selectedLocations = @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []);
         if (typeof dealTypes === 'undefined') dealTypes = @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []);
         if (typeof isFeatured === 'undefined') isFeatured = {{ $isFeatured ? 'true' : 'false' }};
+        if (typeof minRating === 'undefined') minRating = {{ $minRating ?: 'null' }};
         if (typeof searchQuery === 'undefined') searchQuery = '';
     "
 >
@@ -280,6 +281,38 @@
         </div>
     </div>
     @endif
+
+    {{-- Customer Rating --}}
+    <div x-data="{ open: true }" class="border-b">
+        <button
+            @click="open = !open"
+            class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
+        >
+            Customer Rating
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
+            <div class="space-y-1">
+                @foreach([4, 3, 2] as $stars)
+                    <button 
+                        @click="minRating = (minRating == {{ $stars }} ? null : {{ $stars }}); debouncedApplyFilters()"
+                        class="flex items-center w-full gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors group"
+                        :class="minRating == {{ $stars }} ? 'bg-accent text-primary' : 'text-muted-foreground'"
+                    >
+                        <div class="flex items-center text-yellow-500">
+                            @for($i = 0; $i < 5; $i++)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="{{ $stars > $i ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="w-3.5 h-3.5"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            @endfor
+                        </div>
+                        <span class="text-xs font-semibold">& Up</span>
+                        <div x-show="minRating == {{ $stars }}" class="ml-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="h-3 w-3"><path d="M20 6 9 17l-5-5"></path></svg>
+                        </div>
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
 
     {{-- Options --}}
     <div x-data="{ open: true }" class="border-b">

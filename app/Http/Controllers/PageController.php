@@ -145,6 +145,7 @@ class PageController extends Controller
             : [];
         $reqMinPrice = $request->query('minPrice');
         $reqMaxPrice = $request->query('maxPrice');
+        $minRating   = $request->query('minRating');
 
         // Tokenize keyword for matching highlights saved in `deals.highlights` (JSON array of kebab-case strings).
         // Example: "event ticket near Kathmandu" should match:
@@ -389,11 +390,16 @@ class PageController extends Controller
         $groupedByDeal = [];
         $dealOrder = [];
         
-        $mappedOffers->filter(function ($offer) use ($reqMinPrice, $reqMaxPrice, $availableMinPrice, $availableMaxPrice) {
+        $mappedOffers->filter(function ($offer) use ($reqMinPrice, $reqMaxPrice, $availableMinPrice, $availableMaxPrice, $minRating) {
             $minPrice = $reqMinPrice !== null ? (int) $reqMinPrice : $availableMinPrice;
             $maxPrice = $reqMaxPrice !== null ? (int) $reqMaxPrice : $availableMaxPrice;
             $price = $offer['discountedPrice'] ?? 0;
-            return $price >= $minPrice && $price <= $maxPrice;
+            $rating = $offer['vendorRating'] ?? 0;
+
+            $passPrice = ($price >= $minPrice && $price <= $maxPrice);
+            $passRating = ($minRating === null || $minRating === '' || $rating >= (float)$minRating);
+
+            return $passPrice && $passRating;
         })->each(function ($offer) use (&$groupedByDeal, &$dealOrder) {
             $dealId = $offer['dealId'] ?? null;
             if (!$dealId) {
@@ -519,6 +525,7 @@ class PageController extends Controller
             'dealType'        => $typeParam,
             'minPrice'          => $minPrice,
             'maxPrice'          => $maxPrice,
+            'minRating'         => $minRating,
             'availableMinPrice' => $availableMinPrice,
             'availableMaxPrice' => $availableMaxPrice,
             'sortByOptions'     => $sortByOptions,
