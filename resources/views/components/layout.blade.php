@@ -185,7 +185,7 @@
             });
         }
     }"
-    x-init="window.addEventListener('sasto-toast', (e) => { showToast(e.detail.type, e.detail.message) })"
+    x-init="window.addEventListener('sasto-toast', (e) => { $data.showToast(e.detail.type, e.detail.message) })"
 >
     <div class="min-h-screen flex flex-col">
         <div class="fixed top-0 left-0 right-0 z-50">

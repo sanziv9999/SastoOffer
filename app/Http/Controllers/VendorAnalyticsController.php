@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\ActivityMailer;
 use App\Services\FirstXCustomerOfferService;
+use App\Services\DealInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -207,7 +208,7 @@ class VendorAnalyticsController extends Controller
         $previousStatus = $order->status;
         $newStatus = $data['status'];
 
-        DB::transaction(function () use ($order, $newStatus) {
+        DB::transaction(function () use ($order, $newStatus, $previousStatus) {
             $order->status = $newStatus;
             if ($newStatus === 'paid' && ! $order->paid_at) {
                 $order->paid_at = now();
@@ -217,6 +218,9 @@ class VendorAnalyticsController extends Controller
             if ($newStatus === 'fulfilled') {
                 app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
             }
+
+            // Inventory lifecycle for the underlying deal.
+            app(DealInventoryService::class)->syncForOrderStatusChange($order, $previousStatus, $newStatus);
         });
 
         if ($previousStatus !== $newStatus) {
