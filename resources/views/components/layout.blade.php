@@ -29,6 +29,16 @@
     class="font-sans antialiased bg-muted/30"
     x-data="{ 
         wishlistedIds: {{ auth()->check() ? json_encode(auth()->user()->wishlist()->pluck('deal_id')->toArray()) : '[]' }},
+        toasts: [],
+        showToast(type, message) {
+            const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const t = { id, type, message: String(message || '') };
+            this.toasts.unshift(t);
+            this.toasts = this.toasts.slice(0, 3);
+            window.setTimeout(() => {
+                this.toasts = this.toasts.filter(x => x.id !== id);
+            }, 3500);
+        },
         cart: {
             items: [],
             count: {{ auth()->check() ? auth()->user()->cartItems()->count() : 0 }},
@@ -79,10 +89,10 @@
                         return { success: true };
                     }
 
-                    alert(this.getErrorMessage(data));
+                    this.$root.showToast('error', this.getErrorMessage(data));
                     return { success: false, message: this.getErrorMessage(data) };
                 } catch (e) {
-                    alert('Could not add this item to cart. Please try again.');
+                    this.$root.showToast('error', 'Could not add this item to cart. Please try again.');
                     return { success: false };
                 }
             },
@@ -100,7 +110,7 @@
                     this.total = data.cartTotal;
                     this.count = data.cartCount;
                 } else {
-                    alert(this.getErrorMessage(data, 'Could not remove this item. Please try again.'));
+                    this.$root.showToast('error', this.getErrorMessage(data, 'Could not remove this item. Please try again.'));
                 }
             },
             async updateQty(itemId, newQty) {
@@ -126,9 +136,9 @@
                         return;
                     }
 
-                    alert(this.getErrorMessage(data));
+                    this.$root.showToast('error', this.getErrorMessage(data));
                 } catch (e) {
-                    alert('Could not update quantity. Please try again.');
+                    this.$root.showToast('error', 'Could not update quantity. Please try again.');
                 }
             }
         },
@@ -179,6 +189,19 @@
         </main>
 
         <x-footer />
+
+        {{-- Toasts (Alpine-only) --}}
+        <div class="fixed top-24 right-4 z-[200] space-y-2 max-w-[320px] pointer-events-none">
+            <template x-for="t in toasts" :key="t.id">
+                <div
+                    class="pointer-events-auto rounded-xl border px-4 py-3 shadow-lg bg-white"
+                    :class="t.type === 'error' ? 'border-red-200/80' : 'border-green-200/80'"
+                >
+                    <div class="text-sm font-semibold" x-text="t.type === 'error' ? 'Error' : 'Success'"></div>
+                    <div class="text-xs mt-1 opacity-90" x-text="t.message"></div>
+                </div>
+            </template>
+        </div>
         
         {{-- Mobile: Category Drawer + Bottom Nav (md:hidden) --}}
         {{-- Category slide-out drawer --}}
