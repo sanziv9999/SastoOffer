@@ -102,9 +102,9 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                   </td>
                   <td className="p-4 align-middle">
                     <div className="text-sm text-muted-foreground">
-                      {deal.maxQuantity ? (
+                      {deal.maxQuantity !== null && deal.maxQuantity !== undefined ? (
                         <span className="text-foreground">
-                          {Math.min(Number(deal.quantitySold || 0), Number(deal.maxQuantity))}/{deal.maxQuantity}
+                          {Number(deal.quantitySold || 0)}/{Number(deal.quantitySold || 0) + Number(deal.maxQuantity)}
                         </span>
                       ) : (
                         <span className="text-foreground">Unlimited</span>

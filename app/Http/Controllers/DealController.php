@@ -774,10 +774,27 @@ class DealController extends Controller
             'base_price' => isset($data['basePrice']) && $data['basePrice'] !== '' ? (float) $data['basePrice'] : $deal->base_price,
             'short_description' => $data['shortDesc'] ?? $deal->short_description,
             'long_description' => $data['description'] ?? $deal->long_description,
+            // `total_inventory` here is the *remaining* quantity.
+            // UI may display sold vs sold+remaining (total capacity).
             'total_inventory' => ! empty($data['maxQuantity']) ? (int) $data['maxQuantity'] : null,
             'highlights' => is_array($data['tags'] ?? []) ? ($data['tags'] ?? []) : [],
             'status' => $data['status'] ?? $deal->status,
         ]);
+
+        // If vendor restocked after sell-out, re-enable offers that were marked completed due to inventory.
+        if ($deal->total_inventory !== null && (int) $deal->total_inventory > 0) {
+            DealOfferType::query()
+                ->where('deal_id', $deal->id)
+                ->where('status', 'completed')
+                ->update([
+                    'status' => DB::raw("CASE
+                        WHEN ends_at IS NULL THEN 'active'
+                        WHEN ends_at > NOW() THEN 'active'
+                        ELSE 'expired'
+                    END"),
+                    'updated_at' => now(),
+                ]);
+        }
 
         // Persist suggested business metadata so searching can use it later.
         if ($vendor) {
