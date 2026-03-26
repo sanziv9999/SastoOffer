@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CartItem;
 use App\Models\DealOfferType;
+use App\Models\OfferType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -45,17 +46,34 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
+        $offerPivot = DealOfferType::with('offerType')->findOrFail((int) $request->offerPivotId);
+        $isFirstXOffer = $this->isFirstXCustomersOffer($offerPivot);
+        $requestedQty = (int) $request->quantity;
+
+        if ($isFirstXOffer && $requestedQty > 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This is a limited first-X offer. You can order only 1 quantity for this offer.'
+            ], 422);
+        }
+
         $cartItem = CartItem::where('user_id', auth()->id())
             ->where('deal_offer_type_id', $request->offerPivotId)
             ->first();
 
         if ($cartItem) {
-            $cartItem->increment('quantity', $request->quantity);
+            if ($isFirstXOffer) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'This is a limited first-X offer. You can order only 1 quantity for this offer.'
+                ], 422);
+            }
+            $cartItem->increment('quantity', $requestedQty);
         } else {
             $cartItem = CartItem::create([
                 'user_id' => auth()->id(),
                 'deal_offer_type_id' => $request->offerPivotId,
-                'quantity' => $request->quantity
+                'quantity' => $requestedQty
             ]);
         }
 
@@ -73,7 +91,19 @@ class CartController extends Controller
         }
 
         $request->validate(['quantity' => 'required|integer|min:1']);
-        $cartItem->update(['quantity' => $request->quantity]);
+
+        $cartItem->loadMissing('offerType.offerType');
+        $isFirstXOffer = $this->isFirstXCustomersOffer($cartItem->offerType);
+        $requestedQty = (int) $request->quantity;
+
+        if ($isFirstXOffer && $requestedQty > 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This is a limited first-X offer. You can order only 1 quantity for this offer.'
+            ], 422);
+        }
+
+        $cartItem->update(['quantity' => $requestedQty]);
 
         return response()->json([
             'status' => 'success',
@@ -136,5 +166,28 @@ class CartController extends Controller
             'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer',
             'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]) . '?offer=' . $pivot->id,
         ];
+    }
+
+    private function isFirstXCustomersOffer(?DealOfferType $pivot): bool
+    {
+        if (! $pivot) {
+            return false;
+        }
+
+        $offerType = $pivot->offerType;
+        if (! $offerType instanceof OfferType) {
+            return false;
+        }
+
+        $rule = $offerType->calculation_rule;
+        if (is_string($rule)) {
+            $rule = json_decode($rule, true) ?: [];
+        }
+        if (! is_array($rule)) {
+            return false;
+        }
+
+        $availability = $rule['availability'] ?? null;
+        return is_array($availability) && (($availability['mode'] ?? null) === 'first_x_customers');
     }
 }

@@ -35,6 +35,12 @@
             total: 0,
             loading: false,
             isOpen: false,
+            getErrorMessage(data, fallback = 'Could not update cart. Please try again.') {
+                if (!data) return fallback;
+                if (typeof data.message === 'string' && data.message.trim() !== '') return data.message;
+                if (typeof data.error === 'string' && data.error.trim() !== '') return data.error;
+                return fallback;
+            },
             async fetchSummary() {
                 if (this.loading) return;
                 // Only show loading spinner if we don't have items yet
@@ -51,22 +57,33 @@
             async addItem(pivotId, qty = 1) {
                 if (!{{ auth()->check() ? 'true' : 'false' }}) {
                     window.location.href = '/login';
-                    return;
+                    return { success: false };
                 }
-                const res = await fetch('/cart/add', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ offerPivotId: pivotId, quantity: qty })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    this.count = data.cartCount;
-                    this.isOpen = true; // Open the mini cart to show it was added
-                    this.fetchSummary();
+
+                try {
+                    const res = await fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ offerPivotId: pivotId, quantity: qty })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        this.count = data.cartCount;
+                        this.isOpen = true; // Open the mini cart to show it was added
+                        this.fetchSummary();
+                        return { success: true };
+                    }
+
+                    alert(this.getErrorMessage(data));
+                    return { success: false, message: this.getErrorMessage(data) };
+                } catch (e) {
+                    alert('Could not add this item to cart. Please try again.');
+                    return { success: false };
                 }
             },
             async removeItem(itemId) {
@@ -82,25 +99,36 @@
                     this.items = this.items.filter(i => i.id !== itemId);
                     this.total = data.cartTotal;
                     this.count = data.cartCount;
+                } else {
+                    alert(this.getErrorMessage(data, 'Could not remove this item. Please try again.'));
                 }
             },
             async updateQty(itemId, newQty) {
                 if (newQty < 1) return;
-                const res = await fetch(`/cart/${itemId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ quantity: newQty })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    const item = this.items.find(i => i.id === itemId);
-                    if (item) item.quantity = newQty;
-                    this.total = data.cartTotal;
-                    this.count = data.cartCount;
+
+                try {
+                    const res = await fetch(`/cart/${itemId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ quantity: newQty })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        const item = this.items.find(i => i.id === itemId);
+                        if (item) item.quantity = newQty;
+                        this.total = data.cartTotal;
+                        this.count = data.cartCount;
+                        return;
+                    }
+
+                    alert(this.getErrorMessage(data));
+                } catch (e) {
+                    alert('Could not update quantity. Please try again.');
                 }
             }
         },

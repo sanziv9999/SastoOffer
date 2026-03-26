@@ -13,8 +13,9 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ImageIcon, Package, ExternalLink } from 'lucide-react';
 
-const toUIType = (offerTypeName: string): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' => {
+const toUIType = (offerTypeName: string): 'percentage' | 'fixed' | 'bogo' | 'flash' | 'bundle' | 'first_x' => {
   if (offerTypeName === 'percentage_discount') return 'percentage';
+  if (offerTypeName === 'first_x_customers_percentage_discount') return 'first_x';
   if (offerTypeName === 'fixed_amount_discount') return 'fixed';
   if (offerTypeName === 'bogo') return 'bogo';
   if (offerTypeName === 'flash_sale') return 'flash';
@@ -102,6 +103,7 @@ const DealOffers = () => {
     // simplified params
     discount_percent: '',
     offer_price: '',
+    first_x_customers: '',
   });
 
   const selectedOfferType = offerTypesById.get(Number(data.offer_type_id));
@@ -117,6 +119,7 @@ const DealOffers = () => {
     ends_at: '',
     discount_percent: '',
     offer_price: '',
+    first_x_customers: '',
   });
 
   const editingOfferType = offerTypesById.get(Number(editData.offer_type_id));
@@ -126,6 +129,14 @@ const DealOffers = () => {
     if (uiType === 'percentage') {
       const pct = Number(data.discount_percent || 0);
       return { discount_percent: pct };
+    }
+    if (uiType === 'first_x') {
+      const pct = Number(data.discount_percent || 0);
+      const firstX = Number(data.first_x_customers || 0);
+      return {
+        discount_percent: pct,
+        first_x_customers: firstX,
+      };
     }
     if (uiType === 'fixed' || uiType === 'flash' || uiType === 'bundle') {
       const offerPrice = Number(data.offer_price || 0);
@@ -142,6 +153,14 @@ const DealOffers = () => {
     if (editingUiType === 'percentage') {
       const pct = Number(editData.discount_percent || 0);
       return { discount_percent: pct };
+    }
+    if (editingUiType === 'first_x') {
+      const pct = Number(editData.discount_percent || 0);
+      const firstX = Number(editData.first_x_customers || 0);
+      return {
+        discount_percent: pct,
+        first_x_customers: firstX,
+      };
     }
     if (editingUiType === 'fixed' || editingUiType === 'flash' || editingUiType === 'bundle') {
       const offerPrice = Number(editData.offer_price || 0);
@@ -165,7 +184,7 @@ const DealOffers = () => {
       },
       onSuccess: () => {
         toast.success('Offer added.');
-        reset('discount_percent', 'offer_price');
+        reset('discount_percent', 'offer_price', 'first_x_customers');
       },
     } as any);
   };
@@ -177,6 +196,7 @@ const DealOffers = () => {
 
     // Derive edit field values from pivot:
     const discountPercent = getPivotParamNumber(pivot, 'discount_percent');
+    const firstXCustomers = getPivotParamNumber(pivot, 'first_x_customers');
     const finalPrice = pivot?.final_price != null ? Number(pivot.final_price) : null;
 
     setEditingOfferTypeId(offerTypeId);
@@ -188,6 +208,7 @@ const DealOffers = () => {
       starts_at: (pivot?.starts_at ?? '').toString(),
       ends_at: (pivot?.ends_at ?? '').toString(),
       discount_percent: ui === 'percentage' && discountPercent != null ? String(discountPercent) : '',
+      first_x_customers: ui === 'first_x' && firstXCustomers != null ? String(firstXCustomers) : '',
       offer_price: (ui === 'fixed' || ui === 'flash' || ui === 'bundle') && finalPrice != null ? String(finalPrice) : '',
     } as any);
   };
@@ -509,6 +530,31 @@ const DealOffers = () => {
                       </div>
                     )}
 
+                    {editingUiType === 'first_x' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Discount percent (%)</Label>
+                          <Input
+                            type="number"
+                            value={editData.discount_percent}
+                            onChange={(e) => setEditData('discount_percent', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>First X users</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={editData.first_x_customers}
+                            onChange={(e) => setEditData('first_x_customers', e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Only the first N fulfilled customers get this discount.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {(editingUiType === 'fixed' || editingUiType === 'flash' || editingUiType === 'bundle') && (
                       <div className="space-y-2">
                         <Label>Offer price (Rs.)</Label>
@@ -611,6 +657,31 @@ const DealOffers = () => {
                   value={data.discount_percent}
                   onChange={(e) => setData('discount_percent', e.target.value)}
                 />
+              </div>
+            )}
+
+            {uiType === 'first_x' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Discount percent (%)</Label>
+                  <Input
+                    type="number"
+                    value={data.discount_percent}
+                    onChange={(e) => setData('discount_percent', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>First X users</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={data.first_x_customers}
+                    onChange={(e) => setData('first_x_customers', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Offer will expire after these many fulfilled customers.
+                  </p>
+                </div>
               </div>
             )}
 

@@ -125,6 +125,26 @@ class DealSeeder extends Seeder
                     'ends_at' => now()->addDays(15),
                 ],
             ],
+            [
+                'title' => 'First 3 Customers: 25% Off Select Orders',
+                'short_description' => 'पहिलो ३ ग्राहकलाई २५% छुट',
+                'long_description' => 'पहिलो ३ ग्राहकले २५% छुट पाउनेछन्। त्यसपछि यो अफर स्वतः एक्सपायर हुनेछ।',
+                'highlights' => ['Limited to 3 customers', 'Instant discount', 'Valid for a short time'],
+                'total_inventory' => 60,
+                'is_featured' => true,
+                'offer_type_name' => 'first_x_customers_percentage_discount',
+                'pivot' => [
+                    'original_price' => 2000.00,
+                    'params' => [
+                        'first_x_customers' => 3,
+                        'discount_percent' => 25,
+                    ],
+                    'currency_code' => 'NPR',
+                    'status' => 'active',
+                    'starts_at' => now(),
+                    'ends_at' => now()->addDays(7),
+                ],
+            ],
         ];
 
         $created = 0;

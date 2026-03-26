@@ -6,8 +6,10 @@ use App\Models\Deal;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\ActivityMailer;
+use App\Services\FirstXCustomerOfferService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class VendorAnalyticsController extends Controller
 {
@@ -205,11 +207,17 @@ class VendorAnalyticsController extends Controller
         $previousStatus = $order->status;
         $newStatus = $data['status'];
 
-        $order->status = $newStatus;
-        if ($newStatus === 'paid' && ! $order->paid_at) {
-            $order->paid_at = now();
-        }
-        $order->save();
+        DB::transaction(function () use ($order, $newStatus) {
+            $order->status = $newStatus;
+            if ($newStatus === 'paid' && ! $order->paid_at) {
+                $order->paid_at = now();
+            }
+            $order->save();
+
+            if ($newStatus === 'fulfilled') {
+                app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
+            }
+        });
 
         if ($previousStatus !== $newStatus) {
             try {

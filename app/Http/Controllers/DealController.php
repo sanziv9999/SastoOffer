@@ -893,6 +893,7 @@ class DealController extends Controller
             // UI helpers (converted into params on the server)
             'discount_percent' => ['nullable', 'numeric', 'min:0'],
             'offer_price' => ['nullable', 'numeric', 'min:0'],
+            'first_x_customers' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if (! isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
@@ -912,6 +913,9 @@ class DealController extends Controller
         }
         if (isset($validated['offer_price']) && $validated['offer_price'] !== null && $validated['offer_price'] !== '') {
             $params['discount_amount'] = max(0, (float) $validated['original_price'] - (float) $validated['offer_price']);
+        }
+        if (isset($validated['first_x_customers']) && $validated['first_x_customers'] !== null && $validated['first_x_customers'] !== '') {
+            $params['first_x_customers'] = (int) $validated['first_x_customers'];
         }
         $validated['params'] = $params;
 
@@ -940,6 +944,7 @@ class DealController extends Controller
             // UI helpers (converted into params on the server)
             'discount_percent' => ['nullable', 'numeric', 'min:0'],
             'offer_price' => ['nullable', 'numeric', 'min:0'],
+            'first_x_customers' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if (! isset($validated['original_price']) || $validated['original_price'] === null || $validated['original_price'] === '') {
@@ -958,6 +963,9 @@ class DealController extends Controller
         }
         if (isset($validated['offer_price']) && $validated['offer_price'] !== null && $validated['offer_price'] !== '') {
             $params['discount_amount'] = max(0, (float) $validated['original_price'] - (float) $validated['offer_price']);
+        }
+        if (isset($validated['first_x_customers']) && $validated['first_x_customers'] !== null && $validated['first_x_customers'] !== '') {
+            $params['first_x_customers'] = (int) $validated['first_x_customers'];
         }
         $validated['params'] = $params;
 

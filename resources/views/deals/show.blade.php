@@ -145,8 +145,10 @@
             },
             async handleBuyNow() {
                 if (!this.selectedOfferPivotId) return;
-                await this.cart.addItem(this.selectedOfferPivotId, this.quantity);
-                window.location.href = '/cart';
+                const result = await this.cart.addItem(this.selectedOfferPivotId, this.quantity);
+                if (result && result.success) {
+                    window.location.href = '/cart';
+                }
             }
         }"
         @keydown.escape.window="closeModal()"

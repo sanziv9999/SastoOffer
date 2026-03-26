@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\DealOfferType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\ActivityMailer;
@@ -23,6 +24,52 @@ class CheckoutController extends Controller
 
         if ($cartItems->isEmpty()) {
             return back()->with('error', 'Your cart is empty.');
+        }
+
+        // Prevent duplicate redemption:
+        // One user can redeem only one order per `deal_offer_type_id` (non-cancelled/non-refunded).
+        $pivotIds = $cartItems
+            ->map(fn ($ci) => (int) ($ci->offerType?->id ?? 0))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        // Block checkout if any cart offer pivot is not active.
+        $inactiveOfferPivots = $cartItems
+            ->filter(fn ($ci) => ($ci->offerType?->status ?? null) !== 'active')
+            ->values()
+            ->all();
+
+        if (! empty($inactiveOfferPivots)) {
+            return back()->with('error', 'Some offers in your cart have expired. Please refresh your cart.');
+        }
+
+        $alreadyRedeemedPivotIds = OrderItem::query()
+            ->whereIn('deal_offer_type_id', $pivotIds)
+            ->whereHas('order', fn ($q) => $q
+                ->where('user_id', $user->id)
+                ->whereNotIn('status', ['cancelled', 'refunded'])
+            )
+            ->distinct()
+            ->pluck('deal_offer_type_id')
+            ->values()
+            ->all();
+
+        if (! empty($alreadyRedeemedPivotIds)) {
+            return back()->with('error', 'You can redeem each offer only once.');
+        }
+
+        // First X customers offers: one quantity per customer.
+        foreach ($cartItems as $cartItem) {
+            $pivot = $cartItem->offerType;
+            if (! $pivot) {
+                continue;
+            }
+
+            if ($this->isFirstXCustomersOffer($pivot) && (int) $cartItem->quantity > 1) {
+                return back()->with('error', 'This is a limited first-X offer. You can order only 1 quantity for this offer.');
+            }
         }
 
         $orders = DB::transaction(function () use ($user, $cartItems) {
@@ -237,5 +284,24 @@ class CheckoutController extends Controller
         }
 
         return back()->with('success', 'Order cancelled successfully.');
+    }
+
+    private function isFirstXCustomersOffer(?DealOfferType $pivot): bool
+    {
+        if (! $pivot) {
+            return false;
+        }
+
+        $pivot->loadMissing('offerType');
+        $rule = $pivot->offerType?->calculation_rule;
+        if (is_string($rule)) {
+            $rule = json_decode($rule, true) ?: [];
+        }
+        if (! is_array($rule)) {
+            return false;
+        }
+
+        $availability = $rule['availability'] ?? null;
+        return is_array($availability) && (($availability['mode'] ?? null) === 'first_x_customers');
     }
 }

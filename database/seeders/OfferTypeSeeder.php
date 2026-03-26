@@ -104,6 +104,30 @@ class OfferTypeSeeder extends Seeder
 
             // Optional: Add more types as needed
             [
+                'name'          => 'first_x_customers_percentage_discount',
+                'display_name'  => 'First X Customers Discount',
+                'slug'          => Str::slug('First X Customers Discount'),
+                'description'   => 'Only the first X customers get the discount; after that the offer expires',
+                'calculation_rule' => json_encode([
+                    // Pricing is a normal percentage discount.
+                    'type'               => 'percentage',
+                    'formula_final_price' => 'original_price * (1 - discount_percent / 100)',
+                    'formula'            => 'final_price = original_price * (1 - discount_percent / 100)',
+                    'display'            => 'First {first_x_customers} customers get {discount_percent}% OFF',
+                    // Availability rule for redemption limit.
+                    'availability'       => [
+                        'mode' => 'first_x_customers',
+                        'first_x_param' => 'first_x_customers',
+                    ],
+                ]),
+                'required_params' => json_encode(['first_x_customers', 'discount_percent']),
+                'default_values'  => json_encode([
+                    'first_x_customers' => 5,
+                    'discount_percent'  => 20,
+                ]),
+                'is_active'       => true,
+            ],
+            [
                 'name'          => 'cashback',
                 'display_name'  => 'Cashback Offer',
                 'slug'          => Str::slug('Cashback Offer'),
