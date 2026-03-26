@@ -481,7 +481,12 @@
             >
                 <div class="py-2">
                     <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
-                        @foreach($parentCategories as $category)
+                        @php
+                            $topCategories = collect($parentCategories)->take(6);
+                            $moreCategories = collect($parentCategories)->slice(6);
+                        @endphp
+
+                        @foreach($topCategories as $category)
                             <div
                                 class="relative"
                                 @mouseenter="openCategory = '{{ $category['id'] }}'"
@@ -489,7 +494,7 @@
                             >
                                 <button 
                                     @click="openCategory = (openCategory === '{{ $category['id'] }}' ? null : '{{ $category['id'] }}')"
-                                    class="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground rounded-full transition-colors font-medium"
+                                    class="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground rounded-full transition-colors font-medium whitespace-nowrap"
                                 >
                                     @switch($category['icon'])
                                         @case('utensils')
@@ -530,7 +535,7 @@
                                     x-transition:leave="transition ease-in duration-75"
                                     x-transition:leave-start="opacity-100 translate-y-0"
                                     x-transition:leave-end="opacity-0 translate-y-1"
-                                    class="absolute left-0 top-full mt-1 z-50 w-60 bg-background border border-border shadow-xl rounded-lg p-2"
+                                    class="absolute left-0 top-full z-50 w-60 bg-background border border-border shadow-xl rounded-lg p-2"
                                 >
                                     <div class="flex items-center justify-between mb-2 px-2 pb-1 border-b border-border/40">
                                         <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{{ $category['name'] }}</span>
@@ -550,6 +555,75 @@
                                 </div>
                             </div>
                         @endforeach
+
+                        @if($moreCategories->count() > 0)
+                            <div
+                                class="relative"
+                                @mouseenter="openCategory = 'more'"
+                                @mouseleave="openCategory = null"
+                            >
+                                <button 
+                                    @click="openCategory = (openCategory === 'more' ? null : 'more')"
+                                    class="flex items-center gap-1.5 text-foreground h-8 px-3 py-1 text-sm bg-transparent hover:bg-primary hover:text-primary-foreground rounded-full transition-colors font-semibold"
+                                >
+                                    <span>More</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 opacity-60 flex-shrink-0"><path d="m6 9 6 6 6-6"></path></svg>
+                                </button>
+
+                                <div
+                                    x-show="openCategory === 'more' || openCategory?.startsWith('more-')"
+                                    x-cloak
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="opacity-0 translate-y-1"
+                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                    class="absolute right-0 md:left-0 top-full z-50 w-72 bg-background border border-border shadow-2xl rounded-xl p-2"
+                                    x-data="{ activeMore: null }"
+                                >
+                                    <div class="flex flex-col gap-0.5">
+                                        @foreach($moreCategories as $category)
+                                            <div 
+                                                class="relative"
+                                                @mouseenter="activeMore = '{{ $category['id'] }}'"
+                                                @mouseleave="activeMore = null"
+                                            >
+                                                <div class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer group/moreitem"
+                                                     :class="activeMore === '{{ $category['id'] }}' ? 'bg-primary text-primary-foreground' : ''">
+                                                    <a href="{{ route('search', ['category' => $category->slug]) }}" class="text-sm font-semibold flex-1">{{ $category['name'] }}</a>
+                                                    @if(count($category->children) > 0)
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-40 group-hover/moreitem:opacity-100 transition-opacity"><path d="m9 18 6-6-6-6"></path></svg>
+                                                    @endif
+                                                </div>
+
+                                                {{-- Nested subcategories for "More" items --}}
+                                                @if(count($category->children) > 0)
+                                                    <div 
+                                                        x-show="activeMore === '{{ $category['id'] }}'"
+                                                        class="absolute right-full top-0 mr-1 w-64 bg-background border border-border shadow-2xl rounded-xl p-2 z-[60]"
+                                                        x-transition:enter="transition ease-out duration-100"
+                                                        x-transition:enter-start="opacity-0 translate-x-1"
+                                                        x-transition:enter-end="opacity-100 translate-x-0"
+                                                    >
+                                                        <div class="px-2 pb-1.5 mb-1.5 border-b border-border/40">
+                                                            <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{{ $category['name'] }}</span>
+                                                        </div>
+                                                        <div class="flex flex-col gap-0.5">
+                                                            @foreach($category->children as $sub)
+                                                                <a 
+                                                                    href="{{ route('search', ['category' => $category->slug, 'subcategory' => $sub->slug]) }}" 
+                                                                    class="px-2 py-1.5 rounded text-xs font-semibold text-slate-600 hover:bg-muted hover:text-primary transition-colors"
+                                                                >
+                                                                    {{ $sub->name }}
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                         {{-- All Deals link --}}
                         <a
