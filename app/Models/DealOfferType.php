@@ -164,12 +164,18 @@ class DealOfferType extends Pivot
             $address?->tole,
         ])->filter()->implode(', ');
 
+        $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
+        $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
+
         return [
             'id'                => $deal?->id,
             'offerPivotId'      => $this->id,
+            'dealSlug'          => $deal?->slug,
             'title'             => $deal?->title,
+            'vendorName'        => $deal?->vendor?->business_name ?? 'Sasto Offer Vendor',
             'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
             'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+            'subcategoryName'   => optional($deal?->category?->parent)->name ? $deal?->category?->name : null,
             'originalPrice'     => $this->original_price !== null ? (float) $this->original_price : 0,
             'discountedPrice'   => $this->final_price !== null ? (float) $this->final_price : 0,
             'discountPercentage'=> $discountPct > 0 ? round($discountPct) : null,
@@ -184,7 +190,10 @@ class DealOfferType extends Pivot
                 'city' => $address?->district ?? 'Location',
             ],
             'cityName'          => $locationLabel ?: 'Location',
-            'timeLeft'          => optional($this->ends_at)?->diffForHumans() ?? 'soon',
+            'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
+            'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
+            'timeLeft'          => $this->ends_at ? $this->ends_at->diffForHumans() : null,
+            'quantitySold'      => (int) ($this->quantitySold ?? $this->attribute_quantity_sold ?? 0),
             'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $this->id,
         ];
     }

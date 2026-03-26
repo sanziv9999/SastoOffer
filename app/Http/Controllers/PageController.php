@@ -14,19 +14,39 @@ class PageController extends Controller
 {
     public function home()
     {
-        $featuredDeals = DealOfferType::where('status', 'active')
+        $featuredPivots = DealOfferType::where('status', 'active')
             ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
-            ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+            ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->take(8)
-            ->get()
-            ->map(fn($offer) => $offer->toCardData());
+            ->get();
 
-        $recentOffers = DealOfferType::where('status', 'active')
-            ->with(['deal.category.parent', 'deal.images', 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
+        $recentPivots = DealOfferType::where('status', 'active')
+            ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->latest()
             ->take(10)
-            ->get()
-            ->map(fn($offer) => $offer->toCardData());
+            ->get();
+
+        // Calculate sales for homepage deals
+        $homeDealIds = $featuredPivots->pluck('deal_id')->merge($recentPivots->pluck('deal_id'))->unique()->filter();
+        $soldByDealId = \App\Models\OrderItem::query()
+            ->selectRaw('deal_id, SUM(quantity) as quantitySold')
+            ->whereIn('deal_id', $homeDealIds)
+            ->whereHas('order', fn ($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
+            ->groupBy('deal_id')
+            ->pluck('quantitySold', 'deal_id')
+            ->all();
+
+        $featuredDeals = $featuredPivots->map(function($offer) use ($soldByDealId) {
+            $data = $offer->toCardData();
+            $data['quantitySold'] = (int) ($soldByDealId[$offer->deal_id] ?? 0);
+            return $data;
+        });
+
+        $recentOffers = $recentPivots->map(function($offer) use ($soldByDealId) {
+            $data = $offer->toCardData();
+            $data['quantitySold'] = (int) ($soldByDealId[$offer->deal_id] ?? 0);
+            return $data;
+        });
 
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
@@ -233,6 +253,7 @@ class PageController extends Controller
             ->with([
                 'deal.category.parent',
                 'deal.images',
+                'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'),
                 'deal.vendor.defaultAddress',
                 'offerType',
                 'displayTypes',
@@ -318,14 +339,19 @@ class PageController extends Controller
             $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
             $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
 
+            $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
+            $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
+
             return [
                 'dealId'            => $deal?->id,
                 'basePrice'        => $deal?->base_price !== null ? (float) $deal->base_price : 0,
                 'offerPivotId'      => $pivot->id,
                 'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
+                'vendorName'        => $deal?->vendor?->business_name ?? 'Sasto Offer Vendor',
                 'categorySlug'      => optional($deal?->category?->parent)->slug ?? ($deal?->category?->slug ?? 'uncategorized'),
                 'categoryName'      => optional($deal?->category?->parent)->name ?? ($deal?->category?->name ?? 'Uncategorized'),
+                'subcategoryName'   => optional($deal?->category?->parent)->name ? $deal?->category?->name : null,
                 'originalPrice'     => $pivot->original_price !== null ? (float) $pivot->original_price : 0,
                 'discountedPrice'   => $pivot->final_price !== null ? (float) $pivot->final_price : 0,
                 'discountPercentage'=> $discountPct > 0 ? $discountPct : null,
@@ -360,21 +386,18 @@ class PageController extends Controller
         $minPrice = $reqMinPrice !== null ? (int) $reqMinPrice : $availableMinPrice;
         $maxPrice = $reqMaxPrice !== null ? (int) $reqMaxPrice : $availableMaxPrice;
 
-        $filteredOffers = $mappedOffers
-            ->filter(function ($offer) use ($minPrice, $maxPrice) {
-                $price = $offer['discountedPrice'] ?? 0;
-                return $price >= $minPrice && $price <= $maxPrice;
-            })
-            ->values()
-            ->all();
-
-        // Group offers by parent deal and preserve the order from the sorted offer list.
         $groupedByDeal = [];
         $dealOrder = [];
-        foreach ($filteredOffers as $offer) {
+        
+        $mappedOffers->filter(function ($offer) use ($reqMinPrice, $reqMaxPrice, $availableMinPrice, $availableMaxPrice) {
+            $minPrice = $reqMinPrice !== null ? (int) $reqMinPrice : $availableMinPrice;
+            $maxPrice = $reqMaxPrice !== null ? (int) $reqMaxPrice : $availableMaxPrice;
+            $price = $offer['discountedPrice'] ?? 0;
+            return $price >= $minPrice && $price <= $maxPrice;
+        })->each(function ($offer) use (&$groupedByDeal, &$dealOrder) {
             $dealId = $offer['dealId'] ?? null;
             if (!$dealId) {
-                continue;
+                return;
             }
             if (!isset($groupedByDeal[$dealId])) {
                 $dealOrder[] = $dealId;
@@ -382,11 +405,12 @@ class PageController extends Controller
                     'id' => $dealId,
                     'dealSlug' => $offer['dealSlug'] ?? null,
                     'title' => $offer['title'] ?? null,
+                    'vendorName' => $offer['vendorName'] ?? 'Sasto Offer Vendor',
                     'categorySlug' => $offer['categorySlug'] ?? null,
                     'categoryName' => $offer['categoryName'] ?? null,
+                    'subcategoryName' => $offer['subcategoryName'] ?? null,
                     'image' => $offer['image'] ?? null,
                     'featured' => false,
-                    // Use the first (sorted) offer as the "display offer" for the parent card.
                     'displayOffer' => $offer,
                     'offers' => [],
                 ];
@@ -396,7 +420,7 @@ class PageController extends Controller
                 $groupedByDeal[$dealId]['featured'] = true;
             }
             $groupedByDeal[$dealId]['offers'][] = $offer;
-        }
+        });
 
         // Bulk sales aggregation for "Sold" stats on search cards.
         $dealIdsForSales = array_values(array_filter($dealOrder));
@@ -418,16 +442,20 @@ class PageController extends Controller
 
             // Map to the shape expected by <x-deal-card> (parent deal card),
             // while still using a single offer pivot for wishlist/cart actions.
-            $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? $dealId;
+            $group['title'] = $display['title'] ?? $group['title'];
+            $group['vendorName'] = $display['vendorName'] ?? $group['vendorName'] ?? 'Sasto Offer Vendor';
             $group['offerPivotId'] = $display['offerPivotId'] ?? null;
             // Search must show parent deal with base price only (no offer discounts/time).
             $basePrice = $display['basePrice'] ?? 0;
             $group['discountedPrice'] = $basePrice;
             $group['originalPrice'] = 0;
             $group['discountPercentage'] = 0;
-            $group['offerTypeTitle'] = null;
-            $group['timeLeft'] = null;
+            $group['offerTypeTitle'] = $display['offerTypeTitle'] ?? null;
+            $group['timeLeft'] = $display['timeLeft'] ?? null;
+            $group['categoryName'] = $display['categoryName'] ?? 'Uncategorized';
+            $group['subcategoryName'] = $display['subcategoryName'] ?? null;
             $group['status'] = 'active';
+            $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? $dealId;
             $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
             // Important: reviews on the deal page are tied to a specific offer pivot (?offer=...).
             // On search listing, we always prefer the first display offer pivot so the
