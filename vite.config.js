@@ -6,7 +6,7 @@ import path from 'path';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            input: ['resources/css/App.css', 'resources/js/App.tsx'],
             refresh: true,
         }),
         // Avoid runtime crash when Fast Refresh preamble cannot be detected.
