@@ -13,52 +13,52 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Setup Node.js
+      - name:  Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Build Assets (Vite/Mix)
+      - name:  Build Assets (Vite/Mix)
         run: |
           npm install
           npm run build
 
-      - name: Setup PHP
+      - name:  Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           tools: composer
 
-      - name: Install PHP Dependencies
+      - name:  Install PHP Dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # STEP 1: Deploy Core Files (Excluding the public folder)
-      - name: Deploy Laravel Core
+      # STEP 1: Deploy Laravel Core
+      - name:  Deploy Laravel Core
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          protocol: sftp
-          port: 22
+          protocol: ftps
+          port: 21
           local-dir: ./
           server-dir: /home/sastooffer/
-          # We exclude 'public' because it goes to a different folder in Step 2
           exclude: |
             public/**
             .git*
             node_modules/**
             tests/**
             README.md
+            .github/**
 
       # STEP 2: Deploy Public Folder Contents
-      - name: Deploy Public Assets
+      - name:  Deploy Public Assets
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          protocol: sftp
-          port: 22
+          protocol: ftps
+          port: 21
           local-dir: ./public/
           server-dir: /home/sastooffer/public_html/
