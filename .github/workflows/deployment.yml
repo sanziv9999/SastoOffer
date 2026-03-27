@@ -8,41 +8,42 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: 🚚 Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name:  Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name:  Build Assets (Vite/Mix)
+      - name: 🏗️ Build Assets
         run: |
           npm install
           npm run build
 
-      - name:  Setup PHP
+      - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           tools: composer
 
-      - name:  Install PHP Dependencies
+      - name: 📦 Install PHP Dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # STEP 1: Deploy Laravel Core
-      - name:  Deploy Laravel Core
+      # STEP 1: Deploy Core Files
+      # If your FTP user logs directly into /home/sastooffer, use server-dir: ./
+      - name: 🚀 Deploy Laravel Core
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          protocol: ftps
+          protocol: ftp             # Try 'ftp' first; cPanel often blocks FTPS on port 21 unless configured
           port: 21
           local-dir: ./
-          server-dir: /home/sastooffer/
+          server-dir: ./            # Changed from absolute path to relative root
           exclude: |
             public/**
             .git*
@@ -51,14 +52,14 @@ jobs:
             README.md
             .github/**
 
-      # STEP 2: Deploy Public Folder Contents
-      - name:  Deploy Public Assets
+      # STEP 2: Deploy Public Folder
+      - name: 🌐 Deploy Public Assets
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          protocol: ftps
+          protocol: ftp
           port: 21
           local-dir: ./public/
-          server-dir: /home/sastooffer/public_html/
+          server-dir: ./public_html/ # Relative to the FTP login directory
