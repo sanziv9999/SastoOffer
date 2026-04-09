@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BannerCrudController;
 use App\Http\Controllers\Admin\DisplayTypeCrudController;
 use App\Http\Controllers\Admin\OfferTypeCrudController;
 use App\Http\Controllers\Admin\PrimaryCategoryCrudController;
@@ -127,6 +128,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('/admin/display-types', DisplayTypeCrudController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('admin.display-types');
+    Route::resource('/admin/banners', BannerCrudController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('admin.banners');
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
     Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::patch('/admin/users/{user}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');

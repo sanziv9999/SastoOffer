@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Banner extends Model
@@ -13,12 +14,18 @@ class Banner extends Model
         'text',
         'is_featured',
         'sort_order',
+        'category_id',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     /**
      * Polymorphic images (use attribute_name e.g. `image` for the slide artwork).

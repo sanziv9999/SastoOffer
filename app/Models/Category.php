@@ -40,9 +40,13 @@ class Category extends Model
             ->orderBy('display_order');
     }
 
+    public function banners()
+    {
+        return $this->hasMany(Banner::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 }
-
