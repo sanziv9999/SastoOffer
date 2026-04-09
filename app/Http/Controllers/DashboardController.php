@@ -6,6 +6,7 @@ use App\Http\Requests\StoreAddressRequest;
 use App\Models\Address;
 use App\Models\CustomerProfile;
 use App\Models\Deal;
+use App\Models\OfferType;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\Wishlist;
@@ -250,6 +251,22 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function cart()
+    {
+        $payload = $this->buildCustomerCartPayload(auth()->user());
+
+        return Inertia::render('dashboard/Cart', [
+            'items' => $payload['items'],
+            'total' => $payload['total'],
+            'count' => $payload['count'],
+        ]);
+    }
+
+    public function cartData()
+    {
+        return response()->json($this->buildCustomerCartPayload(auth()->user()));
+    }
+
     public function voucherDetail($id)
     {
         return Inertia::render('dashboard/VoucherDetail', [
@@ -325,5 +342,76 @@ class DashboardController extends Controller
         ]);
 
         return back()->with('success', 'Address saved successfully.');
+    }
+
+    protected function buildCustomerCartPayload($user): array
+    {
+        if (! $user) {
+            return [
+                'items' => [],
+                'total' => 0,
+                'count' => 0,
+            ];
+        }
+
+        $items = $user->cartItems()
+            ->with(['offerType.deal.images', 'offerType.offerType'])
+            ->get()
+            ->map(fn ($item) => $this->mapCustomerCartItem($item))
+            ->values();
+
+        return [
+            'items' => $items,
+            'total' => $items->sum(fn ($i) => ((float) $i['discountedPrice']) * ((int) $i['quantity'])),
+            'count' => $items->sum(fn ($i) => (int) $i['quantity']),
+        ];
+    }
+
+    protected function mapCustomerCartItem($item): array
+    {
+        $pivot = $item->offerType;
+        $deal = $pivot?->deal;
+
+        return [
+            'id' => $item->id,
+            'offerPivotId' => $pivot?->id,
+            'title' => $deal?->title ?? 'Deal',
+            'dealId' => $deal?->id,
+            'dealSlug' => $deal?->slug,
+            'quantity' => (int) $item->quantity,
+            'discountedPrice' => (float) ($pivot?->final_price ?? 0),
+            'originalPrice' => (float) ($pivot?->original_price ?? 0),
+            'image' => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'),
+            'typeLabel' => $pivot?->offerType?->display_name ?? 'Standard Offer',
+            'url' => $deal
+                ? route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]).'?offer='.$pivot->id
+                : route('search'),
+            'isFirstXOffer' => $this->isFirstXCustomersOffer($pivot),
+        ];
+    }
+
+    protected function isFirstXCustomersOffer($pivot): bool
+    {
+        if (! $pivot) {
+            return false;
+        }
+
+        $offerType = $pivot->offerType;
+        if (! $offerType instanceof OfferType) {
+            return false;
+        }
+
+        $rule = $offerType->calculation_rule;
+        if (is_string($rule)) {
+            $rule = json_decode($rule, true) ?: [];
+        }
+
+        if (! is_array($rule)) {
+            return false;
+        }
+
+        $availability = $rule['availability'] ?? null;
+
+        return is_array($availability) && (($availability['mode'] ?? null) === 'first_x_customers');
     }
 }

@@ -82,6 +82,8 @@ Route::middleware(['auth'])->get('/dashboard', function (Request $request) {
 // ——— Customer dashboard (auth, customer-only) ———
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/dashboard/data', [DashboardController::class, 'customerDashboardData'])->name('dashboard.data');
+    Route::get('/dashboard/cart', [DashboardController::class, 'cart'])->name('dashboard.cart');
+    Route::get('/dashboard/cart/data', [DashboardController::class, 'cartData'])->name('dashboard.cart.data');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
     Route::get('/dashboard/purchases', [CheckoutController::class, 'myOrders'])->name('dashboard.purchases');
     Route::patch('/dashboard/purchases/{orderNumber}/cancel', [CheckoutController::class, 'cancelOrderGroup'])->name('dashboard.purchases.cancel');

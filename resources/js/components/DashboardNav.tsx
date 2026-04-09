@@ -4,6 +4,7 @@ import Link from '@/components/Link';
 import {
   LayoutDashboard,
   Heart,
+  ShoppingCart,
   ShoppingBag,
   Star,
   Settings,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 const userLinks = [
   { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+  { icon: ShoppingCart, label: 'Cart', path: '/dashboard/cart' },
   { icon: Heart, label: 'Saved Deals', path: '/dashboard/favorites' },
   { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/purchases' },
   { icon: Star, label: 'My Reviews', path: '/dashboard/reviews' },
