@@ -26,15 +26,6 @@ class CheckoutController extends Controller
             return back()->with('error', 'Your cart is empty.');
         }
 
-        // Prevent duplicate redemption:
-        // One user can redeem only one order per `deal_offer_type_id` (non-cancelled/non-refunded).
-        $pivotIds = $cartItems
-            ->map(fn ($ci) => (int) ($ci->offerType?->id ?? 0))
-            ->filter(fn ($id) => $id > 0)
-            ->unique()
-            ->values()
-            ->all();
-
         // Block checkout if any cart offer pivot is not active.
         $inactiveOfferPivots = $cartItems
             ->filter(fn ($ci) => ($ci->offerType?->status ?? null) !== 'active')
@@ -43,21 +34,6 @@ class CheckoutController extends Controller
 
         if (! empty($inactiveOfferPivots)) {
             return back()->with('error', 'Some offers in your cart have expired. Please refresh your cart.');
-        }
-
-        $alreadyRedeemedPivotIds = OrderItem::query()
-            ->whereIn('deal_offer_type_id', $pivotIds)
-            ->whereHas('order', fn ($q) => $q
-                ->where('user_id', $user->id)
-                ->whereNotIn('status', ['cancelled', 'refunded'])
-            )
-            ->distinct()
-            ->pluck('deal_offer_type_id')
-            ->values()
-            ->all();
-
-        if (! empty($alreadyRedeemedPivotIds)) {
-            return back()->with('error', 'You can redeem each offer only once.');
         }
 
         // First X customers offers: one quantity per customer.

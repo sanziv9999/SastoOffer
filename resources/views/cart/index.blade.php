@@ -21,6 +21,17 @@
         }"
     >
         <div class="max-w-5xl mx-auto px-4">
+            @if (session('error'))
+                <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 border-b pb-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2 mb-0.5">
