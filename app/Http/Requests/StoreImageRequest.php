@@ -14,6 +14,7 @@ class StoreImageRequest extends FormRequest
         'business_type' => \App\Models\BusinessType::class,
         'business_sub_category' => \App\Models\BusinessSubCategory::class,
         'deal' => \App\Models\Deal::class,
+        'banner' => \App\Models\Banner::class,
     ];
 
     public const ATTRIBUTES_BY_TYPE = [
@@ -23,6 +24,7 @@ class StoreImageRequest extends FormRequest
         'business_type' => ['icon', 'banner'],
         'business_sub_category' => ['icon', 'banner', 'image'],
         'deal' => ['cover', 'gallery'],
+        'banner' => ['image'],
     ];
 
     public function authorize(): bool
