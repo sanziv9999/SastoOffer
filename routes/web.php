@@ -61,7 +61,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ——— Customer dashboard (auth) ———
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'customerDashboardData'])->name('dashboard.data');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
@@ -82,7 +82,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ——— Vendor (auth) ———
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:vendor'])->group(function () {
     Route::middleware(['vendor.approved'])->group(function () {
         Route::get('/vendor/dashboard', [DealController::class, 'dashboard'])->name('vendor.dashboard');
         Route::get('/vendor', [DealController::class, 'dashboard']);
@@ -117,7 +117,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ——— Admin (auth) ———
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::resource('/admin/primary-categories', PrimaryCategoryCrudController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])

@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'vendor.approved' => \App\Http\Middleware\EnsureVendorIsApproved::class,
+            'role' => \App\Http\Middleware\EnsureUserRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
