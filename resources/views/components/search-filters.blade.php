@@ -27,7 +27,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm" x-data="{ expandedCategories: false }">
-            <div class="space-y-1">
+            <div class="space-y-1 max-h-48 overflow-y-auto pr-1">
 
                 {{-- "All Categories" clears selection --}}
                 <label class="flex items-center gap-2 py-1 cursor-pointer group">
@@ -45,7 +45,6 @@
                     <div 
                         x-data="{ subOpen: selectedCategories.some(s => s === '{{ $category['slug'] }}' || {{ count($category['children']) > 0 ? '[' . implode(',', array_map(fn($c) => "'" . $c['slug'] . "'", $category['children'])) . ']' : '[]' }}.includes(s)) }" 
                         class="mt-1"
-                        x-show="expandedCategories || {{ $index }} < 6"
                         x-transition
                     >
                         <div class="flex items-center justify-between">
@@ -100,16 +99,6 @@
                     </div>
                 @endforeach
 
-                @if(count($categories) > 6)
-                    <button 
-                        @click="expandedCategories = !expandedCategories"
-                        class="text-xs font-bold text-primary hover:text-primary/80 mt-2 px-1 flex items-center gap-1 transition-colors"
-                        type="button"
-                    >
-                        <span x-text="expandedCategories ? 'Show Less' : 'Show More (+{{ count($categories) - 6 }})'"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :class="expandedCategories ? 'rotate-180' : ''" class="transition-transform duration-200"><path d="m6 9 6 6 6-6"></path></svg>
-                    </button>
-                @endif
             </div>
         </div>
     </div>
@@ -193,7 +182,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
-            <div class="space-y-1">
+            <div class="space-y-1 max-h-48 overflow-y-auto pr-1">
                 {{-- All Types --}}
                 <label class="flex items-center gap-2 py-1 cursor-pointer group">
                     <input
