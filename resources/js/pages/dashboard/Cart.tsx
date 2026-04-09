@@ -102,7 +102,7 @@ const Cart = ({ items = [], total = 0, count = 0 }: Props) => {
             <ShoppingCart className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-muted-foreground mb-4">Your cart is empty.</p>
             <Button asChild>
-              <Link href="/search">Browse Deals</Link>
+              <a href="/search">Browse Deals</a>
             </Button>
           </CardContent>
         </Card>
