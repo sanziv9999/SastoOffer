@@ -22,12 +22,20 @@ const ForgotPasswordPage = () => {
       return;
     }
     
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    setIsSubmitted(true);
-    toast({ title: "Email Sent", description: "Check your inbox for password reset instructions." });
+    try {
+      setIsLoading(true);
+      await (window as any).axios.post('/forgot-password', { email });
+      setIsSubmitted(true);
+      toast({ title: "Email Sent", description: "Check your inbox for password reset instructions." });
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.errors?.email?.[0] ||
+        error?.response?.data?.message ||
+        'Unable to send reset link right now. Please try again.';
+      toast({ title: "Unable to send email", description: message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
