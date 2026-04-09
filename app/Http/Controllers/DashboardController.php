@@ -354,8 +354,14 @@ class DashboardController extends Controller
             ];
         }
 
+        // Remove ended/inactive offers from cart so only purchasable items remain.
+        $user->cartItems()
+            ->whereHas('offerType', fn ($q) => $q->where('status', '!=', 'active'))
+            ->delete();
+
         $items = $user->cartItems()
             ->with(['offerType.deal.images', 'offerType.offerType'])
+            ->whereHas('offerType', fn ($q) => $q->where('status', 'active'))
             ->get()
             ->map(fn ($item) => $this->mapCustomerCartItem($item))
             ->values();

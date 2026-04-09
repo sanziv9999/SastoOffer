@@ -16,7 +16,15 @@ class CartController extends Controller
             return redirect()->route('login')->with('info', 'Please login to view your cart.');
         }
 
-        $cartItems = auth()->user()->cartItems()->with(['offerType.deal.images', 'offerType.offerType'])->get();
+        // Remove ended/inactive offers from cart and only show active offers.
+        auth()->user()->cartItems()
+            ->whereHas('offerType', fn ($q) => $q->where('status', '!=', 'active'))
+            ->delete();
+
+        $cartItems = auth()->user()->cartItems()
+            ->with(['offerType.deal.images', 'offerType.offerType'])
+            ->whereHas('offerType', fn ($q) => $q->where('status', 'active'))
+            ->get();
         
         $mappedItems = $cartItems->map(fn($item) => $this->mapCartItem($item));
         $total = $mappedItems->sum(fn($i) => $i['discountedPrice'] * $i['quantity']);
@@ -138,7 +146,15 @@ class CartController extends Controller
             return response()->json(['items' => [], 'total' => 0, 'count' => 0]);
         }
 
-        $cartItems = auth()->user()->cartItems()->with(['offerType.deal.images'])->get();
+        // Keep summary in sync with purchasable cart items only.
+        auth()->user()->cartItems()
+            ->whereHas('offerType', fn ($q) => $q->where('status', '!=', 'active'))
+            ->delete();
+
+        $cartItems = auth()->user()->cartItems()
+            ->with(['offerType.deal.images', 'offerType.offerType'])
+            ->whereHas('offerType', fn ($q) => $q->where('status', 'active'))
+            ->get();
         $mappedItems = $cartItems->map(fn($item) => $this->mapCartItem($item));
         $total = $mappedItems->sum(fn($i) => $i['discountedPrice'] * $i['quantity']);
 

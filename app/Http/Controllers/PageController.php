@@ -12,15 +12,25 @@ use Illuminate\Support\Str;
 
 class PageController extends Controller
 {
+    protected function applyActiveNonEndedOfferFilter($query)
+    {
+        return $query
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', now());
+            });
+    }
+
     public function home()
     {
-        $featuredPivots = DealOfferType::where('status', 'active')
+        $featuredPivots = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
             ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
             ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->take(8)
             ->get();
 
-        $recentPivots = DealOfferType::where('status', 'active')
+        $recentPivots = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
             ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->latest()
             ->take(10)
@@ -72,7 +82,7 @@ class PageController extends Controller
             return response()->json([]);
         }
 
-        $suggestions = DealOfferType::where('status', 'active')
+        $suggestions = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
             ->whereHas('deal', function($q) use ($query) {
                 $q->where('title', 'like', '%' . $query . '%');
             })
@@ -260,6 +270,10 @@ class PageController extends Controller
                 'displayTypes',
             ])
             ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', now());
+            })
             ->whereHas('deal', function ($q) use ($query, $wordTokens, $tagTokens, $subSlug, $categorySlugs, $locationSlugs) {
                 $q->when(is_string($query) && trim($query) !== '' && (count($wordTokens) > 0 || count($tagTokens) > 0), function ($qq) use ($query, $wordTokens, $tagTokens) {
                     $qq->where(function ($w) use ($query, $wordTokens, $tagTokens) {
