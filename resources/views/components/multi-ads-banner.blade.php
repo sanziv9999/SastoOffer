@@ -14,7 +14,7 @@
         </div>
         
         <div 
-            class="relative group"
+            class="relative"
             x-data="{ 
                 scrollLeft() { this.$refs.catContainer.scrollBy({ left: -400, behavior: 'smooth' }) },
                 scrollRight() { this.$refs.catContainer.scrollBy({ left: 400, behavior: 'smooth' }) }
@@ -77,17 +77,17 @@
                 @endforeach
             </div>
 
-            {{-- Slider Controls --}}
+            {{-- Slider Controls - Always visible on desktop --}}
             <button 
                 @click="scrollLeft()"
-                class="absolute -left-2 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all z-40 hidden md:flex opacity-0 group-hover:opacity-100"
+                class="absolute -left-2 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all z-40 hidden md:flex"
                 aria-label="Scroll left"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
             </button>
             <button 
                 @click="scrollRight()"
-                class="absolute -right-2 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all z-40 hidden md:flex opacity-0 group-hover:opacity-100"
+                class="absolute -right-2 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all z-40 hidden md:flex"
                 aria-label="Scroll right"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
