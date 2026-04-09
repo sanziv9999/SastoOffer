@@ -15,6 +15,7 @@
             selectedLocations: @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []),
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
+            localSearchQuery: '{{ addslashes($query) }}',
             resultsCount: {{ count($deals) }},
             isFilterDrawerOpen: false,
             isLoading: false,
@@ -27,7 +28,7 @@
                 this.$watch('dealTypes', () => this.debouncedApplyFilters());
                 this.$watch('selectedLocations', () => this.debouncedApplyFilters());
                 this.$watch('isFeatured', () => this.debouncedApplyFilters());
-                this.$watch('searchQuery', () => this.debouncedApplyFilters());
+                this.$watch('localSearchQuery', () => this.debouncedApplyFilters());
                 this.$watch('minRating', () => this.applyFilters());
 
                 window.addEventListener('popstate', (e) => {
@@ -46,7 +47,7 @@
                 this.isLoading = true;
                 let params = new URLSearchParams();
                 
-                if (this.searchQuery) params.set('q', this.searchQuery);
+                if (this.localSearchQuery) params.set('q', this.localSearchQuery);
                 if (this.selectedCategories.length > 0) params.set('category', this.selectedCategories.join(','));
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
                 if (this.selectedLocations.length > 0) params.set('location', this.selectedLocations.join(','));
@@ -97,7 +98,7 @@
                 this.selectedLocations = [];
                 this.isFeatured = false;
                 this.minRating = null;
-                this.searchQuery = '';
+                this.localSearchQuery = '';
                 this.applyFilters();
             }
         }"

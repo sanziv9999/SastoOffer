@@ -44,19 +44,16 @@
             this.lastScroll = currentScroll;
         },
         submitSearch() {
-            const params = new URLSearchParams(window.location.search);
+            // Global search: reset all filters and only apply search query and city
+            const params = new URLSearchParams();
             const query = this.searchQuery.trim();
 
             if (query) {
                 params.set('q', query);
-            } else {
-                params.delete('q');
             }
 
             if (this.selectedCity && this.selectedCity !== 'All Districts') {
                 params.set('city', this.selectedCity);
-            } else {
-                params.delete('city');
             }
 
             window.location.href = '{{ route('search') }}' + (params.toString() ? `?${params.toString()}` : '');

@@ -1,4 +1,4 @@
-@props(['categories', 'locations' => [], 'currentCategory', 'currentLocation' => '', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'minRating' => null, 'isMobile' => false])
+@props(['categories', 'locations' => [], 'currentCategory', 'currentLocation' => '', 'minPrice', 'maxPrice', 'dealType', 'isFeatured', 'sortBy', 'minRating' => null, 'isMobile' => false, 'currentQuery' => ''])
 
 <div
     class="{{ $isMobile ? 'space-y-6' : 'bg-card shadow-sm rounded-lg p-5 sticky top-20 border' }}"
@@ -13,9 +13,32 @@
         if (typeof dealTypes === 'undefined') dealTypes = @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []);
         if (typeof isFeatured === 'undefined') isFeatured = {{ $isFeatured ? 'true' : 'false' }};
         if (typeof minRating === 'undefined') minRating = {{ $minRating ?: 'null' }};
-        if (typeof searchQuery === 'undefined') searchQuery = '';
+        if (typeof localSearchQuery === 'undefined') localSearchQuery = '{{ addslashes($currentQuery) }}';
     "
 >
+    {{-- Local Search Input - Works with filters --}}
+    <div class="mb-4 pb-4 border-b">
+        <label class="block text-sm font-medium mb-2">Search Deals</label>
+        <div class="relative">
+            <input
+                type="search"
+                x-model="localSearchQuery"
+                @input.debounce.400ms="debouncedApplyFilters()"
+                placeholder="Search within results..."
+                class="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <button
+                x-show="localSearchQuery"
+                @click="localSearchQuery = ''; debouncedApplyFilters()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+        </div>
+        <p class="text-xs text-muted-foreground mt-1">Searches within current filters</p>
+    </div>
     {{-- Categories (hierarchical checkboxes) --}}
     <div x-data="{ open: true }" class="border-b">
         <button
