@@ -17,6 +17,7 @@ use App\Http\Controllers\VendorAnalyticsController;
 use App\Http\Controllers\VendorProfileController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -60,9 +61,23 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// ——— Customer dashboard (auth) ———
+// ——— Dashboard entry (role-aware) ———
+Route::middleware(['auth'])->get('/dashboard', function (Request $request) {
+    $user = $request->user();
+
+    if ($user && $user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user && $user->hasRole('vendor')) {
+        return redirect()->route('vendor.dashboard');
+    }
+
+    return app(DashboardController::class)->index($request);
+})->name('dashboard');
+
+// ——— Customer dashboard (auth, customer-only) ———
 Route::middleware(['auth', 'role:customer'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'customerDashboardData'])->name('dashboard.data');
     Route::get('/dashboard/favorites', [DashboardController::class, 'favorites'])->name('dashboard.favorites');
     Route::get('/dashboard/purchases', [CheckoutController::class, 'myOrders'])->name('dashboard.purchases');
