@@ -309,18 +309,18 @@
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
             <div class="space-y-1">
-                @foreach([4, 3, 2] as $stars)
+                @foreach([5, 4, 3, 2, 1, 0] as $stars)
                     <button 
                         @click="minRating = (minRating == {{ $stars }} ? null : {{ $stars }}); debouncedApplyFilters()"
                         class="flex items-center w-full gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors group"
-                        :class="minRating == {{ $stars }} ? 'bg-accent text-primary' : 'text-muted-foreground'"
+                        :class="minRating == {{ $stars }} ? 'bg-accent text-foreground' : 'text-foreground'"
                     >
                         <div class="flex items-center text-yellow-500">
                             @for($i = 0; $i < 5; $i++)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="{{ $stars > $i ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="w-3.5 h-3.5"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                             @endfor
                         </div>
-                        <span class="text-xs font-semibold">& Up</span>
+                        <span class="text-xs font-semibold">{{ $stars > 0 ? $stars . ' Star' . ($stars > 1 ? 's' : '') : 'All Ratings' }}</span>
                         <div x-show="minRating == {{ $stars }}" class="ml-auto">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="h-3 w-3"><path d="M20 6 9 17l-5-5"></path></svg>
                         </div>
