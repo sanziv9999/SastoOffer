@@ -25,18 +25,18 @@ Route::get('/search', [PageController::class, 'search'])->name('search');
 Route::get('/api/search/suggestions', [PageController::class, 'suggestions'])->name('api.search.suggestions');
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
 Route::get('/checkout', fn () => redirect()->route('cart.index'))->name('checkout');
-Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-Route::post('/wishlist/toggle/{dealId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
 // ——— Cart ———
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add', [CartController::class, 'store'])->name('cart.store');
 Route::get('/cart/summary', [CartController::class, 'getSummary'])->name('cart.summary');
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:customer'])->group(function () {
+    Route::post('/cart/add', [CartController::class, 'store'])->name('cart.store');
     Route::put('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
     Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.place');
-    Route::get('/order/{order}/confirmation', [CheckoutController::class, 'confirmation'])->name('order.confirmation');
+    Route::get('/order/{order}', [CheckoutController::class, 'confirmation'])->name('order.confirmation');
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle/{dealId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 });
 
 // Public deal detail routes.
