@@ -1,27 +1,58 @@
 @php
-    $realBanners = [
-        [
-            'id' => 1,
-            'title' => "Summer Deals",
-            'description' => "Up to 70% off on selected summer items",
-            'imageUrl' => "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format",
-            'link' => route('search', ['category' => 'summer'])
-        ],
-        [
-            'id' => 2,
-            'title' => "Tech Sale",
-            'description' => "Latest gadgets at unbeatable prices",
-            'imageUrl' => "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format",
-            'link' => route('search', ['category' => 'tech'])
-        ],
-        [
-            'id' => 3,
-            'title' => "Travel Offers",
-            'description' => "Exclusive holiday packages",
-            'imageUrl' => "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&auto=format",
-            'link' => route('search', ['category' => 'travel'])
-        ]
-    ];
+    $dbBanners = \App\Models\Banner::query()
+        ->featured()
+        ->orderedForLanding()
+        ->with([
+            'category',
+            'images' => fn ($q) => $q->where('attribute_name', 'image'),
+        ])
+        ->get();
+
+    $realBanners = $dbBanners
+        ->map(function (\App\Models\Banner $b) {
+            $img = $b->images?->firstWhere('attribute_name', 'image')?->image_url;
+            $categorySlug = $b->category?->slug;
+
+            return [
+                'id' => $b->id,
+                'title' => (string) $b->title,
+                'description' => (string) ($b->text ?? ''),
+                'imageUrl' => $img ?: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format',
+                'link' => $categorySlug
+                    ? route('search', ['category' => $categorySlug])
+                    : route('search'),
+            ];
+        })
+        ->filter(fn ($row) => ! empty($row['title']))
+        ->values()
+        ->all();
+
+    // Fallback to static slides if no DB banners exist yet
+    if (count($realBanners) === 0) {
+        $realBanners = [
+            [
+                'id' => 1,
+                'title' => "Summer Deals",
+                'description' => "Up to 70% off on selected summer items",
+                'imageUrl' => "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=1200&auto=format",
+                'link' => route('search', ['category' => 'summer'])
+            ],
+            [
+                'id' => 2,
+                'title' => "Tech Sale",
+                'description' => "Latest gadgets at unbeatable prices",
+                'imageUrl' => "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format",
+                'link' => route('search', ['category' => 'tech'])
+            ],
+            [
+                'id' => 3,
+                'title' => "Travel Offers",
+                'description' => "Exclusive holiday packages",
+                'imageUrl' => "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&auto=format",
+                'link' => route('search', ['category' => 'travel'])
+            ]
+        ];
+    }
 
     // Build the set with clones for seamless looping: [Last, 1, 2, 3, First]
     $banners = array_merge([$realBanners[count($realBanners)-1]], $realBanners, [$realBanners[0]]);
