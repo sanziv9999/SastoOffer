@@ -479,15 +479,14 @@
                 {{-- Highlights --}}
                 @if(isset($deal['highlights']) && is_array($deal['highlights']) && count($deal['highlights']) > 0)
                     <div class="border-t pt-6">
-                        <h3 class="font-semibold mb-3">Highlights</h3>
-                        <ul class="space-y-2">
+                        <h3 class="font-semibold mb-3">Tags</h3>
+                        <div class="flex flex-wrap gap-2">
                             @foreach($deal['highlights'] as $item)
-                                <li class="flex items-start text-sm text-muted-foreground">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-primary mr-2 mt-0.5 shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <span>{{ $item }}</span>
-                                </li>
+                                <span class="inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+                                    {{ $item }}
+                                </span>
                             @endforeach
-                        </ul>
+                        </div>
                     </div>
                 @endif
             </div>
