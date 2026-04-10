@@ -15,7 +15,7 @@
         </div>
         
         <div 
-            class="relative group overflow-hidden"
+            class="relative group/recent-offers overflow-hidden"
             x-data="{ 
                 scrollLeft() { this.$refs.scrollContainer.scrollBy({ left: -300, behavior: 'smooth' }) },
                 scrollRight() { this.$refs.scrollContainer.scrollBy({ left: 300, behavior: 'smooth' }) }
@@ -36,14 +36,14 @@
             {{-- Manual scroll controls --}}
             <button 
                 @click="scrollLeft()"
-                class="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center hover:bg-white"
+                class="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover/recent-offers:opacity-100 transition-opacity items-center justify-center hover:bg-white"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
             </button>
             
             <button 
                 @click="scrollRight()"
-                class="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center hover:bg-white"
+                class="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover/recent-offers:opacity-100 transition-opacity items-center justify-center hover:bg-white"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
             </button>

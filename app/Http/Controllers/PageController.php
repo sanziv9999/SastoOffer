@@ -165,6 +165,10 @@ class PageController extends Controller
             'discountDesc' => 'Biggest Discount',
             'endingSoon' => 'Ending Soon',
         ];
+        $viewMode = $request->query('view', 'grid');
+        if (!in_array($viewMode, ['grid', 'list'], true)) {
+            $viewMode = 'grid';
+        }
 
         $query      = $request->query('q', '');
         $categoryParam = $request->query('category', 'all');
@@ -596,6 +600,7 @@ class PageController extends Controller
             'availableMinPrice' => $availableMinPrice,
             'availableMaxPrice' => $availableMaxPrice,
             'sortByOptions'     => $sortByOptions,
+            'viewMode'          => $viewMode,
         ];
 
         if ($request->has('partial')) {
