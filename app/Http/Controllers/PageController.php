@@ -61,7 +61,6 @@ class PageController extends Controller
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy('display_order')
-            ->take(6)
             ->get();
 
         $topRatedVendors = \App\Models\VendorProfile::query()
