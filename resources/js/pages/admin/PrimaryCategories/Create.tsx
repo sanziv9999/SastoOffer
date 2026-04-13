@@ -35,6 +35,7 @@ const Create = () => {
     image: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const isMainCategory = !data.parent_id;
 
   const iconOptions: Array<{ key: string; label: string; icon: React.ReactNode }> = [
     { key: 'gift', label: 'Default (Gift)', icon: <Gift className="h-4 w-4" /> },
@@ -87,9 +88,15 @@ const Create = () => {
               <select
                 className="border rounded-md px-3 py-2 text-sm w-full"
                 value={data.parent_id ?? ''}
-                onChange={(e) =>
-                  setData('parent_id', e.target.value ? Number(e.target.value) : '')
-                }
+                onChange={(e) => {
+                  const nextParentId = e.target.value ? Number(e.target.value) : '';
+                  setData('parent_id', nextParentId);
+                  if (nextParentId) {
+                    setData('icon_key', '');
+                  } else if (!data.icon_key) {
+                    setData('icon_key', 'gift');
+                  }
+                }}
               >
                 <option value="">— No parent (top-level) —</option>
                 {parentOptions?.map((opt) => (
@@ -119,20 +126,32 @@ const Create = () => {
               <label className="text-sm font-medium">Icon</label>
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-md border bg-muted flex items-center justify-center">
-                  {iconOptions.find((o) => o.key === data.icon_key)?.icon ?? <Gift className="h-4 w-4" />}
+                  {isMainCategory
+                    ? (iconOptions.find((o) => o.key === data.icon_key)?.icon ?? <Gift className="h-4 w-4" />)
+                    : <Gift className="h-4 w-4 opacity-50" />}
                 </div>
                 <select
-                  className="border rounded-md px-3 py-2 text-sm w-full"
-                  value={data.icon_key}
+                  className="border rounded-md px-3 py-2 text-sm w-full disabled:opacity-60"
+                  value={data.icon_key || ''}
                   onChange={(e) => setData('icon_key', e.target.value)}
+                  disabled={!isMainCategory}
                 >
-                  {iconOptions.map((opt) => (
-                    <option key={opt.key} value={opt.key}>
-                      {opt.label}
-                    </option>
-                  ))}
+                  {isMainCategory ? (
+                    iconOptions.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Icons are only for top-level categories</option>
+                  )}
                 </select>
               </div>
+              {!isMainCategory && (
+                <p className="text-xs text-muted-foreground">
+                  Sub-categories inherit navigation icon behavior from their parent.
+                </p>
+              )}
               {errors.icon_key && <p className="text-xs text-destructive">{errors.icon_key}</p>}
             </div>
 

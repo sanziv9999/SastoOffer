@@ -6,7 +6,18 @@ import { router, usePage } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import AdminPagination from '@/components/AdminPagination';
 import React from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Gift,
+  Utensils,
+  Scissors,
+  Coffee,
+  Plane,
+  Smartphone,
+  Heart,
+  BookOpen,
+} from 'lucide-react';
 
 type Props = {
   primaryCategories: any;
@@ -18,6 +29,28 @@ const Index = ({ primaryCategories, filters }: Props) => {
   const items = primaryCategories?.data || [];
   const [search, setSearch] = React.useState(filters?.search || '');
   const [expandedIds, setExpandedIds] = React.useState<Set<number>>(new Set());
+
+  const renderCategoryIcon = (iconKey?: string) => {
+    switch (iconKey) {
+      case 'utensils':
+        return <Utensils className="h-4 w-4" />;
+      case 'scissors':
+        return <Scissors className="h-4 w-4" />;
+      case 'coffee':
+        return <Coffee className="h-4 w-4" />;
+      case 'plane':
+        return <Plane className="h-4 w-4" />;
+      case 'smartphone':
+        return <Smartphone className="h-4 w-4" />;
+      case 'heart':
+        return <Heart className="h-4 w-4" />;
+      case 'book':
+        return <BookOpen className="h-4 w-4" />;
+      case 'gift':
+      default:
+        return <Gift className="h-4 w-4" />;
+    }
+  };
 
   const onDelete = (id: number) => {
     if (!confirm('Delete this primary category?')) return;
@@ -97,7 +130,12 @@ const Index = ({ primaryCategories, filters }: Props) => {
                       ) : null}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{c.name}</div>
+                      <div className="font-medium truncate flex items-center gap-2">
+                        <span>{c.name}</span>
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded border bg-muted text-muted-foreground">
+                          {renderCategoryIcon(c.icon_key)}
+                        </span>
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         Slug: {c.slug || '-'} {hasChildren ? `· ${children.length} child ${children.length === 1 ? 'category' : 'categories'}` : ''}
                       </div>
