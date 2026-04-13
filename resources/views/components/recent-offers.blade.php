@@ -14,39 +14,51 @@
             </a>
         </div>
         
-        <div 
-            class="relative group/recent-offers overflow-hidden"
+        <div
+            class="group/recent-offers"
             x-data="{ 
                 scrollLeft() { this.$refs.scrollContainer.scrollBy({ left: -300, behavior: 'smooth' }) },
                 scrollRight() { this.$refs.scrollContainer.scrollBy({ left: 300, behavior: 'smooth' }) }
             }"
         >
-            <div 
-                x-ref="scrollContainer"
-                class="flex gap-4 py-2 overflow-x-auto scrollbar-hide scroll-smooth cursor-grab" 
-                style="scrollbar-width: none; ms-overflow-style: none;"
-            >
-                @foreach($recentOffers as $deal)
-                    <div class="flex-shrink-0 w-[280px]">
-                        <x-deal-card :deal="$deal" />
+            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                {{-- Left gutter --}}
+                <div class="hidden md:flex justify-start">
+                    <button
+                        @click="scrollLeft()"
+                        class="h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
+                        aria-label="Scroll left"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                </div>
+
+                {{-- Content --}}
+                <div class="overflow-hidden">
+                    <div 
+                        x-ref="scrollContainer"
+                        class="flex gap-4 py-2 overflow-x-auto scrollbar-hide scroll-smooth cursor-grab" 
+                        style="scrollbar-width: none; ms-overflow-style: none;"
+                    >
+                        @foreach($recentOffers as $deal)
+                            <div class="flex-shrink-0 w-[280px]">
+                                <x-deal-card :deal="$deal" />
+                            </div>
+                        @endforeach
                     </div>
-                @endforeach
+                </div>
+
+                {{-- Right gutter --}}
+                <div class="hidden md:flex justify-end">
+                    <button
+                        @click="scrollRight()"
+                        class="h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
+                        aria-label="Scroll right"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
             </div>
-            
-            {{-- Manual scroll controls --}}
-            <button 
-                @click="scrollLeft()"
-                class="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover/recent-offers:opacity-100 transition-opacity items-center justify-center hover:bg-white"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
-            </button>
-            
-            <button 
-                @click="scrollRight()"
-                class="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-white/90 border border-border shadow-md z-10 opacity-0 group-hover/recent-offers:opacity-100 transition-opacity items-center justify-center hover:bg-white"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
-            </button>
         </div>
     </div>
 </section>
