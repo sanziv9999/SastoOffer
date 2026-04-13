@@ -6,6 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import {
+  Gift,
+  Utensils,
+  Scissors,
+  Coffee,
+  Plane,
+  Smartphone,
+  Heart,
+  BookOpen,
+} from 'lucide-react';
 
 type PageProps = {
   parentOptions: Array<{ id: number; name: string }>;
@@ -17,6 +27,7 @@ const Create = () => {
   const { data, setData, post, processing, errors } = useForm({
     name: '',
     slug: '',
+    icon_key: 'gift',
     description: '',
     display_order: '',
     is_active: true,
@@ -24,6 +35,17 @@ const Create = () => {
     image: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const iconOptions: Array<{ key: string; label: string; icon: React.ReactNode }> = [
+    { key: 'gift', label: 'Default (Gift)', icon: <Gift className="h-4 w-4" /> },
+    { key: 'utensils', label: 'Food', icon: <Utensils className="h-4 w-4" /> },
+    { key: 'scissors', label: 'Beauty', icon: <Scissors className="h-4 w-4" /> },
+    { key: 'coffee', label: 'Activities', icon: <Coffee className="h-4 w-4" /> },
+    { key: 'plane', label: 'Travel', icon: <Plane className="h-4 w-4" /> },
+    { key: 'smartphone', label: 'Electronics', icon: <Smartphone className="h-4 w-4" /> },
+    { key: 'heart', label: 'Health', icon: <Heart className="h-4 w-4" /> },
+    { key: 'book', label: 'Education', icon: <BookOpen className="h-4 w-4" /> },
+  ];
 
   useEffect(() => {
     if (!data.image) {
@@ -91,6 +113,27 @@ const Create = () => {
               <label className="text-sm font-medium">Slug (optional)</label>
               <Input value={data.slug} onChange={(e) => setData('slug', e.target.value)} />
               {errors.slug && <p className="text-xs text-destructive">{errors.slug}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Icon</label>
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md border bg-muted flex items-center justify-center">
+                  {iconOptions.find((o) => o.key === data.icon_key)?.icon ?? <Gift className="h-4 w-4" />}
+                </div>
+                <select
+                  className="border rounded-md px-3 py-2 text-sm w-full"
+                  value={data.icon_key}
+                  onChange={(e) => setData('icon_key', e.target.value)}
+                >
+                  {iconOptions.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.icon_key && <p className="text-xs text-destructive">{errors.icon_key}</p>}
             </div>
 
             <div className="space-y-1.5">

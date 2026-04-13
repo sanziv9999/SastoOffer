@@ -83,7 +83,7 @@ class HandleInertiaRequests extends Middleware
             'categories' => \App\Models\Category::where('is_active', true)
                 ->orderBy('display_order')
                 ->orderBy('name')
-                ->get(['id', 'parent_id', 'name', 'slug', 'display_order']),
+                ->get(['id', 'parent_id', 'name', 'slug', 'display_order', 'icon_key']),
             'offerTypes' => \App\Models\OfferType::where('is_active', true)->get(['id', 'name', 'display_name']),
             'flash' => [
                 'success' => session('success'),

@@ -10,6 +10,7 @@ class Category extends Model
         'parent_id',
         'name',
         'slug',
+        'icon_key',
         'description',
         'image_url',
         'display_order',
@@ -19,6 +20,11 @@ class Category extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function getIconAttribute(): string
+    {
+        return (string) ($this->icon_key ?: 'gift');
+    }
 
     public function parent()
     {

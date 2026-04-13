@@ -19,6 +19,7 @@ class StorePrimaryCategoryRequest extends FormRequest
         return [
             'name'          => ['required', 'string', 'max:255'],
             'slug'          => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
+            'icon_key'      => ['nullable', 'string', 'max:50'],
             'description'   => ['nullable', 'string'],
             'display_order' => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['nullable', 'boolean'],
