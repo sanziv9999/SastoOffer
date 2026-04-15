@@ -100,12 +100,13 @@ return new class extends Migration
                 ->join('information_schema.table_constraints as tc', function ($join) {
                     $join->on('tc.constraint_name', '=', 'kcu.constraint_name');
                 })
+                ->selectRaw('kcu.constraint_name as constraint_name')
                 ->where('kcu.table_schema', $dbName)
                 ->where('kcu.table_name', 'wishlists')
                 ->where('kcu.column_name', 'deal_offer_type_id')
                 ->where('tc.constraint_type', 'FOREIGN KEY')
                 ->whereNotNull('kcu.constraint_name')
-                ->pluck('kcu.constraint_name')
+                ->pluck('constraint_name')
                 ->values()
                 ->all();
 
