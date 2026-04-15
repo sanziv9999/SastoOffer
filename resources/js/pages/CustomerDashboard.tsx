@@ -333,7 +333,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                     Start exploring amazing deals and make your first purchase!
                   </p>
                   <Button asChild>
-                    <Link href="/">Explore Deals</Link>
+                    <a href="/">Explore Deals</a>
                   </Button>
                 </div>
               )}
@@ -403,7 +403,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                     You don't have any active coupons at the moment.
                   </p>
                   <Button asChild>
-                    <Link href="/">Find New Deals</Link>
+                    <a href="/">Find New Deals</a>
                   </Button>
                 </div>
               )}

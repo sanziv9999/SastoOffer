@@ -61,7 +61,6 @@ class PageController extends Controller
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy('display_order')
-            ->take(6)
             ->get();
 
         $topRatedVendors = \App\Models\VendorProfile::query()
@@ -82,9 +81,62 @@ class PageController extends Controller
             return response()->json([]);
         }
 
+        // Tokenize query for better matching
+        $wordTokens = [];
+        $tagTokens = [];
+        
+        if (is_string($query) && trim($query) !== '') {
+            $q = mb_strtolower(trim($query));
+            
+            // Split into tokens
+            $rawTokens = preg_split('/[^\p{L}\p{N}]+/u', $q, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            
+            // Filter stopwords and short tokens
+            $stopwords = [
+                'and', 'or', 'the', 'a', 'an', 'near', 'around', 'nearby',
+                'for', 'with', 'without', 'of', 'to', 'in', 'at', 'from',
+            ];
+            
+            $wordTokens = array_values(array_filter($rawTokens, function ($t) use ($stopwords) {
+                $t = trim((string) $t);
+                if ($t === '' || in_array($t, $stopwords, true)) return false;
+                return mb_strlen($t) >= 3;
+            }));
+            
+            // Create kebab-case tokens for highlight matching
+            $kebabQuery = Str::slug($q);
+            $tagWordTokens = array_values(array_unique(array_filter(array_map(fn ($t) => Str::slug($t), $wordTokens), fn ($t) => $t !== '')));
+            $tagTokens = $tagWordTokens;
+            if ($kebabQuery !== '') {
+                $tagTokens[] = $kebabQuery;
+            }
+        }
+
         $suggestions = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
-            ->whereHas('deal', function($q) use ($query) {
-                $q->where('title', 'like', '%' . $query . '%');
+            ->whereHas('deal', function($q) use ($query, $wordTokens, $tagTokens) {
+                $q->where(function($w) use ($query, $wordTokens, $tagTokens) {
+                    // Match title, descriptions
+                    $w->where('title', 'like', '%' . $query . '%')
+                        ->orWhere('short_description', 'like', '%' . $query . '%')
+                        ->orWhere('long_description', 'like', '%' . $query . '%');
+                    
+                    // Match individual tokens in title and descriptions
+                    foreach ($wordTokens as $token) {
+                        $token = trim((string) $token);
+                        if ($token === '') continue;
+                        $like = '%' . $token . '%';
+                        $w->orWhere('title', 'like', $like)
+                            ->orWhere('short_description', 'like', $like)
+                            ->orWhere('long_description', 'like', $like);
+                    }
+                    
+                    // Match against highlight tags using LIKE for partial matching
+                    foreach ($tagTokens as $tagToken) {
+                        $tagToken = trim((string) $tagToken);
+                        if ($tagToken === '') continue;
+                        $w->orWhere('highlights', 'like', '%' . $tagToken . '%');
+                    }
+                });
             })
             ->with(['deal.images', 'offerType'])
             ->take(6)
@@ -112,6 +164,10 @@ class PageController extends Controller
             'discountDesc' => 'Biggest Discount',
             'endingSoon' => 'Ending Soon',
         ];
+        $viewMode = $request->query('view', 'grid');
+        if (!in_array($viewMode, ['grid', 'list'], true)) {
+            $viewMode = 'grid';
+        }
 
         $query      = $request->query('q', '');
         $categoryParam = $request->query('category', 'all');
@@ -295,11 +351,11 @@ class PageController extends Controller
                             });
                         }
 
-                        // And match against highlight tags (JSON array of kebab-case strings).
+                        // And match against highlight tags using LIKE for partial matching.
                         foreach ($tagTokens as $tagToken) {
                             $tagToken = trim((string) $tagToken);
                             if ($tagToken === '') continue;
-                            $w->orWhereRaw("JSON_CONTAINS(deals.highlights, JSON_QUOTE(?))", [$tagToken]);
+                            $w->orWhere('highlights', 'like', '%' . $tagToken . '%');
                         }
                     });
                 })
@@ -543,6 +599,7 @@ class PageController extends Controller
             'availableMinPrice' => $availableMinPrice,
             'availableMaxPrice' => $availableMaxPrice,
             'sortByOptions'     => $sortByOptions,
+            'viewMode'          => $viewMode,
         ];
 
         if ($request->has('partial')) {

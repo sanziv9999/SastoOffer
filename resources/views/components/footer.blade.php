@@ -46,11 +46,13 @@
             <div class="hidden md:block">
                 <h3 class="text-lg font-semibold mb-4">Categories</h3>
                 <ul class="space-y-2">
-                    <li><a href="{{ route('search', ['category' => 'food-dining']) }}" class="text-gray-600 hover:text-primary transition-colors">Restaurants</a></li>
-                    <li><a href="{{ route('search', ['category' => 'beauty-spa']) }}" class="text-gray-600 hover:text-primary transition-colors">Beauty & Spa</a></li>
-                    <li><a href="{{ route('search', ['category' => 'activities-events']) }}" class="text-gray-600 hover:text-primary transition-colors">Activities</a></li>
-                    <li><a href="{{ route('search', ['category' => 'travel']) }}" class="text-gray-600 hover:text-primary transition-colors">Travel</a></li>
-                    <li><a href="{{ route('search', ['category' => 'electronics']) }}" class="text-gray-600 hover:text-primary transition-colors">Electronics</a></li>
+                    @foreach($footerMainCategories as $category)
+                        <li>
+                            <a href="{{ route('search', ['category' => $category->slug]) }}" class="text-gray-600 hover:text-primary transition-colors">
+                                {{ $category->name }}
+                            </a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 
@@ -96,11 +98,11 @@
                         </div>
                     </button>
                     <div x-show="openSections['categories']" x-cloak x-collapse class="space-y-2 py-2 pl-2">
-                        <a href="{{ route('search', ['category' => 'food-dining']) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Restaurants</a>
-                        <a href="{{ route('search', ['category' => 'beauty-spa']) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Beauty & Spa</a>
-                        <a href="{{ route('search', ['category' => 'activities-events']) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Activities</a>
-                        <a href="{{ route('search', ['category' => 'travel']) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Travel</a>
-                        <a href="{{ route('search', ['category' => 'electronics']) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Electronics</a>
+                        @foreach($footerMainCategories as $category)
+                            <a href="{{ route('search', ['category' => $category->slug]) }}" class="text-gray-600 hover:text-primary transition-colors block py-1">
+                                {{ $category->name }}
+                            </a>
+                        @endforeach
                     </div>
                 </div>
 

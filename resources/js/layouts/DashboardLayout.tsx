@@ -47,7 +47,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
-              <p className="text-xs text-muted-foreground">© 2024 Offer Oasis</p>
+              <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Offer Oasis</p>
             </div>
           </SidebarFooter>
         </Sidebar>

@@ -292,7 +292,7 @@ const UserDashboard = () => {
                   You haven't made any purchases yet.
                 </p>
                 <Button asChild>
-                  <Link href="/">Explore Deals</Link>
+                  <a href="/">Explore Deals</a>
                 </Button>
               </div>
             )}
@@ -362,7 +362,7 @@ const UserDashboard = () => {
                 You don't have any active coupons at the moment.
               </p>
               <Button asChild>
-                <Link href="/">Explore Deals</Link>
+                <a href="/">Explore Deals</a>
               </Button>
             </div>
           )}

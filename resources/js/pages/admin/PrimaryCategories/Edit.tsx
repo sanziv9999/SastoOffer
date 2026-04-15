@@ -6,6 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import {
+  Gift,
+  Utensils,
+  Scissors,
+  Coffee,
+  Plane,
+  Smartphone,
+  Heart,
+  BookOpen,
+} from 'lucide-react';
 
 type Props = {
   primaryCategory: any;
@@ -16,6 +26,7 @@ const Edit = ({ primaryCategory, parentOptions }: Props) => {
   const { data, setData, post, processing, errors } = useForm({
     name: primaryCategory?.name || '',
     slug: primaryCategory?.slug || '',
+    icon_key: primaryCategory?.icon_key || 'gift',
     description: primaryCategory?.description || '',
     display_order: primaryCategory?.display_order ?? '',
     is_active: !!primaryCategory?.is_active,
@@ -25,6 +36,18 @@ const Edit = ({ primaryCategory, parentOptions }: Props) => {
     _method: 'put',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(primaryCategory?.image_url || null);
+  const isMainCategory = !data.parent_id;
+
+  const iconOptions: Array<{ key: string; label: string; icon: React.ReactNode }> = [
+    { key: 'gift', label: 'Default (Gift)', icon: <Gift className="h-4 w-4" /> },
+    { key: 'utensils', label: 'Food', icon: <Utensils className="h-4 w-4" /> },
+    { key: 'scissors', label: 'Beauty', icon: <Scissors className="h-4 w-4" /> },
+    { key: 'coffee', label: 'Activities', icon: <Coffee className="h-4 w-4" /> },
+    { key: 'plane', label: 'Travel', icon: <Plane className="h-4 w-4" /> },
+    { key: 'smartphone', label: 'Electronics', icon: <Smartphone className="h-4 w-4" /> },
+    { key: 'heart', label: 'Health', icon: <Heart className="h-4 w-4" /> },
+    { key: 'book', label: 'Education', icon: <BookOpen className="h-4 w-4" /> },
+  ];
 
   useEffect(() => {
     if (!data.image) {
@@ -64,9 +87,15 @@ const Edit = ({ primaryCategory, parentOptions }: Props) => {
               <select
                 className="border rounded-md px-3 py-2 text-sm w-full"
                 value={data.parent_id ?? ''}
-                onChange={(e) =>
-                  setData('parent_id', e.target.value ? Number(e.target.value) : '')
-                }
+                onChange={(e) => {
+                  const nextParentId = e.target.value ? Number(e.target.value) : '';
+                  setData('parent_id', nextParentId);
+                  if (nextParentId) {
+                    setData('icon_key', '');
+                  } else if (!data.icon_key) {
+                    setData('icon_key', 'gift');
+                  }
+                }}
               >
                 <option value="">— No parent (top-level) —</option>
                 {parentOptions?.map((opt) => (
@@ -90,6 +119,39 @@ const Edit = ({ primaryCategory, parentOptions }: Props) => {
               <label className="text-sm font-medium">Slug (optional)</label>
               <Input value={data.slug} onChange={(e) => setData('slug', e.target.value)} />
               {errors.slug && <p className="text-xs text-destructive">{errors.slug}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Icon</label>
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md border bg-muted flex items-center justify-center">
+                  {isMainCategory
+                    ? (iconOptions.find((o) => o.key === data.icon_key)?.icon ?? <Gift className="h-4 w-4" />)
+                    : <Gift className="h-4 w-4 opacity-50" />}
+                </div>
+                <select
+                  className="border rounded-md px-3 py-2 text-sm w-full disabled:opacity-60"
+                  value={data.icon_key || ''}
+                  onChange={(e) => setData('icon_key', e.target.value)}
+                  disabled={!isMainCategory}
+                >
+                  {isMainCategory ? (
+                    iconOptions.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Icons are only for top-level categories</option>
+                  )}
+                </select>
+              </div>
+              {!isMainCategory && (
+                <p className="text-xs text-muted-foreground">
+                  Sub-categories do not use category icons in navigation.
+                </p>
+              )}
+              {errors.icon_key && <p className="text-xs text-destructive">{errors.icon_key}</p>}
             </div>
 
             <div className="space-y-1.5">

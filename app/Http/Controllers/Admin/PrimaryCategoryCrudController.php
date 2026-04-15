@@ -64,6 +64,9 @@ class PrimaryCategoryCrudController extends Controller
         // If parent_id is supplied, this becomes a sub-category under that parent.
         // If not supplied, it will be a top-level category (parent_id = null).
         $data['parent_id'] = $data['parent_id'] ?? null;
+        if ($data['parent_id']) {
+            $data['icon_key'] = null;
+        }
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('categories', 'public');
@@ -99,6 +102,10 @@ class PrimaryCategoryCrudController extends Controller
         }
         if (array_key_exists('slug', $data) && empty($data['slug']) && ! empty($data['name'] ?? $primaryCategory->name)) {
             $data['slug'] = Str::slug($data['name'] ?? $primaryCategory->name);
+        }
+        $nextParentId = $data['parent_id'] ?? $primaryCategory->parent_id;
+        if ($nextParentId) {
+            $data['icon_key'] = null;
         }
 
         if ($request->boolean('remove_image')) {

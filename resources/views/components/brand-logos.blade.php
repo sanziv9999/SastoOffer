@@ -7,13 +7,25 @@
     <div class="container mx-auto px-4">
         <h2 class="text-xl font-bold text-center mb-8 text-foreground tracking-tight uppercase">Top Rated Vendors</h2>
         
-        <div class="relative group">
-            <div 
-                x-ref="brandScroll"
-                class="flex overflow-x-auto gap-6 sm:gap-8 py-4 scrollbar-hide items-center justify-start md:justify-center px-4"
-                style="scrollbar-width: none; ms-overflow-style: none;"
-            >
-                @foreach($vendors as $vendor)
+        <div class="group">
+            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                <div class="hidden md:flex justify-start">
+                    <button 
+                        @click="scrollLeft()"
+                        class="h-10 w-10 rounded-full bg-background/90 border border-border shadow opacity-0 md:group-hover:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
+                        aria-label="Scroll left"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                </div>
+
+                <div class="overflow-hidden">
+                    <div 
+                        x-ref="brandScroll"
+                        class="flex overflow-x-auto gap-6 sm:gap-8 py-4 scrollbar-hide items-center justify-start md:justify-center px-4"
+                        style="scrollbar-width: none; ms-overflow-style: none;"
+                    >
+                        @foreach($vendors as $vendor)
                     @php
                         $logoImg = $vendor->images->where('attribute_name', 'logo')->first();
                         $logoUrl = $logoImg ? $logoImg->image_url : null;
@@ -49,22 +61,20 @@
                             <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{{ $vendor->primaryCategory->name ?? 'Vendor' }}</p>
                         </div>
                     </a>
-                @endforeach
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="hidden md:flex justify-end">
+                    <button 
+                        @click="scrollRight()"
+                        class="h-10 w-10 rounded-full bg-background/90 border border-border shadow opacity-0 md:group-hover:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
+                        aria-label="Scroll right"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
             </div>
-            
-            <button 
-                @click="scrollLeft()"
-                class="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 border border-border shadow z-10 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-background"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m15 18-6-6 6-6"></path></svg>
-            </button>
-            
-            <button 
-                @click="scrollRight()"
-                class="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 border border-border shadow z-10 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-background"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m9 18 6-6-6-6"></path></svg>
-            </button>
         </div>
     </div>
 </div>

@@ -21,6 +21,7 @@ class UpdatePrimaryCategoryRequest extends FormRequest
         return [
             'name'          => ['sometimes', 'string', 'max:255'],
             'slug'          => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('categories', 'slug')->ignore($primaryCategory->id)],
+            'icon_key'      => ['nullable', 'string', 'max:50'],
             'description'   => ['nullable', 'string'],
             'display_order' => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['nullable', 'boolean'],

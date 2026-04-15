@@ -110,7 +110,7 @@ const SavedDeals = ({ favoriteDeals }: SavedDealsProps) => {
             <Heart className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">No saved deals</h3>
             <p className="text-muted-foreground mb-4">Start browsing and save deals you love!</p>
-            <Button asChild><Link href="/">Explore Deals</Link></Button>
+            <Button asChild><a href="/">Explore Deals</a></Button>
           </CardContent>
         </Card>
       )}

@@ -16,6 +16,7 @@
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
             searchQuery: '{{ addslashes($query) }}',
             localSearchQuery: '{{ addslashes($query) }}',
+            viewMode: '{{ $viewMode ?? 'grid' }}',
             resultsCount: {{ count($deals) }},
             isFilterDrawerOpen: false,
             isLoading: false,
@@ -48,6 +49,7 @@
                 let params = new URLSearchParams();
                 
                 if (this.localSearchQuery) params.set('q', this.localSearchQuery);
+                if (this.viewMode !== 'grid') params.set('view', this.viewMode);
                 if (this.selectedCategories.length > 0) params.set('category', this.selectedCategories.join(','));
                 if (this.sortBy !== 'relevance') params.set('sort', this.sortBy);
                 if (this.selectedLocations.length > 0) params.set('location', this.selectedLocations.join(','));
@@ -205,6 +207,39 @@
                 <div class="md:hidden mb-4 space-y-4">
                     
                     <div class="flex gap-2">
+                        <div class="inline-flex items-center rounded-md border border-input p-1 bg-background">
+                            <button
+                                @click="viewMode = 'grid'; applyFilters()"
+                                class="inline-flex items-center justify-center rounded-sm h-8 w-8 transition-colors"
+                                :class="viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                                title="Grid view"
+                                aria-label="Grid view"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                                    <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                                    <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+                                    <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                                </svg>
+                            </button>
+                            <button
+                                @click="viewMode = 'list'; applyFilters()"
+                                class="inline-flex items-center justify-center rounded-sm h-8 w-8 transition-colors"
+                                :class="viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                                title="List view"
+                                aria-label="List view"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+
                         <button 
                             @click="isFilterDrawerOpen = true"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 flex-1"
