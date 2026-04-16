@@ -180,7 +180,7 @@ class CartController extends Controller
             'originalPrice' => (float)$pivot->original_price,
             'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'),
             'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer',
-            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]) . '?offer=' . $pivot->id,
+            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]) . '?offer=' . ($pivot->offerType?->slug ?? $pivot->id),
         ];
     }
 
