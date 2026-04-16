@@ -47,11 +47,10 @@
                     this.applyFilters();
                 }, 400);
             },
-            
-            async applyFilters() {
-                this.isLoading = true;
+
+            buildSearchParams(includeNearbyCoords = false) {
                 let params = new URLSearchParams();
-                
+
                 if (this.localSearchQuery) params.set('q', this.localSearchQuery);
                 if (this.viewMode !== 'grid') params.set('view', this.viewMode);
                 if (this.selectedCategories.length > 0) params.set('category', this.selectedCategories.join(','));
@@ -60,17 +59,28 @@
                 if (this.isFeatured) params.set('featured', 'true');
                 if (this.dealTypes.length > 0) params.set('type', this.dealTypes.join(','));
                 if (this.minRating) params.set('minRating', this.minRating);
-                if (this.nearbyEnabled && this.nearbyLat !== null && this.nearbyLng !== null) {
-                    params.set('nearby', 'true');
-                    params.set('lat', this.nearbyLat);
-                    params.set('lng', this.nearbyLng);
-                    params.set('radiusKm', this.nearbyRadiusKm || 5);
-                }
-                
+
                 let min = Math.min(this.minPrice, this.maxPrice);
                 let max = Math.max(this.minPrice, this.maxPrice);
                 if (min > this.availableMinPrice) params.set('minPrice', min);
                 if (max < this.availableMaxPrice) params.set('maxPrice', max);
+
+                if (this.nearbyEnabled) {
+                    params.set('nearby', 'true');
+                    params.set('radiusKm', this.nearbyRadiusKm || 5);
+
+                    if (includeNearbyCoords && this.nearbyLat !== null && this.nearbyLng !== null) {
+                        params.set('lat', this.nearbyLat);
+                        params.set('lng', this.nearbyLng);
+                    }
+                }
+
+                return params;
+            },
+            
+            async applyFilters() {
+                this.isLoading = true;
+                let params = this.buildSearchParams(false);
 
                 const queryString = params.toString();
                 const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
@@ -113,7 +123,36 @@
                         this.nearbyLat = Number(position.coords.latitude);
                         this.nearbyLng = Number(position.coords.longitude);
                         this.nearbyRadiusKm = 5;
-                        await this.applyFilters();
+
+                        const params = this.buildSearchParams(true);
+                        const queryString = params.toString();
+                        const nearbyUrl = '/search/nearby' + (queryString ? '?' + queryString : '');
+
+                        try {
+                            const response = await fetch(nearbyUrl + (queryString ? '&' : '?') + 'partial=true');
+                            const html = await response.text();
+
+                            const container = document.getElementById('search-results-container');
+                            container.innerHTML = html;
+
+                            const meta = container.querySelector('#results-count-meta');
+                            if (meta) {
+                                this.resultsCount = parseInt(meta.dataset.count);
+                            }
+
+                            if (window.Alpine) {
+                                window.Alpine.initTree(container);
+                            }
+
+                            const cleanParams = this.buildSearchParams(false);
+                            const cleanQueryString = cleanParams.toString();
+                            const cleanUrl = window.location.pathname + (cleanQueryString ? '?' + cleanQueryString : '');
+                            window.history.pushState({ queryString: cleanQueryString }, '', cleanUrl);
+                        } catch (error) {
+                            console.error('Nearby filtering failed:', error);
+                        } finally {
+                            this.isLoading = false;
+                        }
                     },
                     (error) => {
                         this.isLoading = false;
