@@ -111,17 +111,7 @@
             @mouseenter="stopAutoPlay()"
             @mouseleave="startAutoPlay()"
         >
-            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
-                <div class="hidden md:flex justify-start">
-                    <button 
-                        @click="prev()"
-                        class="h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                        aria-label="Previous banner"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5"><path d="m15 18-6-6 6-6"></path></svg>
-                    </button>
-                </div>
-
+            <div class="relative">
                 <div class="relative w-full overflow-hidden rounded-lg">
                     <div 
                         class="flex transition-all duration-500 ease-in-out"
@@ -162,16 +152,20 @@
                         @endforeach
                     </div>
                 </div>
-
-                <div class="hidden md:flex justify-end">
-                    <button 
-                        @click="next()"
-                        class="h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                        aria-label="Next banner"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5 rotate-180"><path d="m15 18-6-6 6-6"></path></svg>
-                    </button>
-                </div>
+                <button 
+                    @click="prev()"
+                    class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 z-20"
+                    aria-label="Previous banner"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+                <button 
+                    @click="next()"
+                    class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/80 border border-border shadow-sm items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 z-20"
+                    aria-label="Next banner"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 md:h-5 md:w-5 rotate-180"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
             </div>
         </div>
     </div>

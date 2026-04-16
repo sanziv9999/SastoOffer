@@ -21,18 +21,7 @@
                 scrollRight() { this.$refs.scrollContainer.scrollBy({ left: 300, behavior: 'smooth' }) }
             }"
         >
-            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3">
-                {{-- Left gutter --}}
-                <div class="hidden md:flex justify-start">
-                    <button
-                        @click="scrollLeft()"
-                        class="h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
-                        aria-label="Scroll left"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
-                    </button>
-                </div>
-
+            <div class="relative">
                 {{-- Content --}}
                 <div class="overflow-hidden">
                     <div 
@@ -47,17 +36,20 @@
                         @endforeach
                     </div>
                 </div>
-
-                {{-- Right gutter --}}
-                <div class="hidden md:flex justify-end">
-                    <button
-                        @click="scrollRight()"
-                        class="h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all flex items-center justify-center text-foreground hover:bg-primary hover:text-white"
-                        aria-label="Scroll right"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
-                    </button>
-                </div>
+                <button
+                    @click="scrollLeft()"
+                    class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all items-center justify-center text-foreground hover:bg-primary hover:text-white z-20"
+                    aria-label="Scroll left"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+                <button
+                    @click="scrollRight()"
+                    class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 border border-border shadow-md opacity-0 group-hover/recent-offers:opacity-100 transition-all items-center justify-center text-foreground hover:bg-primary hover:text-white z-20"
+                    aria-label="Scroll right"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
             </div>
         </div>
     </div>
