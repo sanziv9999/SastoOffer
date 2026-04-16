@@ -483,6 +483,9 @@ const EditDeal = () => {
                 AI Suggest
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Tags help customers discover your deal in search. Use specific, relevant keywords (for example: cuisine, service type, location, or product style) and avoid unrelated or repetitive tags.
+            </p>
             {data.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {data.tags.map(tag => (
