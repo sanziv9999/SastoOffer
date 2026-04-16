@@ -4,6 +4,7 @@
     'compact' => false,
     'showDiscount' => true,
     'showTimeLeft' => true,
+    'showFeaturedRibbon' => false,
 ])
 
 @php
@@ -74,6 +75,12 @@
             @if($showDiscount && $discountPercentage > 0)
                 <div class="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tight uppercase">
                     Save {{ $discountPercentage }}%
+                </div>
+            @endif
+
+            @if($showFeaturedRibbon && $featured)
+                <div class="absolute top-2 -left-8 z-20 w-28 -rotate-45 bg-red-600 text-white text-[10px] font-black py-1 text-center shadow-xl tracking-wider uppercase">
+                    Featured
                 </div>
             @endif
 

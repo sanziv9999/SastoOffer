@@ -60,13 +60,18 @@
                 @foreach($deals as $deal)
                     <article class="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all">
                         <div class="flex flex-col sm:flex-row">
-                            <a href="{{ $deal['url'] ?? '#' }}" class="block sm:w-64 h-44 sm:h-auto bg-slate-100 overflow-hidden">
+                            <a href="{{ $deal['url'] ?? '#' }}" class="block relative sm:w-64 h-44 sm:h-auto bg-slate-100 overflow-hidden">
                                 <img
                                     src="{{ $deal['image'] }}"
                                     alt="{{ $deal['title'] }}"
                                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     loading="lazy"
                                 />
+                                @if(!empty($deal['featured']))
+                                    <div class="absolute top-2 -left-8 z-20 w-28 -rotate-45 bg-red-600 text-white text-[10px] font-black py-1 text-center shadow-xl tracking-wider uppercase">
+                                        Featured
+                                    </div>
+                                @endif
                             </a>
 
                             <div class="flex-1 p-4 flex flex-col gap-3">
@@ -166,6 +171,11 @@
                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                             />
+                            @if(!empty($deal['featured']))
+                                <div class="absolute top-2 -left-8 z-20 w-28 -rotate-45 bg-red-600 text-white text-[10px] font-black py-1 text-center shadow-xl tracking-wider uppercase">
+                                    Featured
+                                </div>
+                            @endif
                         </a>
 
                         <div class="absolute top-3 right-3 flex flex-col gap-2 z-20">
