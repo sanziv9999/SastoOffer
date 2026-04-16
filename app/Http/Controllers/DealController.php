@@ -515,22 +515,30 @@ class DealController extends Controller
             return redirect()->to($canonicalUrl);
         }
 
-        $requestedOfferPivotId = $request->query('offer');
+        $requestedOfferParam = trim((string) $request->query('offer', ''));
         $pivot = null;
-        if ($request->filled('offer') && is_numeric($requestedOfferPivotId)) {
-            $requested = (int) $requestedOfferPivotId;
+        if ($requestedOfferParam !== '') {
+            if (is_numeric($requestedOfferParam)) {
+                $requested = (int) $requestedOfferParam;
 
-            // 1) Most common: ?offer points to deal_offer_type.id (pivot id)
-            $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-                ->where('status', 'active')
-                ->where('id', $requested)
-                ->first();
-
-            // 2) Fallback: some UI paths might pass offer_type_id instead of pivot id
-            if (! $pivot) {
+                // 1) Most common legacy case: ?offer points to deal_offer_type.id (pivot id)
                 $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
                     ->where('status', 'active')
-                    ->where('offer_type_id', $requested)
+                    ->where('id', $requested)
+                    ->first();
+
+                // 2) Fallback: some UI paths might pass offer_type_id instead of pivot id
+                if (! $pivot) {
+                    $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                        ->where('status', 'active')
+                        ->where('offer_type_id', $requested)
+                        ->first();
+                }
+            } else {
+                // Preferred case: ?offer=<offer-type-slug>
+                $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                    ->where('status', 'active')
+                    ->whereHas('offerType', fn ($q) => $q->where('slug', $requestedOfferParam))
                     ->first();
             }
         }

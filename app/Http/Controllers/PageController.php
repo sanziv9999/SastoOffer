@@ -147,7 +147,9 @@ class PageController extends Controller
                     'title' => $offer->deal->title,
                     'price' => (float) $offer->final_price,
                     'image' => $offer->deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&fit=crop'),
-                    'url'   => route('deals.show.by-deal', ['deal' => $offer->deal->slug ?? $offer->deal->id]) . '?offer=' . $offer->id,
+                    'url'   => $offer->deal->slug
+                        ? route('deals.show.by-deal', ['deal' => $offer->deal->slug]) . '?offer=' . ($offer->offerType?->slug ?? $offer->id)
+                        : '#',
                 ];
             });
 
@@ -200,23 +202,6 @@ class PageController extends Controller
         }
         $nearbyRadiusKm = max(5, min(10, $nearbyRadiusKm));
         $hasNearbyCoords = is_numeric($nearbyLat) && is_numeric($nearbyLng);
-        if ($nearbyEnabled && $hasNearbyCoords) {
-            $request->session()->put('search_nearby', [
-                'lat' => (float) $nearbyLat,
-                'lng' => (float) $nearbyLng,
-                'radiusKm' => $nearbyRadiusKm,
-            ]);
-        } elseif ($nearbyEnabled && ! $hasNearbyCoords) {
-            $storedNearby = $request->session()->get('search_nearby', []);
-            if (is_array($storedNearby) && isset($storedNearby['lat'], $storedNearby['lng']) && is_numeric($storedNearby['lat']) && is_numeric($storedNearby['lng'])) {
-                $nearbyLat = (float) $storedNearby['lat'];
-                $nearbyLng = (float) $storedNearby['lng'];
-                $nearbyRadiusKm = isset($storedNearby['radiusKm']) && is_numeric($storedNearby['radiusKm'])
-                    ? max(5, min(10, (float) $storedNearby['radiusKm']))
-                    : $nearbyRadiusKm;
-                $hasNearbyCoords = true;
-            }
-        }
         $nearbyLat = $hasNearbyCoords ? (float) $nearbyLat : null;
         $nearbyLng = $hasNearbyCoords ? (float) $nearbyLng : null;
         // Quick-and-dirty bounding box: 1 degree ~= 111km.
@@ -460,6 +445,7 @@ class PageController extends Controller
                 'dealId'            => $deal?->id,
                 'basePrice'        => $deal?->base_price !== null ? (float) $deal->base_price : 0,
                 'offerPivotId'      => $pivot->id,
+                'offerSlug'         => $pivot->offerType?->slug,
                 'dealSlug'          => $deal?->slug,
                 'title'             => $deal?->title,
                 'vendorName'        => $deal?->vendor?->business_name ?? 'Sasto Offer Vendor',
@@ -486,7 +472,9 @@ class PageController extends Controller
                 'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
                 'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
-                'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $pivot->id,
+                'url'               => $deal?->slug
+                    ? route('deals.show.by-deal', ['deal' => $deal->slug]) . '?offer=' . $pivot->offerType->slug
+                    : '#',
             ];
         });
 
@@ -564,6 +552,7 @@ class PageController extends Controller
             $group['title'] = $display['title'] ?? $group['title'];
             $group['vendorName'] = $display['vendorName'] ?? $group['vendorName'] ?? 'Sasto Offer Vendor';
             $group['offerPivotId'] = $display['offerPivotId'] ?? null;
+            $group['offerSlug'] = $display['offerSlug'] ?? null;
             // Search must show parent deal with base price only (no offer discounts/time).
             $basePrice = $display['basePrice'] ?? 0;
             $group['discountedPrice'] = $basePrice;
@@ -574,13 +563,13 @@ class PageController extends Controller
             $group['categoryName'] = $display['categoryName'] ?? 'Uncategorized';
             $group['subcategoryName'] = $display['subcategoryName'] ?? null;
             $group['status'] = 'active';
-            $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? $dealId;
-            $group['url'] = route('deals.show.by-deal', ['deal' => $dealSlug]);
+            $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? null;
+            $group['url'] = $dealSlug ? route('deals.show.by-deal', ['deal' => $dealSlug]) : '#';
             // Important: reviews on the deal page are tied to a specific offer pivot (?offer=...).
             // On search listing, we always prefer the first display offer pivot so the
             // "reviews" section is available on the details page.
-            if (! empty($group['offerPivotId'])) {
-                $group['url'] .= '?offer=' . $group['offerPivotId'];
+            if (! empty($group['offerSlug'])) {
+                $group['url'] .= '?offer=' . $group['offerSlug'];
             }
             $group['offersCount'] = count($group['offers']);
 
@@ -663,20 +652,11 @@ class PageController extends Controller
             'radiusKm' => ['nullable', 'numeric', 'min:5', 'max:10'],
         ]);
 
-        $radiusKm = (float) ($data['radiusKm'] ?? 5);
-        $radiusKm = max(5, min(10, $radiusKm));
-
-        $request->session()->put('search_nearby', [
-            'lat' => (float) $data['lat'],
-            'lng' => (float) $data['lng'],
-            'radiusKm' => $radiusKm,
-        ]);
-
         $request->merge([
             'nearby' => 'true',
             'lat' => $data['lat'],
             'lng' => $data['lng'],
-            'radiusKm' => $radiusKm,
+            'radiusKm' => $data['radiusKm'] ?? 5,
         ]);
 
         return $this->search($request);
