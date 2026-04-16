@@ -61,9 +61,9 @@
                 <h3 class="text-lg font-semibold mb-4">Support</h3>
                 <ul class="space-y-2">
                     <li><a href="#" class="text-gray-600 hover:text-primary transition-colors">Help Center</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-primary transition-colors">Contact Us</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-primary transition-colors">Privacy Policy</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-primary transition-colors">Terms of Service</a></li>
+                    <li><a href="{{ route('contact') }}" class="text-gray-600 hover:text-primary transition-colors">Contact Us</a></li>
+                    <li><a href="{{ route('privacy') }}" class="text-gray-600 hover:text-primary transition-colors">Privacy Policy</a></li>
+                    <li><a href="{{ route('terms') }}" class="text-gray-600 hover:text-primary transition-colors">Terms of Service</a></li>
                 </ul>
             </div>
 
@@ -118,9 +118,9 @@
                     </button>
                     <div x-show="openSections['support']" x-cloak x-collapse class="space-y-2 py-2 pl-2">
                         <a href="#" class="text-gray-600 hover:text-primary transition-colors block py-1">Help Center</a>
-                        <a href="#" class="text-gray-600 hover:text-primary transition-colors block py-1">Contact Us</a>
-                        <a href="#" class="text-gray-600 hover:text-primary transition-colors block py-1">Privacy Policy</a>
-                        <a href="#" class="text-gray-600 hover:text-primary transition-colors block py-1">Terms of Service</a>
+                        <a href="{{ route('contact') }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Contact Us</a>
+                        <a href="{{ route('privacy') }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Privacy Policy</a>
+                        <a href="{{ route('terms') }}" class="text-gray-600 hover:text-primary transition-colors block py-1">Terms of Service</a>
                     </div>
                 </div>
             </div>
@@ -133,8 +133,8 @@
             </p>
             <div class="mt-4 md:mt-0">
                 <ul class="flex space-x-6">
-                    <li><a href="#" class="text-gray-500 hover:text-primary text-sm transition-colors">Privacy</a></li>
-                    <li><a href="#" class="text-gray-500 hover:text-primary text-sm transition-colors">Terms</a></li>
+                    <li><a href="{{ route('privacy') }}" class="text-gray-500 hover:text-primary text-sm transition-colors">Privacy</a></li>
+                    <li><a href="{{ route('terms') }}" class="text-gray-500 hover:text-primary text-sm transition-colors">Terms</a></li>
                     <li><a href="#" class="text-gray-500 hover:text-primary text-sm transition-colors">Sitemap</a></li>
                 </ul>
             </div>

@@ -661,6 +661,21 @@ class PageController extends Controller
         return Inertia::render('ForgotPasswordPage');
     }
 
+    public function terms()
+    {
+        return view('terms');
+    }
+
+    public function privacy()
+    {
+        return view('privacy');
+    }
+
+    public function contact()
+    {
+        return view('contact');
+    }
+
     public function checkout()
     {
         return Inertia::render('CheckoutPage');
