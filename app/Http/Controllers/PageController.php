@@ -191,6 +191,23 @@ class PageController extends Controller
             : [];
         // Support comma-separated districts for multi-select
         $locationParam  = trim((string) $request->query('location', $request->query('city', $request->query('district', ''))));
+        $nearbyEnabled = filter_var($request->query('nearby', false), FILTER_VALIDATE_BOOL);
+        $nearbyLat = $request->query('lat');
+        $nearbyLng = $request->query('lng');
+        $nearbyRadiusKm = (float) $request->query('radiusKm', 5);
+        if ($nearbyRadiusKm <= 0) {
+            $nearbyRadiusKm = 5;
+        }
+        $nearbyRadiusKm = max(5, min(10, $nearbyRadiusKm));
+        $hasNearbyCoords = is_numeric($nearbyLat) && is_numeric($nearbyLng);
+        $nearbyLat = $hasNearbyCoords ? (float) $nearbyLat : null;
+        $nearbyLng = $hasNearbyCoords ? (float) $nearbyLng : null;
+        // Quick-and-dirty bounding box: 1 degree ~= 111km.
+        $nearbyLatDelta = $hasNearbyCoords ? ($nearbyRadiusKm / 111) : null;
+        $cosLat = $hasNearbyCoords ? cos(deg2rad($nearbyLat)) : null;
+        $nearbyLngDelta = $hasNearbyCoords
+            ? ($nearbyRadiusKm / max(111 * abs((float) $cosLat), 1e-6))
+            : null;
         
         // Treat "All Districts" or "All Cities" as no location selected
         if (in_array($locationParam, ['All Districts', 'All Cities'], true)) {
@@ -330,7 +347,7 @@ class PageController extends Controller
                 $q->whereNull('ends_at')
                     ->orWhere('ends_at', '>=', now());
             })
-            ->whereHas('deal', function ($q) use ($query, $wordTokens, $tagTokens, $subSlug, $categorySlugs, $locationSlugs) {
+            ->whereHas('deal', function ($q) use ($query, $wordTokens, $tagTokens, $subSlug, $categorySlugs, $locationSlugs, $nearbyEnabled, $hasNearbyCoords, $nearbyLat, $nearbyLng, $nearbyLatDelta, $nearbyLngDelta) {
                 $q->when(is_string($query) && trim($query) !== '' && (count($wordTokens) > 0 || count($tagTokens) > 0), function ($qq) use ($query, $wordTokens, $tagTokens) {
                     $qq->where(function ($w) use ($query, $wordTokens, $tagTokens) {
                         // Keep full-phrase matching as a broad recall boost.
@@ -372,6 +389,15 @@ class PageController extends Controller
                         $needles = array_map('mb_strtolower', $locationSlugs);
                         $qq->whereHas('vendor.defaultAddress', function ($addressQ) use ($needles) {
                             $addressQ->whereRaw('LOWER(district) IN (' . implode(',', array_fill(0, count($needles), '?')) . ')', $needles);
+                        });
+                    })
+                    ->when($nearbyEnabled && $hasNearbyCoords, function ($qq) use ($nearbyLat, $nearbyLng, $nearbyLatDelta, $nearbyLngDelta) {
+                        $qq->whereHas('vendor.defaultAddress', function ($addressQ) use ($nearbyLat, $nearbyLng, $nearbyLatDelta, $nearbyLngDelta) {
+                            $addressQ
+                                ->whereNotNull('latitude')
+                                ->whereNotNull('longitude')
+                                ->whereBetween('latitude', [$nearbyLat - $nearbyLatDelta, $nearbyLat + $nearbyLatDelta])
+                                ->whereBetween('longitude', [$nearbyLng - $nearbyLngDelta, $nearbyLng + $nearbyLngDelta]);
                         });
                     });
             });
@@ -600,6 +626,10 @@ class PageController extends Controller
             'availableMaxPrice' => $availableMaxPrice,
             'sortByOptions'     => $sortByOptions,
             'viewMode'          => $viewMode,
+            'nearbyEnabled'     => $nearbyEnabled && $hasNearbyCoords,
+            'nearbyLat'         => $nearbyLat,
+            'nearbyLng'         => $nearbyLng,
+            'nearbyRadiusKm'    => $nearbyRadiusKm,
         ];
 
         if ($request->has('partial')) {
@@ -607,6 +637,23 @@ class PageController extends Controller
         }
 
         return view('search', $viewData);
+    }
+
+    public function nearBy(Request $request){
+       $data = $request->validate([
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+            'radiusKm' => ['nullable', 'numeric', 'min:5', 'max:10'],
+        ]);
+
+        $request->merge([
+            'nearby' => 'true',
+            'lat' => $data['lat'],
+            'lng' => $data['lng'],
+            'radiusKm' => $data['radiusKm'] ?? 5,
+        ]);
+
+        return $this->search($request);
     }
 
     public function forgotPassword()

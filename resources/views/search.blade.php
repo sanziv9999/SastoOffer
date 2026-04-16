@@ -17,6 +17,10 @@
             searchQuery: '{{ addslashes($query) }}',
             localSearchQuery: '{{ addslashes($query) }}',
             viewMode: '{{ $viewMode ?? 'grid' }}',
+            nearbyEnabled: {{ !empty($nearbyEnabled) ? 'true' : 'false' }},
+            nearbyLat: {{ isset($nearbyLat) && $nearbyLat !== null ? (float) $nearbyLat : 'null' }},
+            nearbyLng: {{ isset($nearbyLng) && $nearbyLng !== null ? (float) $nearbyLng : 'null' }},
+            nearbyRadiusKm: {{ isset($nearbyRadiusKm) ? (float) $nearbyRadiusKm : 5 }},
             resultsCount: {{ count($deals) }},
             isFilterDrawerOpen: false,
             isLoading: false,
@@ -56,6 +60,12 @@
                 if (this.isFeatured) params.set('featured', 'true');
                 if (this.dealTypes.length > 0) params.set('type', this.dealTypes.join(','));
                 if (this.minRating) params.set('minRating', this.minRating);
+                if (this.nearbyEnabled && this.nearbyLat !== null && this.nearbyLng !== null) {
+                    params.set('nearby', 'true');
+                    params.set('lat', this.nearbyLat);
+                    params.set('lng', this.nearbyLng);
+                    params.set('radiusKm', this.nearbyRadiusKm || 5);
+                }
                 
                 let min = Math.min(this.minPrice, this.maxPrice);
                 let max = Math.max(this.minPrice, this.maxPrice);
@@ -90,6 +100,28 @@
                     this.isLoading = false;
                 }
             },
+
+            useCurrentLocationForNearby() {
+                if (!('geolocation' in navigator)) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+                this.isLoading = true;
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        this.nearbyEnabled = true;
+                        this.nearbyLat = Number(position.coords.latitude);
+                        this.nearbyLng = Number(position.coords.longitude);
+                        this.nearbyRadiusKm = 5;
+                        await this.applyFilters();
+                    },
+                    (error) => {
+                        this.isLoading = false;
+                        alert(error?.message || 'Unable to get your location.');
+                    },
+                    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+                );
+            },
             
             resetFilters() {
                 this.selectedCategories = [];
@@ -101,6 +133,10 @@
                 this.isFeatured = false;
                 this.minRating = null;
                 this.localSearchQuery = '';
+                this.nearbyEnabled = false;
+                this.nearbyLat = null;
+                this.nearbyLng = null;
+                this.nearbyRadiusKm = 5;
                 this.applyFilters();
             }
         }"
@@ -109,16 +145,27 @@
             <h1 class="text-2xl md:text-3xl font-bold">
                 {{ $query ? "Search results for \"$query\"" : "All Deals" }}
             </h1>
-            
-            <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating">
-                <button 
-                    @click="resetFilters" 
-                    class="hidden md:flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
+
+            <div class="hidden md:flex items-center gap-2">
+                <button
+                    @click="useCurrentLocationForNearby()"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
+                    :disabled="isLoading"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                    Clear Filters
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M12 2v4"/><path d="m16.24 7.76 2.83-2.83"/><path d="M18 12h4"/><path d="m16.24 16.24 2.83 2.83"/><path d="M12 18v4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M2 12h4"/><path d="m4.93 4.93 2.83 2.83"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span x-text="nearbyEnabled ? 'Nearby: On' : 'Near Me'"></span>
                 </button>
-            </template>
+
+                <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating || nearbyEnabled">
+                    <button
+                        @click="resetFilters"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                        Clear Filters
+                    </button>
+                </template>
+            </div>
         </div>
 
         {{-- Mobile Filters Drawer --}}
@@ -275,7 +322,16 @@
                         </div>
                     </div>
                     
-                    <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating">
+                    <button
+                        @click="useCurrentLocationForNearby()"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2"
+                        :disabled="isLoading"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M12 2v4"/><path d="m16.24 7.76 2.83-2.83"/><path d="M18 12h4"/><path d="m16.24 16.24 2.83 2.83"/><path d="M12 18v4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M2 12h4"/><path d="m4.93 4.93 2.83 2.83"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span x-text="nearbyEnabled ? 'Nearby: On' : 'Near Me'"></span>
+                    </button>
+
+                    <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating || nearbyEnabled">
                         <button @click="resetFilters" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
                             Clear All Filters

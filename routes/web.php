@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 // ——— Public (no auth) ———
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/search', [PageController::class, 'search'])->name('search');
+Route::get('/search/nearby', [PageController::class, 'nearBy'])->name('search.nearby');
 Route::get('/api/search/suggestions', [PageController::class, 'suggestions'])->name('api.search.suggestions');
 Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->name('password.request');
 Route::get('/checkout', fn () => redirect()->route('cart.index'))->name('checkout');
