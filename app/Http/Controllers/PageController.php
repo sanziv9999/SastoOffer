@@ -200,6 +200,23 @@ class PageController extends Controller
         }
         $nearbyRadiusKm = max(5, min(10, $nearbyRadiusKm));
         $hasNearbyCoords = is_numeric($nearbyLat) && is_numeric($nearbyLng);
+        if ($nearbyEnabled && $hasNearbyCoords) {
+            $request->session()->put('search_nearby', [
+                'lat' => (float) $nearbyLat,
+                'lng' => (float) $nearbyLng,
+                'radiusKm' => $nearbyRadiusKm,
+            ]);
+        } elseif ($nearbyEnabled && ! $hasNearbyCoords) {
+            $storedNearby = $request->session()->get('search_nearby', []);
+            if (is_array($storedNearby) && isset($storedNearby['lat'], $storedNearby['lng']) && is_numeric($storedNearby['lat']) && is_numeric($storedNearby['lng'])) {
+                $nearbyLat = (float) $storedNearby['lat'];
+                $nearbyLng = (float) $storedNearby['lng'];
+                $nearbyRadiusKm = isset($storedNearby['radiusKm']) && is_numeric($storedNearby['radiusKm'])
+                    ? max(5, min(10, (float) $storedNearby['radiusKm']))
+                    : $nearbyRadiusKm;
+                $hasNearbyCoords = true;
+            }
+        }
         $nearbyLat = $hasNearbyCoords ? (float) $nearbyLat : null;
         $nearbyLng = $hasNearbyCoords ? (float) $nearbyLng : null;
         // Quick-and-dirty bounding box: 1 degree ~= 111km.
@@ -646,11 +663,20 @@ class PageController extends Controller
             'radiusKm' => ['nullable', 'numeric', 'min:5', 'max:10'],
         ]);
 
+        $radiusKm = (float) ($data['radiusKm'] ?? 5);
+        $radiusKm = max(5, min(10, $radiusKm));
+
+        $request->session()->put('search_nearby', [
+            'lat' => (float) $data['lat'],
+            'lng' => (float) $data['lng'],
+            'radiusKm' => $radiusKm,
+        ]);
+
         $request->merge([
             'nearby' => 'true',
             'lat' => $data['lat'],
             'lng' => $data['lng'],
-            'radiusKm' => $data['radiusKm'] ?? 5,
+            'radiusKm' => $radiusKm,
         ]);
 
         return $this->search($request);
