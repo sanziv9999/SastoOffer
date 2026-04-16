@@ -13,7 +13,7 @@ import {
   ArrowLeft, X, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
   Tag, Info, Save,
-  Upload, ImagePlus, Star, GripVertical
+  ImagePlus, Star, GripVertical
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -150,6 +150,7 @@ const EditDeal = () => {
   };
 
   const removeTag = (tag: string) => setData('tags', data.tags.filter(t => t !== tag));
+  const clearAllTags = () => setData('tags', []);
 
   const execCommand = (command: string, target: 'shortDesc' | 'description', value?: string) => {
     document.execCommand(command, false, value);
@@ -474,6 +475,9 @@ const EditDeal = () => {
               <Input placeholder="Add a tag…" value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
               <Button type="button" variant="outline" onClick={addTag}>Add</Button>
+              <Button type="button" variant="outline" onClick={clearAllTags} disabled={data.tags.length === 0}>
+                Clear All
+              </Button>
               <Button type="button" variant="default" onClick={generateAITags} disabled={isGeneratingTags} className="gap-2 shrink-0">
                 {isGeneratingTags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 AI Suggest

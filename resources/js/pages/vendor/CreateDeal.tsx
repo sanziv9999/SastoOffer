@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ type LocalDealImage = {
 
 const CreateDeal = () => {
   const { categories, vendorDefaults } = usePage().props as any;
-  const { data, setData, processing } = useForm({
+  const { data, setData } = useForm({
     title: '',
     shortDesc: '',
     description: '',
@@ -179,6 +179,7 @@ const CreateDeal = () => {
   };
 
   const removeTag = (tag: string) => setData('tags', data.tags.filter(t => t !== tag));
+  const clearAllTags = () => setData('tags', []);
 
   const execCommand = (command: string, target: 'shortDesc' | 'description', value?: string) => {
     document.execCommand(command, false, value);
@@ -431,6 +432,9 @@ const CreateDeal = () => {
               <Input placeholder="Add a tag…" value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
               <Button type="button" variant="outline" onClick={addTag}>Add</Button>
+              <Button type="button" variant="outline" onClick={clearAllTags} disabled={data.tags.length === 0}>
+                Clear All
+              </Button>
               <Button type="button" variant="default" onClick={generateAITags} disabled={isGeneratingTags} className="gap-2 shrink-0">
                 {isGeneratingTags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 AI Suggest
