@@ -292,10 +292,6 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                   <span>Rs. {order.taxTotal.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Shipping</span>
-                <span className="text-primary font-semibold uppercase text-[10px] tracking-wider">Free</span>
-              </div>
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
                 <span className="text-sm font-bold text-teal-950">Total</span>
                 <span className="text-base font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</span>
@@ -471,10 +467,6 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                   <span className="font-medium tabular-nums">{formatMoney(order.taxTotal)}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="text-primary font-semibold uppercase text-[10px] tracking-wider">Free</span>
-              </div>
               <div className="pt-2 border-t flex items-center justify-between gap-4">
                 <span className="font-semibold text-foreground">Total</span>
                 <span className="font-bold text-foreground tabular-nums">{formatMoney(order.grandTotal)}</span>
