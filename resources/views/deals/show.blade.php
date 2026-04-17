@@ -143,7 +143,7 @@
                 if (!this.selectedOfferPivotId) return;
                 this.cart.addItem(this.selectedOfferPivotId, this.quantity);
             },
-            async handleBuyNow() {
+            async handleClaimOffer() {
                 if (!this.selectedOfferPivotId) return;
                 const result = await this.cart.addItem(this.selectedOfferPivotId, this.quantity);
                 if (result && result.success) {
@@ -439,11 +439,11 @@
                             Add to Cart
                         </button>
                         <button 
-                            @click="handleBuyNow"
+                            @click="handleClaimOffer"
                             :disabled="!selectedOfferPivotId"
                             class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-8 py-2 flex-1 min-w-[140px]"
                         >
-                            Buy Now
+                            Claim Offer
                         </button>
                     </div>
 

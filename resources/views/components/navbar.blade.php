@@ -369,7 +369,7 @@
                                             View Cart
                                         </a>
                                         <a href="/checkout" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:ring-1 focus:ring-ring bg-secondary text-white hover:bg-secondary/90 h-10 px-4 shadow-sm">
-                                            Checkout
+                                            Claim Offer
                                         </a>
                                     </div>
                                 </div>

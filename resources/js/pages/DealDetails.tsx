@@ -85,7 +85,7 @@ const DealDetails = () => {
     toast.success(`Added to cart: ${quantity} × ${deal.title}`);
   };
 
-  const handleBuyNow = () => {
+  const handleClaimOffer = () => {
     if (!user) {
       toast.error('Please log in to purchase this deal');
       return;
@@ -261,8 +261,8 @@ const DealDetails = () => {
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Add to Cart
               </Button>
-              <Button onClick={handleBuyNow} className="flex-1 min-w-[140px]">
-                Buy Now
+              <Button onClick={handleClaimOffer} className="flex-1 min-w-[140px]">
+                Claim Offer
               </Button>
             </div>
 

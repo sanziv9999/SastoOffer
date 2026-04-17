@@ -133,7 +133,7 @@ class CheckoutController extends Controller
 
         return redirect()
             ->route('order.confirmation', $firstOrder->id)
-            ->with('success', 'Order placed successfully!');
+            ->with('success', 'Offer claimed successfully!');
     }
 
     public function confirmation(Order $order)

@@ -40,7 +40,7 @@ const CartButton = () => {
               <Link to="/cart">View Cart</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/checkout">Checkout</Link>
+              <Link to="/checkout">Claim Offer</Link>
             </DropdownMenuItem>
           </>
         )}

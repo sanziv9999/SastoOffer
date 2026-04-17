@@ -192,7 +192,7 @@ const Cart = ({ items = [], total = 0, count = 0 }: Props) => {
                 onClick={proceedCheckout}
                 disabled={isSubmittingCheckout || cartItems.length === 0}
               >
-                {isSubmittingCheckout ? 'Processing...' : 'Proceed to Checkout'}
+                {isSubmittingCheckout ? 'Processing...' : 'Proceed to Claim Offer'}
               </Button>
             </CardContent>
           </Card>
