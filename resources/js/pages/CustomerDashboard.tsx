@@ -197,10 +197,10 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-20 flex-col">
-              <Link href="/search">
+              <a href="/search">
                 <Search className="h-6 w-6 mb-2" />
                 <span>Find Deals</span>
-              </Link>
+              </a>
             </Button>
             <Button asChild variant="outline" className="h-20 flex-col">
               <Link href="/dashboard/favorites">
@@ -254,9 +254,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                     </div>
                   </div>
                   <Button asChild className="w-full" size="sm">
-                    <Link href={getDealHref(deal, deal.id)}>
+                    <a href={getDealHref(deal, deal.id)}>
                       View Deal
-                    </Link>
+                    </a>
                   </Button>
                 </CardContent>
               </Card>
