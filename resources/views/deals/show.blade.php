@@ -159,7 +159,7 @@
         <div class="text-sm mb-6 flex items-center gap-1 text-muted-foreground">
             <a href="/" class="hover:text-foreground transition-colors">Home</a>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
-            <a href="/" class="hover:text-foreground transition-colors">Deals</a>
+            <a href="/search" class="hover:text-foreground transition-colors">Deals</a>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="m9 18 6-6-6-6"/></svg>
             <span class="font-medium text-foreground truncate">{{ $deal['title'] }}</span>
         </div>
