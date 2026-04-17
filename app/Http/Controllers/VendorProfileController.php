@@ -8,6 +8,7 @@ use App\Models\Address;
 use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
 use App\Services\ActivityMailer;
+use App\Support\DealUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -301,7 +302,7 @@ class VendorProfileController extends Controller
                 'cityName'          => $locationLabel ?: 'Location',
                 'status'            => $isExpired ? 'expired' : 'active',
                 'timeLeft'          => $isExpired ? null : (optional($pivot->ends_at)?->diffForHumans() ?? 'soon'),
-                'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . ($pivot->offerType?->slug ?? $pivot->id),
+                'url'               => DealUrl::fromPivot($pivot),
             ];
         });
 

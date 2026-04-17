@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CartItem;
 use App\Models\DealOfferType;
 use App\Models\OfferType;
+use App\Support\DealUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -180,7 +181,7 @@ class CartController extends Controller
             'originalPrice' => (float)$pivot->original_price,
             'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'),
             'typeLabel' => $pivot->offerType?->display_name ?? 'Standard Offer',
-            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]) . '?offer=' . ($pivot->offerType?->slug ?? $pivot->id),
+            'url' => DealUrl::fromPivot($pivot),
         ];
     }
 

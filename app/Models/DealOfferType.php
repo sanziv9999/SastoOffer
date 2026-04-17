@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\OfferRuleCalculator;
+use App\Support\DealUrl;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -194,7 +195,7 @@ class DealOfferType extends Pivot
             'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
             'timeLeft'          => $this->ends_at ? $this->ends_at->diffForHumans() : null,
             'quantitySold'      => (int) ($this->quantitySold ?? $this->attribute_quantity_sold ?? 0),
-            'url'               => route('deals.show.by-deal', ['deal' => $deal?->slug ?? $deal?->id]) . '?offer=' . $this->id,
+            'url'               => $deal ? DealUrl::fromPivot($this) : '#',
         ];
     }
 }

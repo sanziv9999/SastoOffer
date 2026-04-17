@@ -44,9 +44,12 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
 });
 
 // Public deal detail routes.
-// - Canonical slug URL: /deals/{deal-slug}
+// - Canonical: /deals/{mainCategory}/{subCategory}/{location}/{dealSlug}/{offerTypeSlug}
+// - Legacy short URL: /deals/{deal-slug} (redirects to canonical when possible)
 // - Offer-specific URL (kept for compatibility): /deals/offer/{pivot-id}
 Route::get('/deals/offer/{dealOfferType}', [DealController::class, 'showDeal'])->name('deals.show');
+Route::get('/deals/{mainCategory}/{subCategory}/{location}/{dealSlug}/{offerTypeSlug}', [DealController::class, 'showDealCanonical'])
+    ->name('deals.show.canonical');
 Route::get('/deals/{deal}', [DealController::class, 'showDealByDealId'])->name('deals.show.by-deal');
 
 // Legacy: /deals/deal/{deal} redirects/handles old id URLs.

@@ -10,6 +10,7 @@ use App\Models\OfferType;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\Wishlist;
+use App\Support\DealUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -65,7 +66,7 @@ class DashboardController extends Controller
             'timeLeft' => null,
             'status' => $deal->status,
             'locationLabel' => $locationLabel,
-            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?? $deal->id]),
+            'url' => DealUrl::forDealFirstOffer($deal),
         ];
     }
 
@@ -389,8 +390,8 @@ class DashboardController extends Controller
             'originalPrice' => (float) ($pivot?->original_price ?? 0),
             'image' => $deal?->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'),
             'typeLabel' => $pivot?->offerType?->display_name ?? 'Standard Offer',
-            'url' => $deal
-                ? route('deals.show.by-deal', ['deal' => $deal->slug ?: $deal->id]).'?offer='.($pivot?->offerType?->slug ?? $pivot?->id)
+            'url' => $deal && $pivot
+                ? DealUrl::fromPivot($pivot)
                 : route('search'),
             'isFirstXOffer' => $this->isFirstXCustomersOffer($pivot),
         ];

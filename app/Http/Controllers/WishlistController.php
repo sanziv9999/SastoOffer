@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Deal;
 use App\Models\DealOfferType;
+use App\Support\DealUrl;
 use Illuminate\Http\Request;
 
 class WishlistController extends Controller
@@ -108,7 +109,7 @@ class WishlistController extends Controller
             'timeLeft' => null,
             'status' => $deal->status,
             'locationLabel' => $locationLabel,
-            'url' => route('deals.show.by-deal', ['deal' => $deal->slug ?? $deal->id]),
+            'url' => DealUrl::forDealFirstOffer($deal),
         ];
     }
 }

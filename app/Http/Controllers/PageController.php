@@ -8,6 +8,7 @@ use App\Models\Deal;
 use App\Models\Category;
 use App\Models\DealOfferType;
 use App\Models\Address;
+use App\Support\DealUrl;
 use Illuminate\Support\Str;
 
 class PageController extends Controller
@@ -138,7 +139,7 @@ class PageController extends Controller
                     }
                 });
             })
-            ->with(['deal.images', 'offerType'])
+            ->with(['deal.images', 'deal.category.parent', 'deal.vendor.defaultAddress', 'offerType'])
             ->take(6)
             ->get()
             ->map(function($offer) {
@@ -147,8 +148,8 @@ class PageController extends Controller
                     'title' => $offer->deal->title,
                     'price' => (float) $offer->final_price,
                     'image' => $offer->deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&fit=crop'),
-                    'url'   => $offer->deal->slug
-                        ? route('deals.show.by-deal', ['deal' => $offer->deal->slug]) . '?offer=' . ($offer->offerType?->slug ?? $offer->id)
+                    'url'   => $offer->deal->slug && $offer->offerType?->slug
+                        ? DealUrl::canonical($offer->deal, $offer->offerType->slug)
                         : '#',
                 ];
             });
@@ -472,8 +473,11 @@ class PageController extends Controller
                 'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
                 'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
-                'url'               => $deal?->slug
-                    ? route('deals.show.by-deal', ['deal' => $deal->slug]) . '?offer=' . $pivot->offerType->slug
+                'canonicalUrl'      => $deal?->slug && $pivot->offerType?->slug
+                    ? DealUrl::canonical($deal, $pivot->offerType->slug)
+                    : null,
+                'url'               => $deal?->slug && $pivot->offerType?->slug
+                    ? DealUrl::canonical($deal, $pivot->offerType->slug)
                     : '#',
             ];
         });
@@ -564,11 +568,9 @@ class PageController extends Controller
             $group['subcategoryName'] = $display['subcategoryName'] ?? null;
             $group['status'] = 'active';
             $dealSlug = $display['dealSlug'] ?? $group['dealSlug'] ?? null;
-            $group['url'] = $dealSlug ? route('deals.show.by-deal', ['deal' => $dealSlug]) : '#';
-            // Important: reviews on the deal page are tied to a specific offer pivot (?offer=...).
-            // On search listing, we always prefer the first display offer pivot so the
-            // "reviews" section is available on the details page.
-            if (! empty($group['offerSlug'])) {
+            $group['url'] = $display['canonicalUrl']
+                ?? ($dealSlug ? route('deals.show.by-deal', ['deal' => $dealSlug]) : '#');
+            if ($group['url'] !== '#' && empty($display['canonicalUrl']) && ! empty($group['offerSlug'])) {
                 $group['url'] .= '?offer=' . $group['offerSlug'];
             }
             $group['offersCount'] = count($group['offers']);

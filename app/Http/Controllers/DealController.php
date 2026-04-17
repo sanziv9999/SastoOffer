@@ -11,6 +11,7 @@ use App\Models\OfferType;
 use App\Models\VendorProfile;
 use App\Services\DealMetadataSuggestionService;
 use App\Services\DealOfferService;
+use App\Support\DealUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -493,6 +494,39 @@ class DealController extends Controller
     }
 
     /**
+     * Canonical public URL: /deals/{mainCategory}/{subCategory}/{location}/{dealSlug}/{offerTypeSlug}
+     */
+    public function showDealCanonical(string $mainCategory, string $subCategory, string $location, string $dealSlug, string $offerTypeSlug)
+    {
+        $dealModel = Deal::query()
+            ->where('slug', $dealSlug)
+            ->with(['vendor.defaultAddress', 'category.parent'])
+            ->first();
+
+        if (! $dealModel) {
+            abort(404);
+        }
+
+        [$expectedMain, $expectedSub, $expectedLoc] = DealUrl::segments($dealModel);
+
+        if ($mainCategory !== $expectedMain || $subCategory !== $expectedSub || $location !== $expectedLoc) {
+            return redirect()->to(DealUrl::canonical($dealModel, $offerTypeSlug), 301);
+        }
+
+        $pivot = DealOfferTypePivot::query()
+            ->where('deal_id', $dealModel->id)
+            ->where('status', 'active')
+            ->whereHas('offerType', fn ($q) => $q->where('slug', $offerTypeSlug))
+            ->first();
+
+        if (! $pivot) {
+            abort(404);
+        }
+
+        return $this->showDeal($pivot);
+    }
+
+    /**
      * Public deal view by deal id (legacy): redirects to first active offer pivot.
      */
     public function showDealByDealId($deal, Request $request)
@@ -506,7 +540,37 @@ class DealController extends Controller
             return view('deals.show', ['deal' => null]);
         }
 
+        $dealModel->loadMissing(['category.parent', 'vendor.defaultAddress', 'activeOfferTypes']);
+
+        $requestedOfferParam = trim((string) $request->query('offer', ''));
+        $pivot = $this->resolveOfferPivot($dealModel, $requestedOfferParam);
+
+        $offerSlug = $pivot?->offerType?->slug
+            ? (string) $pivot->offerType->slug
+            : null;
+        if ($offerSlug === '') {
+            $offerSlug = null;
+        }
+        if ($offerSlug === null && $requestedOfferParam !== '' && ! is_numeric($requestedOfferParam)) {
+            $offerSlug = $requestedOfferParam;
+        }
+        if ($offerSlug === null) {
+            $offerSlug = $dealModel->activeOfferTypes->first()?->slug;
+        }
+
+        if ($dealModel->slug && $offerSlug) {
+            $target = DealUrl::canonical($dealModel, $offerSlug);
+            $currentPath = parse_url($request->url(), PHP_URL_PATH) ?: '';
+            $targetPath = parse_url($target, PHP_URL_PATH) ?: '';
+            if (rtrim($currentPath, '/') !== rtrim($targetPath, '/')) {
+                return redirect()->to($target, 301);
+            }
+        }
+
         if ((string) $deal !== (string) $dealModel->slug) {
+            if ($dealModel->slug && $offerSlug) {
+                return redirect()->to(DealUrl::canonical($dealModel, $offerSlug), 301);
+            }
             $canonicalUrl = route('deals.show.by-deal', ['deal' => $dealModel->slug]);
             if ($request->filled('offer')) {
                 $canonicalUrl .= '?offer='.$request->query('offer');
@@ -515,36 +579,8 @@ class DealController extends Controller
             return redirect()->to($canonicalUrl);
         }
 
-        $requestedOfferParam = trim((string) $request->query('offer', ''));
-        $pivot = null;
-        if ($requestedOfferParam !== '') {
-            if (is_numeric($requestedOfferParam)) {
-                $requested = (int) $requestedOfferParam;
-
-                // 1) Most common legacy case: ?offer points to deal_offer_type.id (pivot id)
-                $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-                    ->where('status', 'active')
-                    ->where('id', $requested)
-                    ->first();
-
-                // 2) Fallback: some UI paths might pass offer_type_id instead of pivot id
-                if (! $pivot) {
-                    $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-                        ->where('status', 'active')
-                        ->where('offer_type_id', $requested)
-                        ->first();
-                }
-            } else {
-                // Preferred case: ?offer=<offer-type-slug>
-                $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
-                    ->where('status', 'active')
-                    ->whereHas('offerType', fn ($q) => $q->where('slug', $requestedOfferParam))
-                    ->first();
-            }
-        }
-
-        // If an offer is explicitly selected, render the selected offer context.
-        if ($pivot) {
+        // If an offer is explicitly selected but could not use canonical URL (missing offer slug), render pivot.
+        if ($pivot && $offerSlug === null) {
             return $this->showDeal($pivot);
         }
 
@@ -1067,7 +1103,7 @@ class DealController extends Controller
 
         $this->syncDealOffers($deal, $offerTypesInput);
 
-        return redirect()->route('deals.show.by-deal', ['deal' => $deal->slug])->with('success', 'Deal updated successfully.');
+        return redirect()->to(DealUrl::forDealFirstOffer($deal))->with('success', 'Deal updated successfully.');
     }
 
     protected function syncDealOffers(Deal $deal, array $offerTypesInput): void
@@ -1114,6 +1150,36 @@ class DealController extends Controller
         $deal->delete();
 
         return redirect()->route('deals.index')->with('success', 'Deal deleted successfully.');
+    }
+
+    protected function resolveOfferPivot(Deal $dealModel, string $requestedOfferParam): ?DealOfferTypePivot
+    {
+        if ($requestedOfferParam === '') {
+            return null;
+        }
+
+        if (is_numeric($requestedOfferParam)) {
+            $requested = (int) $requestedOfferParam;
+
+            $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                ->where('status', 'active')
+                ->where('id', $requested)
+                ->first();
+
+            if (! $pivot) {
+                $pivot = DealOfferTypePivot::where('deal_id', $dealModel->id)
+                    ->where('status', 'active')
+                    ->where('offer_type_id', $requested)
+                    ->first();
+            }
+
+            return $pivot;
+        }
+
+        return DealOfferTypePivot::where('deal_id', $dealModel->id)
+            ->where('status', 'active')
+            ->whereHas('offerType', fn ($q) => $q->where('slug', $requestedOfferParam))
+            ->first();
     }
 
     protected function syncDealImagesFromRequest(Request $request, Deal $deal, bool $isUpdate): void
