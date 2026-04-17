@@ -298,10 +298,31 @@ class Deal extends Model
     private static function normalizeHighlightTags(array $rawValues): array
     {
         $normalized = [];
+        $stopTokens = [
+            'city',
+            'metro',
+            'metropolitan',
+            'municipality',
+            'district',
+            'province',
+            'ward',
+        ];
+
         foreach ($rawValues as $value) {
             $tag = self::normalizeHighlightTag($value);
             if ($tag !== null) {
                 $normalized[] = $tag;
+
+                // Include useful word-level location tokens so older highlights like
+                // "kathmandu" can be replaced when full address strings change.
+                $parts = explode('-', $tag);
+                foreach ($parts as $part) {
+                    $part = trim($part);
+                    if (mb_strlen($part) < 3 || in_array($part, $stopTokens, true)) {
+                        continue;
+                    }
+                    $normalized[] = $part;
+                }
             }
         }
 

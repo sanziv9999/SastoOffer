@@ -444,7 +444,9 @@ class VendorProfileController extends Controller
         }
 
         // Keep location-related highlights in sync when vendor location changes.
-        $vendorProfile->loadMissing('defaultAddress');
+        // Important: force-refresh relation because address might have been updated via query builder.
+        $vendorProfile->unsetRelation('defaultAddress');
+        $vendorProfile->load('defaultAddress');
         $currentAddress = $vendorProfile->defaultAddress;
         $newLocationParts = [
             $currentAddress?->province,
