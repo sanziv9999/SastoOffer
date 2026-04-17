@@ -27,11 +27,15 @@ class PageController extends Controller
     {
         $featuredPivots = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
             ->whereHas('displayTypes', fn($q) => $q->where('name', 'featured'))
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->take(8)
             ->get();
 
         $recentPivots = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->with(['deal.category.parent', 'deal.images', 'deal.vendor' => fn($q) => $q->withAvg('reviews', 'rating')->withCount('reviews'), 'deal.vendor.defaultAddress', 'offerType', 'displayTypes'])
             ->latest()
             ->take(10)
@@ -114,6 +118,8 @@ class PageController extends Controller
         }
 
         $suggestions = $this->applyActiveNonEndedOfferFilter(DealOfferType::query())
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->whereHas('deal', function($q) use ($query, $wordTokens, $tagTokens) {
                 $q->where(function($w) use ($query, $wordTokens, $tagTokens) {
                     // Match title, descriptions
@@ -337,6 +343,8 @@ class PageController extends Controller
         }
 
         $offerQuery = DealOfferType::query()
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->with([
                 'deal.category.parent',
                 'deal.images',
@@ -436,11 +444,9 @@ class PageController extends Controller
                 $address?->tole,
             ])->filter()->implode(', ');
 
-            $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
-            $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
-
-            $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
-            $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
+            // Use offer-level reviews for deal cards.
+            $offerRating = $pivot->reviews_avg_rating ?? null;
+            $offerReviewCount = $pivot->reviews_count ?? null;
 
             return [
                 'dealId'            => $deal?->id,
@@ -470,8 +476,9 @@ class PageController extends Controller
                     'city' => $address?->district ?? 'Location',
                 ],
                 'cityName'          => $locationLabel ?: 'Location',
-                'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
-                'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
+                // Keep existing keys consumed by the UI.
+                'vendorRating'      => $offerRating !== null ? (float) $offerRating : null,
+                'vendorReviewCount' => $offerReviewCount !== null ? (int) $offerReviewCount : null,
                 'timeLeft'          => optional($pivot->ends_at)?->diffForHumans() ?? 'soon',
                 'canonicalUrl'      => $deal?->slug && $pivot->offerType?->slug
                     ? DealUrl::canonical($deal, $pivot->offerType->slug)

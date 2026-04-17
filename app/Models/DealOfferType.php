@@ -165,8 +165,9 @@ class DealOfferType extends Pivot
             $address?->tole,
         ])->filter()->implode(', ');
 
-        $vendorRating = $deal?->vendor?->reviews_avg_rating ?? null;
-        $vendorReviewCount = $deal?->vendor?->reviews_count ?? null;
+        // Deal cards should use this offer's own reviews, not vendor profile reviews.
+        $offerRating = $this->reviews_avg_rating ?? null;
+        $offerReviewCount = $this->reviews_count ?? null;
 
         return [
             'id'                => $deal?->id,
@@ -191,8 +192,9 @@ class DealOfferType extends Pivot
                 'city' => $address?->district ?? 'Location',
             ],
             'cityName'          => $locationLabel ?: 'Location',
-            'vendorRating'      => $vendorRating !== null ? (float) $vendorRating : null,
-            'vendorReviewCount' => $vendorReviewCount !== null ? (int) $vendorReviewCount : null,
+            // Keep existing response keys for UI compatibility.
+            'vendorRating'      => $offerRating !== null ? (float) $offerRating : null,
+            'vendorReviewCount' => $offerReviewCount !== null ? (int) $offerReviewCount : null,
             'timeLeft'          => $this->ends_at ? $this->ends_at->diffForHumans() : null,
             'quantitySold'      => (int) ($this->quantitySold ?? $this->attribute_quantity_sold ?? 0),
             'url'               => $deal ? DealUrl::fromPivot($this) : '#',
