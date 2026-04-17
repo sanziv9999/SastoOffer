@@ -52,7 +52,7 @@ interface OrdersProps {
   orders: VendorOrder[];
 }
 
-type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'cancelled' | 'refunded';
+type OrderStatus = 'pending' | 'paid' | 'redeemed' | 'cancelled' | 'refunded';
 
 const Orders = ({ orders }: OrdersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,7 +103,7 @@ const Orders = ({ orders }: OrdersProps) => {
     switch (status) {
       case 'pending': return <Clock className="h-3.5 w-3.5" />;
       case 'paid': return <Package className="h-3.5 w-3.5" />;
-      case 'fulfilled': return <CheckCircle className="h-3.5 w-3.5" />;
+      case 'redeemed': return <CheckCircle className="h-3.5 w-3.5" />;
       case 'cancelled': return <XCircle className="h-3.5 w-3.5" />;
       case 'refunded': return <XCircle className="h-3.5 w-3.5" />;
       default: return null;
@@ -114,7 +114,7 @@ const Orders = ({ orders }: OrdersProps) => {
     switch (status) {
       case 'pending': return 'bg-amber-500 text-white hover:bg-amber-600 focus:bg-amber-600';
       case 'paid': return 'bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600';
-      case 'fulfilled': return 'bg-emerald-500 text-white hover:bg-emerald-600 focus:bg-emerald-600';
+      case 'redeemed': return 'bg-emerald-500 text-white hover:bg-emerald-600 focus:bg-emerald-600';
       case 'cancelled': return 'bg-red-500 text-white hover:bg-red-600 focus:bg-red-600';
       case 'refunded': return 'bg-slate-500 text-white hover:bg-slate-600 focus:bg-slate-600';
       default: return '';
@@ -125,7 +125,7 @@ const Orders = ({ orders }: OrdersProps) => {
     switch (status) {
       case 'pending': return 'border-l-4 border-l-amber-400';
       case 'paid': return 'border-l-4 border-l-blue-400';
-      case 'fulfilled': return 'border-l-4 border-l-emerald-400';
+      case 'redeemed': return 'border-l-4 border-l-emerald-400';
       case 'cancelled': return 'border-l-4 border-l-red-400';
       case 'refunded': return 'border-l-4 border-l-slate-400';
       default: return 'border-l-4 border-l-transparent';
@@ -144,7 +144,7 @@ const Orders = ({ orders }: OrdersProps) => {
     return filteredOrders;
   };
 
-  const totalRevenue = localOrders?.filter(o => o.status === 'fulfilled').reduce((s, o) => s + o.total, 0) || 0;
+  const totalRevenue = localOrders?.filter(o => o.status === 'redeemed').reduce((s, o) => s + o.total, 0) || 0;
   const totalDiscount = localOrders?.reduce((s, o) => s + (o.discountTotal || 0), 0) || 0;
 
   const claimOfferByCode = () => {
@@ -392,7 +392,7 @@ const Orders = ({ orders }: OrdersProps) => {
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="fulfilled">Redeemed</SelectItem>
+                        <SelectItem value="redeemed">Redeemed</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                         <SelectItem value="refunded">Refunded</SelectItem>
                       </SelectContent>
@@ -503,14 +503,14 @@ const Orders = ({ orders }: OrdersProps) => {
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="fulfilled">Redeemed</TabsTrigger>
+              <TabsTrigger value="redeemed">Redeemed</TabsTrigger>
               <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
               <TabsTrigger value="refunded">Refunded</TabsTrigger>
             </TabsList>
             <TabsContent value="all">{renderOrdersTable(filterOrders('all'))}</TabsContent>
             <TabsContent value="pending">{renderOrdersTable(filterOrders('pending'))}</TabsContent>
             <TabsContent value="paid">{renderOrdersTable(filterOrders('paid'))}</TabsContent>
-            <TabsContent value="fulfilled">{renderOrdersTable(filterOrders('fulfilled'))}</TabsContent>
+            <TabsContent value="redeemed">{renderOrdersTable(filterOrders('redeemed'))}</TabsContent>
             <TabsContent value="cancelled">{renderOrdersTable(filterOrders('cancelled'))}</TabsContent>
             <TabsContent value="refunded">{renderOrdersTable(filterOrders('refunded'))}</TabsContent>
           </Tabs>

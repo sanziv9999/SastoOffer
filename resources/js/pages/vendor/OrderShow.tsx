@@ -62,7 +62,7 @@ interface OrderShowProps {
   order: VendorOrderDetail;
 }
 
-type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'cancelled' | 'refunded';
+type OrderStatus = 'pending' | 'paid' | 'redeemed' | 'cancelled' | 'refunded';
 
 const formatRs = (n: number) => `Rs. ${n.toFixed(2)}`;
 
@@ -101,7 +101,7 @@ const OrderShow = ({ order }: OrderShowProps) => {
         return <Clock className="h-4 w-4" />;
       case 'paid':
         return <Package className="h-4 w-4" />;
-      case 'fulfilled':
+      case 'redeemed':
         return <CheckCircle className="h-4 w-4" />;
       case 'cancelled':
       case 'refunded':
@@ -117,7 +117,7 @@ const OrderShow = ({ order }: OrderShowProps) => {
         return 'border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-100';
       case 'paid':
         return 'border-blue-500/50 bg-blue-500/10 text-blue-900 dark:text-blue-100';
-      case 'fulfilled':
+      case 'redeemed':
         return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100';
       case 'cancelled':
         return 'border-red-500/50 bg-red-500/10 text-red-900 dark:text-red-100';
@@ -134,7 +134,7 @@ const OrderShow = ({ order }: OrderShowProps) => {
         return 'bg-amber-500 text-white border-none';
       case 'paid':
         return 'bg-blue-500 text-white border-none';
-      case 'fulfilled':
+      case 'redeemed':
         return 'bg-emerald-500 text-white border-none';
       case 'cancelled':
         return 'bg-red-500 text-white border-none';
@@ -187,7 +187,7 @@ const OrderShow = ({ order }: OrderShowProps) => {
             <SelectContent>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="fulfilled">Fulfilled</SelectItem>
+              <SelectItem value="redeemed">Redeemed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
               <SelectItem value="refunded">Refunded</SelectItem>
             </SelectContent>

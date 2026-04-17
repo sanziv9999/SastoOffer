@@ -165,7 +165,7 @@ class CheckoutController extends Controller
                 $allItems = $ordersInGroup->flatMap(fn (Order $order) => $order->items);
 
                 $statuses = $ordersInGroup->pluck('status')->filter()->values();
-                $statusPriority = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'];
+                $statusPriority = ['pending', 'paid', 'redeemed', 'cancelled', 'refunded'];
                 $aggregatedStatus = collect($statusPriority)->first(fn ($status) => $statuses->contains($status)) ?? 'pending';
                 $canCancel = $ordersInGroup->every(fn (Order $o) => $o->status === 'pending');
 

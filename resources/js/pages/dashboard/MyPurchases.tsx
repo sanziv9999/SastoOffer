@@ -55,7 +55,7 @@ interface MyPurchasesProps {
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-800', icon: <Clock className="h-3 w-3" /> },
   paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800', icon: <CreditCard className="h-3 w-3" /> },
-  fulfilled: { label: 'Fulfilled', color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" /> },
+  redeemed: { label: 'Redeemed', color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: <XCircle className="h-3 w-3" /> },
   refunded: { label: 'Refunded', color: 'bg-gray-100 text-gray-800', icon: <XCircle className="h-3 w-3" /> },
 };
@@ -63,7 +63,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 const MyPurchases = ({ purchases }: MyPurchasesProps) => {
   const orders = purchases || [];
   const activeOrders = orders.filter(o => ['pending', 'paid'].includes(o.status));
-  const completedOrders = orders.filter(o => ['fulfilled', 'cancelled', 'refunded'].includes(o.status));
+  const completedOrders = orders.filter(o => ['redeemed', 'cancelled', 'refunded'].includes(o.status));
   const totalSpent = orders.reduce((sum, o) => sum + o.grandTotal, 0);
   const totalSaved = orders.reduce((sum, o) => sum + o.discountTotal, 0);
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());

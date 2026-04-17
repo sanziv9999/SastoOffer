@@ -13,12 +13,12 @@ class DealInventoryService
     {
         $order->loadMissing('items');
 
-        if ($previousStatus !== 'fulfilled' && $newStatus === 'fulfilled') {
+        if ($previousStatus !== 'redeemed' && $newStatus === 'redeemed') {
             $this->decrementInventoryForFulfilledOrder($order);
             return;
         }
 
-        if ($previousStatus === 'fulfilled' && in_array($newStatus, ['cancelled', 'refunded'], true)) {
+        if ($previousStatus === 'redeemed' && in_array($newStatus, ['cancelled', 'refunded'], true)) {
             $this->incrementInventoryForCancelledFulfilledOrder($order);
             return;
         }

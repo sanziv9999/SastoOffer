@@ -206,7 +206,7 @@ class VendorAnalyticsController extends Controller
         }
 
         $data = $request->validate([
-            'status' => ['required', 'in:pending,paid,fulfilled,cancelled,refunded'],
+            'status' => ['required', 'in:pending,paid,redeemed,cancelled,refunded'],
         ]);
 
         $previousStatus = $order->status;
@@ -219,7 +219,7 @@ class VendorAnalyticsController extends Controller
             }
             $order->save();
 
-            if ($newStatus === 'fulfilled') {
+            if ($newStatus === 'redeemed') {
                 app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
             }
 
@@ -286,12 +286,12 @@ class VendorAnalyticsController extends Controller
                 ]);
             }
 
-            if ($orderByNumber->status === 'fulfilled') {
+            if ($orderByNumber->status === 'redeemed') {
                 return back()->with('success', 'This order is already redeemed.');
             }
 
             $previousStatus = $orderByNumber->status;
-            $newStatus = 'fulfilled';
+            $newStatus = 'redeemed';
 
             DB::transaction(function () use ($orderByNumber, $user, $claimCode) {
                 foreach ($orderByNumber->items as $item) {
@@ -307,7 +307,7 @@ class VendorAnalyticsController extends Controller
                     $item->save();
                 }
 
-                $orderByNumber->status = 'fulfilled';
+                $orderByNumber->status = 'redeemed';
                 if (! $orderByNumber->paid_at) {
                     $orderByNumber->paid_at = now();
                 }
@@ -320,12 +320,12 @@ class VendorAnalyticsController extends Controller
             });
 
             try {
-                $activityMailer->sendOrderStatusChangedCustomer($orderByNumber, 'fulfilled');
-                $activityMailer->sendOrderStatusChangedVendor($orderByNumber, 'fulfilled');
+                $activityMailer->sendOrderStatusChangedCustomer($orderByNumber, 'redeemed');
+                $activityMailer->sendOrderStatusChangedVendor($orderByNumber, 'redeemed');
             } catch (\Throwable $e) {
                 Log::warning('Order claim status mail failed', [
                     'order_id' => $orderByNumber->id,
-                    'status' => 'fulfilled',
+                    'status' => 'redeemed',
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -371,21 +371,21 @@ class VendorAnalyticsController extends Controller
             });
 
             if ($isOrderNowFullyClaimed) {
-                $newStatus = 'fulfilled';
+                $newStatus = 'redeemed';
             } elseif ($order->status === 'pending') {
                 $newStatus = 'paid';
             }
 
             if ($order->status !== $newStatus) {
                 $order->status = $newStatus;
-                if (in_array($newStatus, ['paid', 'fulfilled'], true) && ! $order->paid_at) {
+                if (in_array($newStatus, ['paid', 'redeemed'], true) && ! $order->paid_at) {
                     $order->paid_at = now();
                 }
                 $order->save();
             }
         });
 
-        if ($previousStatus !== $newStatus && $newStatus === 'fulfilled') {
+        if ($previousStatus !== $newStatus && $newStatus === 'redeemed') {
             DB::transaction(function () use ($order, $previousStatus, $newStatus) {
                 app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
                 app(DealInventoryService::class)->syncForOrderStatusChange($order, $previousStatus, $newStatus);
@@ -406,7 +406,7 @@ class VendorAnalyticsController extends Controller
         }
 
         if ($isOrderNowFullyClaimed) {
-            return back()->with('success', 'Claim token verified. All offers redeemed and order marked fulfilled.');
+            return back()->with('success', 'Claim token verified. All offers redeemed and order marked redeemed.');
         }
 
         return back()->with('success', 'Claim token verified. Offer line marked as claimed.');

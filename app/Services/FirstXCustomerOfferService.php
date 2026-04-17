@@ -56,7 +56,7 @@ class FirstXCustomerOfferService
             $userAlreadyFulfilledForThisOffer = DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.deal_offer_type_id', $pivotId)
-                ->where('orders.status', 'fulfilled')
+                ->where('orders.status', 'redeemed')
                 ->where('orders.user_id', (int) $order->user_id)
                 ->where('order_items.order_id', '!=', (int) $order->id)
                 ->exists();
@@ -147,7 +147,7 @@ class FirstXCustomerOfferService
         $query = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.deal_offer_type_id', $pivotId)
-            ->where('orders.status', 'fulfilled')
+            ->where('orders.status', 'redeemed')
             ->selectRaw('COUNT(DISTINCT orders.user_id) AS cnt');
 
         if ($excludeUserId !== null) {

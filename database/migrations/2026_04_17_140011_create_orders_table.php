@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('vendor_id')->nullable()->constrained('vendor_profiles')->nullOnDelete();
 
             $table->string('order_number', 50)->unique();
-            $table->enum('status', ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'redeemed', 'cancelled', 'refunded'])->default('pending');
 
             $table->string('currency_code', 3)->default('NPR');
             $table->decimal('subtotal', 12, 2)->default(0);

@@ -43,7 +43,7 @@ const SalesHistory = ({ sales }: SalesHistoryProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'fulfilled': return 'bg-green-500';
+      case 'redeemed': return 'bg-green-500';
       case 'paid': return 'bg-blue-500';
       case 'pending': return 'bg-amber-500';
       case 'refunded': return 'bg-orange-500';

@@ -101,11 +101,11 @@ class DashboardController extends Controller
             $firstOrder = $ordersInGroup->first();
             $allItems = $ordersInGroup->flatMap(fn (Order $o) => $o->items);
 
-            $statusPriority = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'];
+            $statusPriority = ['pending', 'paid', 'redeemed', 'cancelled', 'refunded'];
             $statuses = $ordersInGroup->pluck('status')->filter()->values();
             $aggregatedStatus = collect($statusPriority)->first(fn ($s) => $statuses->contains($s)) ?? 'pending';
 
-            $redeemed = in_array($aggregatedStatus, ['fulfilled', 'cancelled', 'refunded'], true);
+            $redeemed = in_array($aggregatedStatus, ['redeemed', 'cancelled', 'refunded'], true);
 
             $firstItem = $allItems->first();
             $paidAt = $ordersInGroup->pluck('paid_at')->filter()->max();

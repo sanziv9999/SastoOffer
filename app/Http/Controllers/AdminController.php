@@ -25,7 +25,7 @@ class AdminController extends Controller
 
         $totalRevenue = (float) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('grand_total');
         $totalSales = (int) Order::whereNotIn('status', ['cancelled', 'refunded'])->sum('subtotal');
-        $redeemedSalesCount = (int) Order::where('status', 'fulfilled')->count();
+        $redeemedSalesCount = (int) Order::where('status', 'redeemed')->count();
 
         $totalUsers = (int) User::count();
         $totalVendors = (int) VendorProfile::count();
@@ -757,7 +757,7 @@ class AdminController extends Controller
         $totalVendors = (int) VendorProfile::count();
         $activeDeals = (int) Deal::where('status', 'active')->count();
 
-        $fulfilledOrdersCount = (int) Order::where('status', 'fulfilled')->count();
+        $fulfilledOrdersCount = (int) Order::where('status', 'redeemed')->count();
         $conversionRate = $totalSales > 0
             ? number_format(($fulfilledOrdersCount / $totalSales) * 100, 1) . '%'
             : '0.0%';
@@ -811,7 +811,7 @@ class AdminController extends Controller
             ? ($fulfilledOrdersCount / $currentMonthSales) * 100
             : 0.0;
         $previousMonthFulfilled = (int) Order::query()
-            ->where('status', 'fulfilled')
+            ->where('status', 'redeemed')
             ->whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
             ->count();
         $previousMonthConversion = $previousMonthSales > 0
