@@ -35,7 +35,7 @@
             <img src="{{ $deal['image'] }}" alt="{{ $deal['title'] }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             
             @if($showDiscount && $discountPercentage > 0)
-                <div class="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-black rounded-sm shadow-md">
+                <div class="absolute bottom-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-black rounded-sm shadow-md z-10">
                     -{{ $discountPercentage }}%
                 </div>
             @endif
@@ -73,7 +73,7 @@
             
             {{-- Elite Discount Badge --}}
             @if($showDiscount && $discountPercentage > 0)
-                <div class="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tight uppercase">
+                <div class="absolute bottom-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tight uppercase">
                     Save {{ $discountPercentage }}%
                 </div>
             @endif
