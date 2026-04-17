@@ -1,5 +1,5 @@
 <x-layout>
-    @section('title', 'Order Confirmed - SastoOffer')
+    @section('title', 'Offer Claimed - SastoOffer')
 
     <div class="container py-12">
         <div class="max-w-2xl mx-auto px-4">
@@ -8,9 +8,9 @@
                 <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m9 11 3 3L22 4"></path></svg>
                 </div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-teal-950 mb-2">Order Placed!</h1>
+                <h1 class="text-3xl font-extrabold tracking-tight text-teal-950 mb-2">Offer Claimed!</h1>
                 <p class="text-muted-foreground">
-                    Your order <span class="font-mono font-semibold text-teal-900">{{ $order->order_number }}</span> has been placed and is <span class="font-semibold text-amber-600">pending</span>.
+                    Your claim <span class="font-mono font-semibold text-teal-900">{{ $order->order_number }}</span> has been created and is <span class="font-semibold text-amber-600">{{ $order->status }}</span>.
                 </p>
             </div>
 
@@ -19,7 +19,7 @@
                 <div class="p-6 border-b bg-muted/30">
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Order Number</p>
+                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Claim Reference</p>
                             <p class="text-lg font-mono font-bold text-teal-950">{{ $order->order_number }}</p>
                         </div>
                         <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1">
@@ -68,10 +68,6 @@
                         <span>Subtotal</span>
                         <span>Rs. {{ number_format($order->subtotal, 2) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm text-muted-foreground">
-                        <span>Shipping</span>
-                        <span class="text-primary font-bold uppercase text-[10px] tracking-wider">Free</span>
-                    </div>
                     <div class="border-t pt-3 flex justify-between items-end">
                         <span class="text-base font-bold text-teal-950">Total</span>
                         <span class="text-2xl font-bold text-teal-950">
@@ -84,7 +80,7 @@
             {{-- Actions --}}
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="{{ route('dashboard.purchases') }}" class="inline-flex items-center justify-center rounded-xl bg-teal-950 text-white text-sm font-semibold shadow-lg hover:bg-teal-900 h-11 px-6 transition-all">
-                    View My Orders
+                    View My Claimed Offers
                 </a>
                 <a href="{{ route('search') }}" class="inline-flex items-center justify-center rounded-xl border border-border bg-white text-teal-950 text-sm font-semibold shadow-sm hover:bg-muted h-11 px-6 transition-all">
                     Continue Shopping
