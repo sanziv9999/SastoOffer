@@ -48,6 +48,9 @@ class VendorAnalyticsController extends Controller
                 'lineTotal' => (float) $item->line_total,
                 'image' => $item->meta['deal_image'] ?? '',
                 'offerType' => $item->meta['offer_type'] ?? 'Offer',
+                'claimToken' => $item->meta['claim_token'] ?? null,
+                'claimedAt' => $item->meta['claimed_at'] ?? null,
+                'isClaimed' => ! empty($item->meta['claimed_at']),
             ])->values()->all(),
         ];
     }
@@ -254,56 +257,90 @@ class VendorAnalyticsController extends Controller
 
         $claimCode = trim((string) $data['claim_code']);
 
-        $order = Order::query()
-            ->where('vendor_id', $vendor->id)
-            ->where('order_number', $claimCode)
-            ->with('items')
+        $orderItem = OrderItem::query()
+            ->where('meta->claim_token', $claimCode)
+            ->whereHas('order', fn ($q) => $q->where('vendor_id', $vendor->id))
+            ->with('order.items')
             ->latest('id')
             ->first();
 
+        if (! $orderItem) {
+            return back()->with('error', 'Claim token not found for your offers.');
+        }
+
+        $order = $orderItem->order;
         if (! $order) {
-            return back()->with('error', 'Claim code not found for your orders.');
+            return back()->with('error', 'Claim token is invalid.');
         }
 
         if (in_array($order->status, ['cancelled', 'refunded'], true)) {
-            return back()->with('error', 'This claim code belongs to a cancelled/refunded order.');
+            return back()->with('error', 'This claim token belongs to a cancelled/refunded order.');
         }
 
-        if ($order->status === 'fulfilled') {
-            return back()->with('success', 'This offer is already claimed.');
+        $itemMeta = is_array($orderItem->meta) ? $orderItem->meta : [];
+        if (! empty($itemMeta['claimed_at'])) {
+            return back()->with('success', 'This claimed offer is already redeemed.');
         }
 
         $previousStatus = $order->status;
-        $newStatus = 'fulfilled';
+        $newStatus = $previousStatus;
+        $isOrderNowFullyClaimed = false;
 
-        DB::transaction(function () use ($order, $newStatus, $previousStatus, $user, $claimCode) {
-            $order->status = $newStatus;
-            if (! $order->paid_at) {
-                $order->paid_at = now();
+        DB::transaction(function () use ($order, $orderItem, $user, $claimCode, &$newStatus, &$isOrderNowFullyClaimed) {
+            $itemMeta = is_array($orderItem->meta) ? $orderItem->meta : [];
+            $itemMeta['claimed_at'] = now()->toIso8601String();
+            $itemMeta['claimed_by_user_id'] = $user?->id;
+            $itemMeta['claim_token'] = $claimCode;
+            $orderItem->meta = $itemMeta;
+            $orderItem->save();
+
+            $order->refresh()->load('items');
+
+            $isOrderNowFullyClaimed = $order->items->every(function (OrderItem $item) {
+                $meta = is_array($item->meta) ? $item->meta : [];
+                return ! empty($meta['claimed_at']);
+            });
+
+            if ($isOrderNowFullyClaimed) {
+                $newStatus = 'fulfilled';
+            } elseif ($order->status === 'pending') {
+                $newStatus = 'paid';
             }
-            $meta = is_array($order->metadata) ? $order->metadata : [];
-            $meta['claimed_at'] = now()->toIso8601String();
-            $meta['claimed_by_user_id'] = $user?->id;
-            $meta['claim_code'] = $claimCode;
-            $order->metadata = $meta;
-            $order->save();
 
-            app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
-            app(DealInventoryService::class)->syncForOrderStatusChange($order, $previousStatus, $newStatus);
+            if ($order->status !== $newStatus) {
+                $order->status = $newStatus;
+                if (in_array($newStatus, ['paid', 'fulfilled'], true) && ! $order->paid_at) {
+                    $order->paid_at = now();
+                }
+                $order->save();
+            }
         });
 
-        try {
-            $activityMailer->sendOrderStatusChangedCustomer($order, $newStatus);
-            $activityMailer->sendOrderStatusChangedVendor($order, $newStatus);
-        } catch (\Throwable $e) {
-            Log::warning('Order claim status mail failed', [
-                'order_id' => $order->id,
-                'status' => $newStatus,
-                'error' => $e->getMessage(),
-            ]);
+        if ($previousStatus !== $newStatus && $newStatus === 'fulfilled') {
+            DB::transaction(function () use ($order, $previousStatus, $newStatus) {
+                app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
+                app(DealInventoryService::class)->syncForOrderStatusChange($order, $previousStatus, $newStatus);
+            });
         }
 
-        return back()->with('success', 'Offer claimed successfully. Order marked as redeemed.');
+        if ($previousStatus !== $newStatus) {
+            try {
+                $activityMailer->sendOrderStatusChangedCustomer($order, $newStatus);
+                $activityMailer->sendOrderStatusChangedVendor($order, $newStatus);
+            } catch (\Throwable $e) {
+                Log::warning('Order claim status mail failed', [
+                    'order_id' => $order->id,
+                    'status' => $newStatus,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($isOrderNowFullyClaimed) {
+            return back()->with('success', 'Claim token verified. All offers redeemed and order marked fulfilled.');
+        }
+
+        return back()->with('success', 'Claim token verified. Offer line marked as claimed.');
     }
 
     public function customers(Request $request)

@@ -23,6 +23,9 @@ interface OrderItemDetail {
   lineTotal: number;
   image: string;
   offerType: string;
+  claimToken?: string | null;
+  claimedAt?: string | null;
+  isClaimed?: boolean;
 }
 
 interface VendorOrder {
@@ -254,6 +257,14 @@ const Orders = ({ orders }: OrdersProps) => {
                       </>
                     )}
                   </div>
+                  <div className="text-[11px] mt-1">
+                    <span className="text-muted-foreground">Token: </span>
+                    <span className="font-mono">{item.claimToken || 'N/A'}</span>
+                    <span className="mx-1 text-muted-foreground/40">·</span>
+                    <span className={item.isClaimed ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
+                      {item.isClaimed ? 'Claimed' : 'Pending claim'}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-sm font-bold tabular-nums flex-shrink-0 pt-0.5">Rs. {item.lineTotal.toFixed(2)}</p>
               </div>
@@ -404,12 +415,12 @@ const Orders = ({ orders }: OrdersProps) => {
       <Card>
         <CardHeader>
           <CardTitle>Verify Claimed Offer</CardTitle>
-          <CardDescription>Enter order/claim code provided by customer to redeem.</CardDescription>
+          <CardDescription>Enter per-offer claim token provided by customer to redeem one line item.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
-              placeholder="Enter claim code (e.g. ORD-20260417-ABC123)"
+              placeholder="Enter claim token (e.g. CLM-260417-AB12CD34)"
               value={claimCode}
               onChange={(e) => setClaimCode(e.target.value)}
               onKeyDown={(e) => {

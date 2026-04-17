@@ -77,6 +77,7 @@ class CheckoutController extends Controller
                 foreach ($items as $cartItem) {
                     $pivot = $cartItem->offerType;
                     $deal = $pivot->deal;
+                    $claimToken = $this->generateClaimToken();
 
                     OrderItem::create([
                         'order_id' => $order->id,
@@ -91,6 +92,9 @@ class CheckoutController extends Controller
                             'original_price' => (float) $pivot->original_price,
                             'deal_slug' => $deal->slug,
                             'deal_image' => $deal->featuredImageUrl(),
+                            'claim_token' => $claimToken,
+                            'claimed_at' => null,
+                            'claimed_by_user_id' => null,
                         ],
                     ]);
                 }
@@ -201,6 +205,9 @@ class CheckoutController extends Controller
                         'lineTotal' => (float) $item->line_total,
                         'image' => $item->meta['deal_image'] ?? '',
                         'offerType' => $item->meta['offer_type'] ?? 'Offer',
+                        'claimToken' => $item->meta['claim_token'] ?? null,
+                        'claimedAt' => $item->meta['claimed_at'] ?? null,
+                        'isClaimed' => ! empty($item->meta['claimed_at']),
                     ])->values()->all(),
                 ];
             })
@@ -279,5 +286,17 @@ class CheckoutController extends Controller
 
         $availability = $rule['availability'] ?? null;
         return is_array($availability) && (($availability['mode'] ?? null) === 'first_x_customers');
+    }
+
+    private function generateClaimToken(): string
+    {
+        do {
+            $token = 'CLM-' . now()->format('ymd') . '-' . strtoupper(Str::random(8));
+            $exists = OrderItem::query()
+                ->where('meta->claim_token', $token)
+                ->exists();
+        } while ($exists);
+
+        return $token;
     }
 }

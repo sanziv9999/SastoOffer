@@ -23,6 +23,9 @@ interface OrderItem {
   lineTotal: number;
   image: string;
   offerType: string;
+  claimToken?: string | null;
+  claimedAt?: string | null;
+  isClaimed?: boolean;
 }
 
 interface Order {
@@ -250,6 +253,14 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                       <span>{item.offerType}</span>
                       <span className="text-muted-foreground/40">·</span>
                       <span>Qty: {item.quantity}</span>
+                    </div>
+                    <div className="mt-1 text-[11px]">
+                      <span className="text-muted-foreground">Claim code: </span>
+                      <span className="font-mono font-semibold">{item.claimToken || 'Not available'}</span>
+                      <span className="mx-1 text-muted-foreground/40">·</span>
+                      <span className={item.isClaimed ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
+                        {item.isClaimed ? 'Claimed' : 'Pending claim'}
+                      </span>
                     </div>
                     {hasDiscount(item) && (
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -537,6 +548,14 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
 
                               <div className="text-xs text-muted-foreground mt-1">
                                 {item.offerType} · Qty {item.quantity}
+                              </div>
+                              <div className="text-[11px] mt-1">
+                                <span className="text-muted-foreground">Claim code: </span>
+                                <span className="font-mono">{item.claimToken || 'Not available'}</span>
+                                <span className="mx-1 text-muted-foreground/40">·</span>
+                                <span className={item.isClaimed ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
+                                  {item.isClaimed ? 'Claimed' : 'Pending claim'}
+                                </span>
                               </div>
 
                               {discount && (
