@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             OfferTypeSeeder::class,
             DealSeeder::class,
+            DemoShowcaseSeeder::class,
+            DemoShowcaseTopUpSeeder::class,
         ]);
     }
 }
