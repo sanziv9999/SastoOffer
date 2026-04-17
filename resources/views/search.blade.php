@@ -160,6 +160,16 @@
                 this.nearbyLng = null;
                 this.nearbyRadiusKm = 5;
                 this.applyFilters();
+            },
+
+            hasActiveFilters() {
+                return this.selectedCategories.length > 0
+                    || this.dealTypes.length > 0
+                    || this.selectedLocations.length > 0
+                    || this.isFeatured
+                    || !!this.minRating
+                    || this.minPrice > this.availableMinPrice
+                    || this.maxPrice < this.availableMaxPrice;
             }
         }"
     >
@@ -178,6 +188,49 @@
                     <span x-text="nearbyEnabled ? 'Nearby: On' : 'Near Me'"></span>
                 </button>
             </div>
+        </div>
+
+        <div
+            x-show="hasActiveFilters()"
+            class="mb-5 flex flex-wrap items-center justify-end gap-2 text-right"
+            x-cloak
+        >
+            <span class="text-sm font-semibold text-muted-foreground">Filters:</span>
+            <template x-if="selectedCategories.length > 0">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                    <span>Categories:&nbsp;</span>
+                    <span x-text="selectedCategories.length"></span>
+                </span>
+            </template>
+
+            <template x-if="dealTypes.length > 0">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                    <span>Deal Types:&nbsp;</span>
+                    <span x-text="dealTypes.length"></span>
+                </span>
+            </template>
+
+            <template x-if="selectedLocations.length > 0">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                    <span>Locations:&nbsp;</span>
+                    <span x-text="selectedLocations.length"></span>
+                </span>
+            </template>
+
+            <template x-if="minPrice > availableMinPrice || maxPrice < availableMaxPrice">
+                <span class="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                    <span>Price:</span>
+                    <span x-text="`${Math.min(minPrice, maxPrice)} - ${Math.max(minPrice, maxPrice)}`"></span>
+                </span>
+            </template>
+
+            <template x-if="minRating">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium" x-text="`${minRating} stars`"></span>
+            </template>
+
+            <template x-if="isFeatured">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium">Featured</span>
+            </template>
         </div>
 
         {{-- Mobile Filters Drawer --}}
