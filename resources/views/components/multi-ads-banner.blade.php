@@ -81,15 +81,17 @@
 
                 </div>
                 <button 
-                    @click="scrollLeft()"
-                    class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all opacity-0 md:group-hover/discover-slider:opacity-100 z-20"
+                    type="button"
+                    @click.stop.prevent="scrollLeft()"
+                    class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all opacity-0 md:group-hover/discover-slider:opacity-100 z-[60]"
                     aria-label="Scroll left"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m15 18-6-6 6-6"></path></svg>
                 </button>
                 <button 
-                    @click="scrollRight()"
-                    class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all opacity-0 md:group-hover/discover-slider:opacity-100 z-20"
+                    type="button"
+                    @click.stop.prevent="scrollRight()"
+                    class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-white shadow-xl rounded-full border border-border/50 text-foreground hover:bg-primary hover:text-white transition-all opacity-0 md:group-hover/discover-slider:opacity-100 z-[60]"
                     aria-label="Scroll right"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m9 18 6-6-6-6"></path></svg>
