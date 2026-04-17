@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrimaryCategoryRequest;
 use App\Http\Requests\UpdatePrimaryCategoryRequest;
 use App\Models\Category;
+use App\Support\GdImageConverter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -69,7 +70,7 @@ class PrimaryCategoryCrudController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('categories', 'public');
+            $path = GdImageConverter::convertUploadedToJpeg($request->file('image'), 'categories');
             $data['image_url'] = '/storage/' . $path;
         }
 
@@ -121,7 +122,7 @@ class PrimaryCategoryCrudController extends Controller
                 $oldStoragePath = str_replace('/storage/', '', $primaryCategory->image_url);
                 Storage::disk('public')->delete($oldStoragePath);
             }
-            $path = $request->file('image')->store('categories', 'public');
+            $path = GdImageConverter::convertUploadedToJpeg($request->file('image'), 'categories');
             $data['image_url'] = '/storage/' . $path;
         }
 

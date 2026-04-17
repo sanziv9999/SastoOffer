@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateBannerRequest;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Image;
+use App\Support\GdImageConverter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -178,7 +179,7 @@ class BannerCrudController extends Controller
     {
         $this->deleteBannerImage($banner);
 
-        $path = $file->store('banners', 'public');
+        $path = GdImageConverter::convertUploadedToJpeg($file, 'banners');
         $banner->images()->create([
             'attribute_name' => 'image',
             'image_url' => '/storage/'.$path,

@@ -12,6 +12,7 @@ use App\Models\VendorProfile;
 use App\Services\DealMetadataSuggestionService;
 use App\Services\DealOfferService;
 use App\Support\DealUrl;
+use App\Support\GdImageConverter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -1216,7 +1217,7 @@ class DealController extends Controller
         $uploadedUrlByKey = [];
 
         foreach ($uploadedFiles as $idx => $file) {
-            $path = $file->store('deals/gallery', 'public');
+            $path = GdImageConverter::convertUploadedToJpeg($file, 'deals/gallery');
             $uploadedUrlByKey['new:'.$idx] = '/storage/'.$path;
         }
 

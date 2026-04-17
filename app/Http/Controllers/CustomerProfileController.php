@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateCustomerProfileRequest;
 use App\Models\CustomerProfile;
+use App\Support\GdImageConverter;
 use Illuminate\Http\Request;
 
 class CustomerProfileController extends Controller
@@ -50,7 +51,7 @@ class CustomerProfileController extends Controller
             return back()->withErrors(['profile_pic' => 'Invalid profile picture upload.']);
         }
 
-        $path = $file->store('customer_profiles/profile_pics', 'public');
+        $path = GdImageConverter::convertUploadedToJpeg($file, 'customer_profiles/profile_pics');
 
         // Remove previous profile_pic image entries
         $profile->images()->where('attribute_name', 'profile_pic')->delete();

@@ -9,6 +9,7 @@ use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
 use App\Services\ActivityMailer;
 use App\Support\DealUrl;
+use App\Support\GdImageConverter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -403,7 +404,7 @@ class VendorProfileController extends Controller
 
         // Handle Image Uploads (Polymorphic)
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('vendor_profiles/logos', 'public');
+            $path = GdImageConverter::convertUploadedToJpeg($request->file('logo'), 'vendor_profiles/logos');
             $vendorProfile->images()->where('attribute_name', 'logo')->delete();
             $vendorProfile->images()->create([
                 'attribute_name' => 'logo',
@@ -412,7 +413,7 @@ class VendorProfileController extends Controller
         }
 
         if ($request->hasFile('cover')) {
-            $path = $request->file('cover')->store('vendor_profiles/covers', 'public');
+            $path = GdImageConverter::convertUploadedToJpeg($request->file('cover'), 'vendor_profiles/covers');
             $vendorProfile->images()->where('attribute_name', 'cover')->delete();
             $vendorProfile->images()->create([
                 'attribute_name' => 'cover',
