@@ -144,6 +144,19 @@
                     { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
                 );
             },
+
+            async toggleNearby() {
+                if (this.nearbyEnabled) {
+                    this.nearbyEnabled = false;
+                    this.nearbyLat = null;
+                    this.nearbyLng = null;
+                    this.nearbyRadiusKm = 5;
+                    await this.applyFilters();
+                    return;
+                }
+
+                this.useCurrentLocationForNearby();
+            },
             
             resetFilters() {
                 this.selectedCategories = [];
@@ -169,7 +182,8 @@
                     || this.isFeatured
                     || this.selectedRatings.length > 0
                     || this.minPrice > this.availableMinPrice
-                    || this.maxPrice < this.availableMaxPrice;
+                    || this.maxPrice < this.availableMaxPrice
+                    || this.nearbyEnabled;
             }
         }"
     >
@@ -180,7 +194,7 @@
 
             <div class="hidden md:flex items-center gap-2">
                 <button
-                    @click="useCurrentLocationForNearby()"
+                    @click="toggleNearby()"
                     class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
                     :disabled="isLoading"
                 >
@@ -373,7 +387,7 @@
                     </div>
                     
                     <button
-                        @click="useCurrentLocationForNearby()"
+                        @click="toggleNearby()"
                         class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2"
                         :disabled="isLoading"
                     >
