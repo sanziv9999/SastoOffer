@@ -50,7 +50,7 @@ class CheckoutController extends Controller
 
         $orders = DB::transaction(function () use ($user, $cartItems) {
             $grouped = $cartItems->groupBy(fn (CartItem $item) => $item->offerType->deal->vendor_id ?? 0);
-            $sharedOrderNumber = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
+            $sharedOrderNumber = 'OFFER-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
 
             $createdOrders = [];
 
@@ -155,7 +155,7 @@ class CheckoutController extends Controller
             ->with(['items.deal', 'vendor'])
             ->latest()
             ->get()
-            ->groupBy(fn (Order $order) => $order->order_number ?: ('ORD-' . $order->id))
+            ->groupBy(fn (Order $order) => $order->order_number ?: ('OFFER-' . $order->id))
             ->map(function ($ordersInGroup, $orderNumber) {
                 /** @var \Illuminate\Support\Collection<int, Order> $ordersInGroup */
                 $firstOrder = $ordersInGroup->first();

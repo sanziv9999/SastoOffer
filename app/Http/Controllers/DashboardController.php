@@ -94,7 +94,7 @@ class DashboardController extends Controller
             ->get();
 
         /** @var Collection<string, Collection<int, Order>> $groupedOrders */
-        $groupedOrders = $orders->groupBy(fn (Order $o) => $o->order_number ?: ('ORD-'.$o->id));
+        $groupedOrders = $orders->groupBy(fn (Order $o) => $o->order_number ?: ('OFFER-'.$o->id));
 
         $purchaseGroups = $groupedOrders->map(function (Collection $ordersInGroup, string $orderNumber) {
             /** @var Order $firstOrder */
