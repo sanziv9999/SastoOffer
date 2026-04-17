@@ -23,14 +23,13 @@
             <input
                 type="search"
                 x-model="localSearchQuery"
-                @input.debounce.400ms="debouncedApplyFilters()"
                 placeholder="Search within results..."
                 class="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
             <button
                 x-show="localSearchQuery"
-                @click="localSearchQuery = ''; debouncedApplyFilters()"
+                @click="localSearchQuery = ''"
                 class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 type="button"
             >
@@ -57,7 +56,7 @@
                     <input
                         type="checkbox"
                         :checked="selectedCategories.length === 0"
-                        @change="selectedCategories = []; debouncedApplyFilters()"
+                        @change="selectedCategories = []"
                         class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     />
                     <span class="font-medium leading-none text-foreground group-hover:text-primary transition-colors">All Categories</span>
@@ -82,7 +81,6 @@
                                         } else {
                                             selectedCategories = selectedCategories.filter(s => s !== '{{ $category['slug'] }}');
                                         }
-                                        debouncedApplyFilters();
                                     "
                                     class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 />
@@ -110,7 +108,6 @@
                                                 } else {
                                                     selectedCategories = selectedCategories.filter(s => s !== '{{ $sub['slug'] }}');
                                                 }
-                                                debouncedApplyFilters();
                                             "
                                             class="h-3.5 w-3.5 rounded border border-primary/70 text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                         />
@@ -211,7 +208,7 @@
                     <input
                         type="checkbox"
                         :checked="dealTypes.length === 0"
-                        @change="dealTypes = []; debouncedApplyFilters()"
+                        @change="dealTypes = []"
                         class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     />
                     <span class="font-medium leading-none text-foreground group-hover:text-primary transition-colors">All Types</span>
@@ -235,7 +232,6 @@
                                 } else {
                                     dealTypes = dealTypes.filter(t => t !== '{{ $val }}');
                                 }
-                                debouncedApplyFilters();
                             "
                             class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
@@ -278,7 +274,7 @@
                     <input
                         type="checkbox"
                         :checked="selectedLocations.length === 0"
-                        @change="selectedLocations = []; debouncedApplyFilters()"
+                        @change="selectedLocations = []"
                         class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     />
                     <span class="font-medium leading-none text-foreground group-hover:text-primary transition-colors">All Locations</span>
@@ -298,7 +294,6 @@
                                 } else {
                                     selectedLocations = selectedLocations.filter(l => l !== '{{ addslashes($district) }}');
                                 }
-                                debouncedApplyFilters();
                             "
                             class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
@@ -323,7 +318,7 @@
             <div class="space-y-1">
                 @foreach([5, 4, 3, 2, 1, 0] as $stars)
                     <button 
-                        @click="minRating = (minRating == {{ $stars }} ? null : {{ $stars }}); debouncedApplyFilters()"
+                        @click="minRating = (minRating == {{ $stars }} ? null : {{ $stars }})"
                         class="flex items-center w-full gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors group"
                         :class="minRating == {{ $stars }} ? 'bg-accent text-foreground' : 'text-foreground'"
                     >
@@ -364,6 +359,26 @@
                     <span class="text-sm font-medium leading-none group-hover:text-primary transition-colors">Featured Deals Only</span>
                 </label>
             </div>
+        </div>
+    </div>
+
+    {{-- Filter Actions --}}
+    <div class="pt-5">
+        <div class="space-y-2">
+            <button
+                @click="{{ $isMobile ? 'applyFilters(); isFilterDrawerOpen = false' : 'applyFilters()' }}"
+                class="inline-flex items-center justify-center rounded-md text-sm font-semibold transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2 w-full"
+                :disabled="isLoading"
+            >
+                Apply Filters
+            </button>
+            <button
+                @click="resetFilters()"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent h-10 px-4 py-2 w-full"
+                x-show="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating || nearbyEnabled"
+            >
+                Reset Filters
+            </button>
         </div>
     </div>
 </div>

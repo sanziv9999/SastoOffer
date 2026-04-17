@@ -26,26 +26,9 @@
             isLoading: false,
             
             init() {
-                this.$watch('selectedCategories', () => this.debouncedApplyFilters());
-                this.$watch('sortBy', () => this.applyFilters());
-                this.$watch('minPrice', () => this.debouncedApplyFilters());
-                this.$watch('maxPrice', () => this.debouncedApplyFilters());
-                this.$watch('dealTypes', () => this.debouncedApplyFilters());
-                this.$watch('selectedLocations', () => this.debouncedApplyFilters());
-                this.$watch('isFeatured', () => this.debouncedApplyFilters());
-                this.$watch('localSearchQuery', () => this.debouncedApplyFilters());
-                this.$watch('minRating', () => this.applyFilters());
-
                 window.addEventListener('popstate', (e) => {
                     window.location.reload();
                 });
-            },
-
-            debouncedApplyFilters() {
-                clearTimeout(this.filterTimeout);
-                this.filterTimeout = setTimeout(() => {
-                    this.applyFilters();
-                }, 400);
             },
 
             buildSearchParams(includeNearbyCoords = false) {
@@ -194,16 +177,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M12 2v4"/><path d="m16.24 7.76 2.83-2.83"/><path d="M18 12h4"/><path d="m16.24 16.24 2.83 2.83"/><path d="M12 18v4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M2 12h4"/><path d="m4.93 4.93 2.83 2.83"/><circle cx="12" cy="12" r="3"/></svg>
                     <span x-text="nearbyEnabled ? 'Nearby: On' : 'Near Me'"></span>
                 </button>
-
-                <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating || nearbyEnabled">
-                    <button
-                        @click="resetFilters"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                        Clear Filters
-                    </button>
-                </template>
             </div>
         </div>
 
@@ -251,21 +224,6 @@
                     />
                 </div>
                 
-                <div class="pt-6 mt-auto border-t bg-background shrink-0 space-y-3">
-                    <button 
-                        @click="isFilterDrawerOpen = false"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-bold transition-all bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-4 py-2 w-full active:scale-[0.98]"
-                    >
-                        Show <span class="mx-1 font-mono" x-text="resultsCount"></span> Results
-                    </button>
-                    <button 
-                        @click="resetFilters"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-semibold transition-all border border-input bg-background hover:bg-accent h-11 px-4 py-2 w-full text-muted-foreground active:scale-[0.98]"
-                        x-show="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice"
-                    >
-                        Reset All Filters
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -350,7 +308,7 @@
                             >
                                 @foreach($sortByOptions as $val => $label)
                                     <button 
-                                        @click="sortBy = '{{ $val }}'; applyFilters(); open = false"
+                                        @click="sortBy = '{{ $val }}'; open = false"
                                         class="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                                         :class="sortBy === '{{ $val }}' ? 'bg-accent text-accent-foreground' : ''"
                                     >
