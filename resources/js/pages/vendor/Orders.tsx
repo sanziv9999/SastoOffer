@@ -56,6 +56,8 @@ const Orders = ({ orders }: OrdersProps) => {
   const [localOrders, setLocalOrders] = useState<VendorOrder[]>(orders || []);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [claimCode, setClaimCode] = useState('');
+  const [claiming, setClaiming] = useState(false);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -137,6 +139,31 @@ const Orders = ({ orders }: OrdersProps) => {
 
   const totalRevenue = localOrders?.filter(o => o.status === 'fulfilled').reduce((s, o) => s + o.total, 0) || 0;
   const totalDiscount = localOrders?.reduce((s, o) => s + (o.discountTotal || 0), 0) || 0;
+
+  const claimOfferByCode = () => {
+    const code = claimCode.trim();
+    if (!code) {
+      toast.error('Enter a claim code.');
+      return;
+    }
+
+    setClaiming(true);
+    router.post(
+      route('vendor.orders.claim'),
+      { claim_code: code },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setClaimCode('');
+          toast.success('Offer claimed successfully.');
+        },
+        onError: () => {
+          toast.error('Could not claim offer. Please verify code.');
+        },
+        onFinish: () => setClaiming(false),
+      }
+    );
+  };
 
   const renderExpandedRow = (order: VendorOrder) => (
     <tr>
@@ -371,14 +398,39 @@ const Orders = ({ orders }: OrdersProps) => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground">Manage and track all customer orders</p>
+        <p className="text-muted-foreground">Verify claimed offers and manage order statuses</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Verify Claimed Offer</CardTitle>
+          <CardDescription>Enter order/claim code provided by customer to redeem.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              placeholder="Enter claim code (e.g. ORD-20260417-ABC123)"
+              value={claimCode}
+              onChange={(e) => setClaimCode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  claimOfferByCode();
+                }
+              }}
+            />
+            <Button onClick={claimOfferByCode} disabled={claiming || !claimCode.trim()}>
+              {claiming ? 'Verifying...' : 'Verify & Redeem'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Claims</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardHeader>

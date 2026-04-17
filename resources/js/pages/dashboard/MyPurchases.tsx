@@ -587,14 +587,14 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
       ) : (
         <>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
-            <p className="text-muted-foreground">Track all your orders and purchases</p>
+            <h1 className="text-2xl font-bold tracking-tight">My Claimed Offers</h1>
+            <p className="text-muted-foreground">Track your claimed and redeemable offers</p>
           </div>
 
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Claims</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>

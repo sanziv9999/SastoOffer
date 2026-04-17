@@ -130,6 +130,7 @@ Route::middleware(['auth', 'role:vendor'])->group(function () {
         Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
         Route::get('/vendor/orders/{order}', [VendorAnalyticsController::class, 'showOrder'])->name('vendor.orders.show');
         Route::patch('/vendor/orders/{order}/status', [VendorAnalyticsController::class, 'updateOrderStatus'])->name('vendor.orders.status');
+        Route::post('/vendor/orders/claim', [VendorAnalyticsController::class, 'claimOrderByCode'])->name('vendor.orders.claim');
         Route::get('/vendor/customers', [VendorAnalyticsController::class, 'customers'])->name('vendor.customers');
         Route::get('/vendor/customers/history', [VendorAnalyticsController::class, 'customerHistory'])->name('vendor.customers.history');
         Route::get('/vendor/sales-history', [VendorAnalyticsController::class, 'salesHistory'])->name('vendor.sales-history');

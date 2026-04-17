@@ -239,6 +239,73 @@ class VendorAnalyticsController extends Controller
         return back()->with('success', 'Order status updated successfully.');
     }
 
+    public function claimOrderByCode(Request $request, ActivityMailer $activityMailer)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'claim_code' => ['required', 'string', 'max:100'],
+        ]);
+
+        $claimCode = trim((string) $data['claim_code']);
+
+        $order = Order::query()
+            ->where('vendor_id', $vendor->id)
+            ->where('order_number', $claimCode)
+            ->with('items')
+            ->latest('id')
+            ->first();
+
+        if (! $order) {
+            return back()->with('error', 'Claim code not found for your orders.');
+        }
+
+        if (in_array($order->status, ['cancelled', 'refunded'], true)) {
+            return back()->with('error', 'This claim code belongs to a cancelled/refunded order.');
+        }
+
+        if ($order->status === 'fulfilled') {
+            return back()->with('success', 'This offer is already claimed.');
+        }
+
+        $previousStatus = $order->status;
+        $newStatus = 'fulfilled';
+
+        DB::transaction(function () use ($order, $newStatus, $previousStatus, $user, $claimCode) {
+            $order->status = $newStatus;
+            if (! $order->paid_at) {
+                $order->paid_at = now();
+            }
+            $meta = is_array($order->metadata) ? $order->metadata : [];
+            $meta['claimed_at'] = now()->toIso8601String();
+            $meta['claimed_by_user_id'] = $user?->id;
+            $meta['claim_code'] = $claimCode;
+            $order->metadata = $meta;
+            $order->save();
+
+            app(FirstXCustomerOfferService::class)->handleFulfilledOrder($order);
+            app(DealInventoryService::class)->syncForOrderStatusChange($order, $previousStatus, $newStatus);
+        });
+
+        try {
+            $activityMailer->sendOrderStatusChangedCustomer($order, $newStatus);
+            $activityMailer->sendOrderStatusChangedVendor($order, $newStatus);
+        } catch (\Throwable $e) {
+            Log::warning('Order claim status mail failed', [
+                'order_id' => $order->id,
+                'status' => $newStatus,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return back()->with('success', 'Offer claimed successfully. Order marked as redeemed.');
+    }
+
     public function customers(Request $request)
     {
         $user = auth()->user();

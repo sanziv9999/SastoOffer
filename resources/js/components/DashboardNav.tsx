@@ -24,7 +24,7 @@ const userLinks = [
   { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
   { icon: ShoppingCart, label: 'Cart', path: '/dashboard/cart' },
   { icon: Heart, label: 'Saved Deals', path: '/dashboard/favorites' },
-  { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/purchases' },
+  { icon: ShoppingBag, label: 'My Claimed Offers', path: '/dashboard/purchases' },
   { icon: Star, label: 'My Reviews', path: '/dashboard/reviews' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ];
