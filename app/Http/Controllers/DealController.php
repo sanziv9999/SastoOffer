@@ -843,6 +843,15 @@ class DealController extends Controller
 
         // Persist suggested business metadata so searching can use it later.
         if ($vendor) {
+            $addr = $vendor->defaultAddress;
+            $oldLocationParts = [
+                $addr?->province,
+                $addr?->district,
+                $addr?->municipality,
+                $addr?->ward_no,
+                $addr?->tole,
+            ];
+
             $businessType = $data['business_type'] ?? null;
             if (! empty($businessType) && in_array($businessType, ['service', 'product', 'hybrid'], true)) {
                 $vendor->business_type = $businessType;
@@ -850,7 +859,6 @@ class DealController extends Controller
 
             $district = $data['district'] ?? null;
             $tole = $data['tole'] ?? null;
-            $addr = $vendor->defaultAddress;
             if ($addr) {
                 if (! empty($district)) $addr->district = (string) $district;
                 if (! empty($tole)) $addr->tole = (string) $tole;
@@ -858,6 +866,15 @@ class DealController extends Controller
             }
 
             $vendor->saveQuietly();
+
+            $newLocationParts = [
+                $addr?->province,
+                $addr?->district,
+                $addr?->municipality,
+                $addr?->ward_no,
+                $addr?->tole,
+            ];
+            Deal::syncLocationHighlightsForVendor((int) $vendor->id, $oldLocationParts, $newLocationParts);
         }
 
         // If base price changes, keep all offers in sync and recalculate their final prices.

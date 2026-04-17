@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\VendorProfile;
 use App\Models\Category;
 use App\Models\Address;
+use App\Models\Deal;
 use App\Http\Requests\StoreVendorProfileRequest;
 use App\Http\Requests\UpdateVendorProfileRequest;
 use App\Services\ActivityMailer;
@@ -360,6 +361,15 @@ class VendorProfileController extends Controller
     public function update(UpdateVendorProfileRequest $request, VendorProfile $vendorProfile)
     {
         $data = $request->validated();
+        $vendorProfile->loadMissing('defaultAddress');
+        $previousAddress = $vendorProfile->defaultAddress;
+        $oldLocationParts = [
+            $previousAddress?->province,
+            $previousAddress?->district,
+            $previousAddress?->municipality,
+            $previousAddress?->ward_no,
+            $previousAddress?->tole,
+        ];
 
         // Normalize business hours on update as well
         if (isset($data['business_hours']) && is_array($data['business_hours'])) {
@@ -432,6 +442,18 @@ class VendorProfileController extends Controller
             $vendorProfile->verified_by_user_id = null;
             $vendorProfile->save();
         }
+
+        // Keep location-related highlights in sync when vendor location changes.
+        $vendorProfile->loadMissing('defaultAddress');
+        $currentAddress = $vendorProfile->defaultAddress;
+        $newLocationParts = [
+            $currentAddress?->province,
+            $currentAddress?->district,
+            $currentAddress?->municipality,
+            $currentAddress?->ward_no,
+            $currentAddress?->tole,
+        ];
+        Deal::syncLocationHighlightsForVendor((int) $vendorProfile->id, $oldLocationParts, $newLocationParts);
 
         return redirect()->back()->with('success', 'Vendor profile updated successfully.');
     }

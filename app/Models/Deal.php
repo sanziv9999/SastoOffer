@@ -230,4 +230,94 @@ class Deal extends Model
     {
         return $this->total_inventory; // null = unlimited
     }
+
+    /**
+     * Replace old location tags with new location tags across all vendor deals.
+     */
+    public static function syncLocationHighlightsForVendor(int $vendorId, array $oldLocationParts = [], array $newLocationParts = []): void
+    {
+        if ($vendorId <= 0) {
+            return;
+        }
+
+        $oldTags = self::normalizeHighlightTags($oldLocationParts);
+        $newTags = self::normalizeHighlightTags($newLocationParts);
+
+        // Nothing to remove/add.
+        if (empty($oldTags) && empty($newTags)) {
+            return;
+        }
+
+        $oldLookup = array_fill_keys($oldTags, true);
+        $newLookup = array_fill_keys($newTags, true);
+
+        self::query()
+            ->where('vendor_id', $vendorId)
+            ->select(['id', 'highlights'])
+            ->chunkById(100, function ($deals) use ($oldLookup, $newLookup, $newTags) {
+                foreach ($deals as $deal) {
+                    $existing = is_array($deal->highlights) ? $deal->highlights : [];
+                    $next = [];
+                    $nextNormLookup = [];
+
+                    foreach ($existing as $tag) {
+                        if (! is_string($tag)) {
+                            continue;
+                        }
+
+                        $norm = self::normalizeHighlightTag($tag);
+                        if ($norm === null) {
+                            continue;
+                        }
+
+                        // Remove tags from old location unless they still exist in new location.
+                        if (isset($oldLookup[$norm]) && ! isset($newLookup[$norm])) {
+                            continue;
+                        }
+
+                        $next[] = $norm;
+                        $nextNormLookup[$norm] = true;
+                    }
+
+                    // Add new location tags if missing.
+                    foreach ($newTags as $tag) {
+                        if (! isset($nextNormLookup[$tag])) {
+                            $next[] = $tag;
+                            $nextNormLookup[$tag] = true;
+                        }
+                    }
+
+                    if ($next !== $existing) {
+                        $deal->highlights = $next;
+                        $deal->saveQuietly();
+                    }
+                }
+            });
+    }
+
+    private static function normalizeHighlightTags(array $rawValues): array
+    {
+        $normalized = [];
+        foreach ($rawValues as $value) {
+            $tag = self::normalizeHighlightTag($value);
+            if ($tag !== null) {
+                $normalized[] = $tag;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    private static function normalizeHighlightTag(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $tag = trim(mb_strtolower((string) $value));
+        $tag = preg_replace('/[^a-z0-9]+/u', '-', $tag);
+        $tag = trim((string) $tag, '-');
+
+        return mb_strlen($tag) >= 3 ? $tag : null;
+    }
 }
