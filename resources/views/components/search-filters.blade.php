@@ -39,9 +39,9 @@
         <p class="text-xs text-muted-foreground mt-1">Searches within current filters</p>
     </div>
     {{-- Categories (hierarchical checkboxes) --}}
-    <div x-data="{ open: true }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.categories') === '1'; } catch (e) { return false; } })() }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.categories', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
             :data-state="open ? 'open' : 'closed'"
         >
@@ -124,9 +124,9 @@
     </div>
 
     {{-- Price Range --}}
-    <div x-data="{ open: true }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.price') === '1'; } catch (e) { return false; } })() }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.price', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
             :data-state="open ? 'open' : 'closed'"
         >
@@ -192,9 +192,9 @@
     </div>
 
     {{-- Deal Type --}}
-    <div x-data="{ open: true }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.dealType') === '1'; } catch (e) { return false; } })() }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.dealType', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
             :data-state="open ? 'open' : 'closed'"
         >
@@ -244,9 +244,9 @@
 
     {{-- Location Filter --}}
     @if(count($locations) > 0)
-    <div x-data="{ open: true, locationSearch: '' }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.location') === '1'; } catch (e) { return false; } })(), locationSearch: '' }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.location', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
         >
             Location
@@ -306,9 +306,9 @@
     @endif
 
     {{-- Customer Rating --}}
-    <div x-data="{ open: true }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.rating') === '1'; } catch (e) { return false; } })() }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.rating', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
         >
             Customer Rating
@@ -353,9 +353,9 @@
     </div>
 
     {{-- Options --}}
-    <div x-data="{ open: true }" class="border-b">
+    <div x-data="{ open: (() => { try { return localStorage.getItem('searchFilterOpen.options') === '1'; } catch (e) { return false; } })() }" class="border-b">
         <button
-            @click="open = !open"
+            @click="open = !open; try { localStorage.setItem('searchFilterOpen.options', open ? '1' : '0'); } catch (e) {}"
             class="flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline w-full"
             :data-state="open ? 'open' : 'closed'"
         >
