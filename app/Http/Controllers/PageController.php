@@ -127,7 +127,7 @@ class PageController extends Controller
             ->withCount('reviews')
             ->whereHas('deal', function($q) use ($query, $wordTokens, $tagTokens) {
                 $q->where(function($w) use ($query, $wordTokens, $tagTokens) {
-                    // Match title, descriptions, and vendor address fields.
+                    // Match title, descriptions, address fields, and category/subcategory.
                     $w->where('title', 'like', '%' . $query . '%')
                         ->orWhere('short_description', 'like', '%' . $query . '%')
                         ->orWhere('long_description', 'like', '%' . $query . '%')
@@ -137,9 +137,17 @@ class PageController extends Controller
                                 ->orWhere('tole', 'like', '%' . $query . '%')
                                 ->orWhere('province', 'like', '%' . $query . '%')
                                 ->orWhere('ward_no', 'like', '%' . $query . '%');
+                        })
+                        ->orWhereHas('category', function ($cq) use ($query) {
+                            $cq->where('name', 'like', '%' . $query . '%')
+                                ->orWhere('slug', 'like', '%' . $query . '%');
+                        })
+                        ->orWhereHas('category.parent', function ($pcq) use ($query) {
+                            $pcq->where('name', 'like', '%' . $query . '%')
+                                ->orWhere('slug', 'like', '%' . $query . '%');
                         });
                     
-                    // Match individual tokens in title/descriptions/address.
+                    // Match individual tokens in title/descriptions/address/category.
                     foreach ($wordTokens as $token) {
                         $token = trim((string) $token);
                         if ($token === '') continue;
@@ -153,6 +161,14 @@ class PageController extends Controller
                                     ->orWhere('tole', 'like', $like)
                                     ->orWhere('province', 'like', $like)
                                     ->orWhere('ward_no', 'like', $like);
+                            })
+                            ->orWhereHas('category', function ($cq) use ($like) {
+                                $cq->where('name', 'like', $like)
+                                    ->orWhere('slug', 'like', $like);
+                            })
+                            ->orWhereHas('category.parent', function ($pcq) use ($like) {
+                                $pcq->where('name', 'like', $like)
+                                    ->orWhere('slug', 'like', $like);
                             });
                     }
                     
@@ -390,6 +406,14 @@ class PageController extends Controller
                                     ->orWhere('tole', 'like', '%' . $query . '%')
                                     ->orWhere('province', 'like', '%' . $query . '%')
                                     ->orWhere('ward_no', 'like', '%' . $query . '%');
+                            })
+                            ->orWhereHas('category', function ($cq) use ($query) {
+                                $cq->where('name', 'like', '%' . $query . '%')
+                                    ->orWhere('slug', 'like', '%' . $query . '%');
+                            })
+                            ->orWhereHas('category.parent', function ($pcq) use ($query) {
+                                $pcq->where('name', 'like', '%' . $query . '%')
+                                    ->orWhere('slug', 'like', '%' . $query . '%');
                             });
 
                         // Then match per-token to reduce "no results" for sentence searches.
@@ -408,6 +432,14 @@ class PageController extends Controller
                                             ->orWhere('tole', 'like', $like)
                                             ->orWhere('province', 'like', $like)
                                             ->orWhere('ward_no', 'like', $like);
+                                    })
+                                    ->orWhereHas('category', function ($cq) use ($like) {
+                                        $cq->where('name', 'like', $like)
+                                            ->orWhere('slug', 'like', $like);
+                                    })
+                                    ->orWhereHas('category.parent', function ($pcq) use ($like) {
+                                        $pcq->where('name', 'like', $like)
+                                            ->orWhere('slug', 'like', $like);
                                     });
                             });
                         }
