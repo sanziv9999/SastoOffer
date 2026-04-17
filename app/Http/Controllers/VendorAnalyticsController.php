@@ -11,6 +11,7 @@ use App\Services\DealInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class VendorAnalyticsController extends Controller
 {
@@ -264,17 +265,85 @@ class VendorAnalyticsController extends Controller
             ->latest('id')
             ->first();
 
+        // Backward compatible path: allow vendors to redeem by order number as well.
         if (! $orderItem) {
-            return back()->with('error', 'Claim token not found for your offers.');
+            $orderByNumber = Order::query()
+                ->where('vendor_id', $vendor->id)
+                ->where('order_number', $claimCode)
+                ->with('items')
+                ->latest('id')
+                ->first();
+
+            if (! $orderByNumber) {
+                throw ValidationException::withMessages([
+                    'claim_code' => 'Claim token or order ID not found for your offers.',
+                ]);
+            }
+
+            if (in_array($orderByNumber->status, ['cancelled', 'refunded'], true)) {
+                throw ValidationException::withMessages([
+                    'claim_code' => 'This order is cancelled/refunded and cannot be redeemed.',
+                ]);
+            }
+
+            if ($orderByNumber->status === 'fulfilled') {
+                return back()->with('success', 'This order is already redeemed.');
+            }
+
+            $previousStatus = $orderByNumber->status;
+            $newStatus = 'fulfilled';
+
+            DB::transaction(function () use ($orderByNumber, $user, $claimCode) {
+                foreach ($orderByNumber->items as $item) {
+                    $meta = is_array($item->meta) ? $item->meta : [];
+                    if (empty($meta['claim_token'])) {
+                        $meta['claim_token'] = $claimCode;
+                    }
+                    if (empty($meta['claimed_at'])) {
+                        $meta['claimed_at'] = now()->toIso8601String();
+                        $meta['claimed_by_user_id'] = $user?->id;
+                    }
+                    $item->meta = $meta;
+                    $item->save();
+                }
+
+                $orderByNumber->status = 'fulfilled';
+                if (! $orderByNumber->paid_at) {
+                    $orderByNumber->paid_at = now();
+                }
+                $orderByNumber->save();
+            });
+
+            DB::transaction(function () use ($orderByNumber, $previousStatus, $newStatus) {
+                app(FirstXCustomerOfferService::class)->handleFulfilledOrder($orderByNumber);
+                app(DealInventoryService::class)->syncForOrderStatusChange($orderByNumber, $previousStatus, $newStatus);
+            });
+
+            try {
+                $activityMailer->sendOrderStatusChangedCustomer($orderByNumber, 'fulfilled');
+                $activityMailer->sendOrderStatusChangedVendor($orderByNumber, 'fulfilled');
+            } catch (\Throwable $e) {
+                Log::warning('Order claim status mail failed', [
+                    'order_id' => $orderByNumber->id,
+                    'status' => 'fulfilled',
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return back()->with('success', 'Order verified and redeemed successfully.');
         }
 
         $order = $orderItem->order;
         if (! $order) {
-            return back()->with('error', 'Claim token is invalid.');
+            throw ValidationException::withMessages([
+                'claim_code' => 'Claim token is invalid.',
+            ]);
         }
 
         if (in_array($order->status, ['cancelled', 'refunded'], true)) {
-            return back()->with('error', 'This claim token belongs to a cancelled/refunded order.');
+            throw ValidationException::withMessages([
+                'claim_code' => 'This claim token belongs to a cancelled/refunded order.',
+            ]);
         }
 
         $itemMeta = is_array($orderItem->meta) ? $orderItem->meta : [];

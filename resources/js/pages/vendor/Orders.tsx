@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,10 @@ const Orders = ({ orders }: OrdersProps) => {
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const [claimCode, setClaimCode] = useState('');
   const [claiming, setClaiming] = useState(false);
+
+  useEffect(() => {
+    setLocalOrders(orders || []);
+  }, [orders]);
 
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
@@ -158,10 +162,12 @@ const Orders = ({ orders }: OrdersProps) => {
         preserveScroll: true,
         onSuccess: () => {
           setClaimCode('');
-          toast.success('Offer claimed successfully.');
+          router.reload({ only: ['orders'] });
+          toast.success('Offer redeemed successfully.');
         },
-        onError: () => {
-          toast.error('Could not claim offer. Please verify code.');
+        onError: (errors) => {
+          const message = (errors?.claim_code as string) || 'Could not redeem offer. Please verify token/order ID.';
+          toast.error(message);
         },
         onFinish: () => setClaiming(false),
       }
@@ -386,7 +392,7 @@ const Orders = ({ orders }: OrdersProps) => {
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                        <SelectItem value="fulfilled">Redeemed</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                         <SelectItem value="refunded">Refunded</SelectItem>
                       </SelectContent>
@@ -420,7 +426,7 @@ const Orders = ({ orders }: OrdersProps) => {
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
-              placeholder="Enter claim token (e.g. CLM-260417-AB12CD34)"
+              placeholder="Enter claim token or order ID"
               value={claimCode}
               onChange={(e) => setClaimCode(e.target.value)}
               onKeyDown={(e) => {
@@ -497,7 +503,7 @@ const Orders = ({ orders }: OrdersProps) => {
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="fulfilled">Fulfilled</TabsTrigger>
+              <TabsTrigger value="fulfilled">Redeemed</TabsTrigger>
               <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
               <TabsTrigger value="refunded">Refunded</TabsTrigger>
             </TabsList>
