@@ -37,5 +37,10 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Deal::class);
     }
+
+    public function offerType(): BelongsTo
+    {
+        return $this->belongsTo(DealOfferType::class, 'deal_offer_type_id');
+    }
 }
 

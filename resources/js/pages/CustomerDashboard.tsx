@@ -4,7 +4,6 @@ import Link from '@/components/Link';
 import {
   ShoppingBag,
   Calendar,
-  Clock,
   Tag,
   Star,
   Search,
@@ -35,16 +34,17 @@ import { useAuth } from '@/context/AuthContext';
 interface CustomerDashboardProps {
   stats: {
     totalPurchases: number;
-    activeCoupons: number;
+    activeOffers: number;
     totalSavings: number;
     favoriteDealsCount: number;
   };
   recommendations: any[];
   recentActivity: any[];
   deals: any[]; // Lookup for deal details if not provided in activity
+  purchases: any[];
 }
 
-const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: CustomerDashboardProps) => {
+const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purchases }: CustomerDashboardProps) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [dashboardData, setDashboardData] = useState<{
@@ -52,16 +52,18 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
     recommendations: any[];
     recentActivity: any[];
     deals: any[];
+    purchases: any[];
   }>({
     stats: stats || {
       totalPurchases: 0,
-      activeCoupons: 0,
+      activeOffers: 0,
       totalSavings: 0,
       favoriteDealsCount: 0,
     },
     recommendations: recommendations || [],
     recentActivity: recentActivity || [],
     deals: deals || [],
+    purchases: purchases || [],
   });
 
   useEffect(() => {
@@ -81,13 +83,14 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
         setDashboardData({
           stats: json.stats || {
             totalPurchases: 0,
-            activeCoupons: 0,
+            activeOffers: 0,
             totalSavings: 0,
             favoriteDealsCount: 0,
           },
           recommendations: Array.isArray(json.recommendations) ? json.recommendations : [],
           recentActivity: Array.isArray(json.recentActivity) ? json.recentActivity : [],
           deals: Array.isArray(json.deals) ? json.deals : [],
+          purchases: Array.isArray(json.purchases) ? json.purchases : [],
         });
       } catch {
         // Keep initial props when request fails.
@@ -152,11 +155,11 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Coupons</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.stats?.activeCoupons || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData.stats?.activeOffers || 0}</div>
             <p className="text-xs text-muted-foreground">
               Ready to redeem
             </p>
@@ -269,13 +272,13 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest purchases and coupon usage</CardDescription>
+          <CardDescription>Your latest purchases and offer usage</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="recent" className="space-y-4">
             <TabsList>
               <TabsTrigger value="recent">Recent Purchases</TabsTrigger>
-              <TabsTrigger value="active">Active Coupons</TabsTrigger>
+              <TabsTrigger value="active">Active Offers</TabsTrigger>
             </TabsList>
 
             <TabsContent value="recent" className="space-y-4">
@@ -316,9 +319,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
                             {purchase.redeemed ? "Used" : "Active"}
                           </Badge>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/dashboard/purchases/${purchase.id}`}>
-                              View Voucher
-                            </Link>
+                            <a href={getDealHref(purchaseDeal, purchase.dealId)}>
+                              View Offer
+                            </a>
                           </Button>
                         </div>
                       </div>
@@ -340,67 +343,55 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals }: Cu
             </TabsContent>
 
             <TabsContent value="active" className="space-y-4">
-              {dashboardData.recentActivity?.filter((p: any) => !p.redeemed).length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {dashboardData.recentActivity
-                    .filter((p: any) => !p.redeemed)
+              {dashboardData.purchases?.filter((p: any) => !!p.activeOffer).length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.purchases
+                    .filter((p: any) => !!p.activeOffer)
                     .map((purchase: any) => {
                       const purchaseDeal = purchase.deal || getDealById(purchase.dealId);
                       return (
-                        <Card key={purchase.id} className="border-green-200 bg-green-50">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-base">
-                                  {purchaseDeal ? purchaseDeal.title : 'Unknown Deal'}
-                                </CardTitle>
-                                <CardDescription>
-                                  Purchased {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
-                                </CardDescription>
-                              </div>
-                              <Badge className="bg-green-500">Active</Badge>
+                        <div
+                          key={purchase.id}
+                          className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          {purchaseDeal && (
+                            <img
+                              src={purchaseDeal.image}
+                              alt={purchaseDeal.title}
+                              className="h-12 w-12 rounded object-cover flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-grow">
+                            <h4 className="font-medium">
+                              {purchaseDeal ? purchaseDeal.title : 'Unknown Deal'}
+                            </h4>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                Purchased {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
+                              </span>
+                              <span>Qty: {purchase.quantity}</span>
+                              <span className="font-medium">Rs. {purchase.totalPrice?.toFixed(2)}</span>
                             </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="bg-white p-3 rounded-md mb-3 border">
-                              <div className="text-xs text-muted-foreground mb-1">Coupon Code:</div>
-                              <code className="text-lg font-bold font-mono text-green-600">
-                                {purchase.couponCode}
-                              </code>
-                            </div>
-
-                            <div className="flex items-center text-sm text-muted-foreground mb-3">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {purchaseDeal && (
-                                <span>
-                                  Valid until {formatDistanceToNow(new Date(purchaseDeal.endDate), { addSuffix: true })}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex gap-2">
-                              <Button className="flex-1" size="sm" asChild>
-                                <Link href={`/dashboard/purchases/${purchase.id}`}>
-                                  View Voucher
-                                </Link>
-                              </Button>
-                              <Button variant="outline" size="sm" asChild>
-                                <Link href={getDealHref(purchaseDeal, purchase.dealId)}>
-                                  Deal Page
-                                </Link>
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-green-500">Active</Badge>
+                            <Button variant="ghost" size="sm" asChild>
+                              <a href={getDealHref(purchaseDeal, purchase.dealId)}>
+                                View Offer
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
                       );
                     })}
                 </div>
               ) : (
                 <div className="text-center p-8 border rounded-md">
                   <Tag className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No active coupons</h3>
+                  <h3 className="text-lg font-semibold mb-2">No active offers</h3>
                   <p className="text-muted-foreground mb-4">
-                    You don't have any active coupons at the moment.
+                    You don't have any active offers at the moment.
                   </p>
                   <Button asChild>
                     <a href="/">Find New Deals</a>

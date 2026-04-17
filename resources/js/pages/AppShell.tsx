@@ -144,6 +144,7 @@ const AppShell = () => {
                             recommendations={deals.slice(0, 3)}
                             recentActivity={purchases.slice(0, 5)}
                             deals={deals}
+                            purchases={purchases}
                         />
                     </DashboardLayout>
                 }

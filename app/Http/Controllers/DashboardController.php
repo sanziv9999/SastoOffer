@@ -76,7 +76,7 @@ class DashboardController extends Controller
             return [
                 'stats' => [
                     'totalPurchases' => 0,
-                    'activeCoupons' => 0,
+                    'activeOffers' => 0,
                     'totalSavings' => 0,
                     'favoriteDealsCount' => 0,
                     'reviewsCount' => 0,
@@ -89,7 +89,7 @@ class DashboardController extends Controller
         }
 
         $orders = Order::where('user_id', $user->id)
-            ->with(['items'])
+            ->with(['items.offerType'])
             ->latest()
             ->get();
 
@@ -109,6 +109,17 @@ class DashboardController extends Controller
 
             $firstItem = $allItems->first();
             $paidAt = $ordersInGroup->pluck('paid_at')->filter()->max();
+            $isPurchased = $paidAt !== null || in_array($aggregatedStatus, ['paid', 'redeemed'], true);
+            $hasNonEndedOffer = $allItems->contains(function ($item) {
+                $offer = $item->offerType;
+
+                if (! $offer || $offer->status !== 'active') {
+                    return false;
+                }
+
+                return $offer->ends_at === null || $offer->ends_at->greaterThanOrEqualTo(now());
+            });
+            $activeOffer = $isPurchased && ! $redeemed && $hasNonEndedOffer;
 
             return [
                 'id' => (string) ($firstOrder?->id ?? ''),
@@ -116,6 +127,7 @@ class DashboardController extends Controller
                 'dealSlug' => $firstItem?->meta['deal_slug'] ?? null,
                 'couponCode' => $orderNumber,
                 'redeemed' => $redeemed,
+                'activeOffer' => $activeOffer,
                 'redeemedAt' => $paidAt?->toIso8601String(),
                 'quantity' => (int) $allItems->sum('quantity'),
                 'totalPrice' => (float) $ordersInGroup->sum('grand_total'),
@@ -197,11 +209,11 @@ class DashboardController extends Controller
         $favoriteDealsCount = $this->getUserWishlistDeals($user)->count();
 
         $reviewsCount = Review::where('user_id', $user->id)->count();
-        $activeCouponsCount = collect($purchaseGroups)->filter(fn ($p) => ! ($p['redeemed'] ?? false))->count();
+        $activeOffersCount = collect($purchaseGroups)->filter(fn ($p) => (bool) ($p['activeOffer'] ?? false))->count();
 
         $stats = [
             'totalPurchases' => $purchaseGroups->count(),
-            'activeCoupons' => $activeCouponsCount,
+            'activeOffers' => $activeOffersCount,
             'totalSavings' => $totalSavings,
             'favoriteDealsCount' => $favoriteDealsCount,
             'reviewsCount' => $reviewsCount,
@@ -225,6 +237,7 @@ class DashboardController extends Controller
             'recommendations' => $payload['recommendations'],
             'recentActivity' => $payload['recentActivity'],
             'deals' => $payload['deals'],
+            'purchases' => $payload['purchases'],
         ]);
     }
 
