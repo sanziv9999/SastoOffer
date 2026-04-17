@@ -179,10 +179,6 @@ const Cart = ({ items = [], total = 0, count = 0 }: Props) => {
                 <span>Subtotal</span>
                 <span>Rs. {(totalAmount || total).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Shipping</span>
-                <span className="text-primary font-semibold">Free</span>
-              </div>
               <div className="border-t pt-3 flex justify-between font-bold">
                 <span>Total</span>
                 <span>Rs. {(totalAmount || total).toFixed(2)}</span>
@@ -192,7 +188,7 @@ const Cart = ({ items = [], total = 0, count = 0 }: Props) => {
                 onClick={proceedCheckout}
                 disabled={isSubmittingCheckout || cartItems.length === 0}
               >
-                {isSubmittingCheckout ? 'Processing...' : 'Proceed to Claim Offer'}
+                {isSubmittingCheckout ? 'Processing...' : 'Lock In Offer'}
               </Button>
             </CardContent>
           </Card>

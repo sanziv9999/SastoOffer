@@ -112,10 +112,6 @@
                                         <span class="text-[10px] font-normal opacity-70">Rs.</span> <span x-text="cart.total"></span>
                                     </span>
                                 </div>
-                                <div class="flex justify-between text-sm text-muted-foreground">
-                                    <span>Shipping</span>
-                                    <span class="text-primary font-bold uppercase text-[10px] tracking-wider">Free</span>
-                                </div>
                                 <div class="border-t border-border/60 pt-4 flex justify-between items-end">
                                     <span class="text-sm md:text-base font-bold text-teal-950">Total</span>
                                     <div class="text-right">
@@ -135,7 +131,7 @@
                                 >
                                     <div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                                     <span class="relative flex items-center gap-2">
-                                        PROCEED TO CHECKOUT
+                                        LOCK IN OFFER
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1"><path d="m9 18 6-6-6-6"></path></svg>
                                     </span>
                                 </button>
