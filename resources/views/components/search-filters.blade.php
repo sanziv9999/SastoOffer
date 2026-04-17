@@ -12,7 +12,7 @@
         if (typeof selectedLocations === 'undefined') selectedLocations = @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []);
         if (typeof dealTypes === 'undefined') dealTypes = @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []);
         if (typeof isFeatured === 'undefined') isFeatured = {{ $isFeatured ? 'true' : 'false' }};
-        if (typeof minRating === 'undefined') minRating = {{ $minRating ?: 'null' }};
+        if (typeof selectedRatings === 'undefined') selectedRatings = @js($minRating !== null && $minRating !== '' ? [(int)$minRating] : []);
         if (typeof localSearchQuery === 'undefined') localSearchQuery = '{{ addslashes($currentQuery) }}';
     "
 >
@@ -316,22 +316,37 @@
         </button>
         <div x-show="open" x-collapse class="pb-4 pt-0 text-sm">
             <div class="space-y-1">
-                @foreach([5, 4, 3, 2, 1, 0] as $stars)
-                    <button 
-                        @click="minRating = (minRating == {{ $stars }} ? null : {{ $stars }})"
-                        class="flex items-center w-full gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors group"
-                        :class="minRating == {{ $stars }} ? 'bg-accent text-foreground' : 'text-foreground'"
-                    >
+                <label class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-accent transition-colors group">
+                    <input
+                        type="checkbox"
+                        :checked="selectedRatings.length === 0"
+                        @change="if ($event.target.checked) selectedRatings = []"
+                        class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <span class="text-xs font-semibold">All Ratings</span>
+                </label>
+
+                @foreach([5, 4, 3, 2, 1] as $stars)
+                    <label class="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-accent transition-colors group">
+                        <input
+                            type="checkbox"
+                            :checked="selectedRatings.includes({{ $stars }})"
+                            @change="
+                                if ($event.target.checked) {
+                                    if (!selectedRatings.includes({{ $stars }})) selectedRatings.push({{ $stars }});
+                                } else {
+                                    selectedRatings = selectedRatings.filter(r => r !== {{ $stars }});
+                                }
+                            "
+                            class="h-4 w-4 rounded border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
                         <div class="flex items-center text-yellow-500">
                             @for($i = 0; $i < 5; $i++)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="{{ $stars > $i ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="w-3.5 h-3.5"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                             @endfor
                         </div>
-                        <span class="text-xs font-semibold">{{ $stars > 0 ? $stars . ' Star' . ($stars > 1 ? 's' : '') : 'All Ratings' }}</span>
-                        <div x-show="minRating == {{ $stars }}" class="ml-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="h-3 w-3"><path d="M20 6 9 17l-5-5"></path></svg>
-                        </div>
-                    </button>
+                        <span class="text-xs font-semibold">{{ $stars }} Star{{ $stars > 1 ? 's' : '' }}</span>
+                    </label>
                 @endforeach
             </div>
         </div>

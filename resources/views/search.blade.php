@@ -10,7 +10,7 @@
             maxPrice: {{ (int)$maxPrice }},
             availableMinPrice: {{ (int)$availableMinPrice }},
             availableMaxPrice: {{ (int)$availableMaxPrice }},
-            minRating: {{ $minRating ?: 'null' }},
+            selectedRatings: @js($minRating !== null && $minRating !== '' ? [(int)$minRating] : []),
             dealTypes: @js(($dealType !== 'all' && $dealType !== '') ? array_filter(array_map('trim', explode(',', $dealType))) : []),
             selectedLocations: @js(($currentLocation !== '') ? array_filter(array_map('trim', explode(',', $currentLocation))) : []),
             isFeatured: {{ $isFeatured ? 'true' : 'false' }},
@@ -41,7 +41,7 @@
                 if (this.selectedLocations.length > 0) params.set('location', this.selectedLocations.join(','));
                 if (this.isFeatured) params.set('featured', 'true');
                 if (this.dealTypes.length > 0) params.set('type', this.dealTypes.join(','));
-                if (this.minRating) params.set('minRating', this.minRating);
+                if (this.selectedRatings.length > 0) params.set('minRating', Math.min(...this.selectedRatings));
 
                 let min = Math.min(this.minPrice, this.maxPrice);
                 let max = Math.max(this.minPrice, this.maxPrice);
@@ -153,7 +153,7 @@
                 this.dealTypes = [];
                 this.selectedLocations = [];
                 this.isFeatured = false;
-                this.minRating = null;
+                this.selectedRatings = [];
                 this.localSearchQuery = '';
                 this.nearbyEnabled = false;
                 this.nearbyLat = null;
@@ -167,7 +167,7 @@
                     || this.dealTypes.length > 0
                     || this.selectedLocations.length > 0
                     || this.isFeatured
-                    || !!this.minRating
+                    || this.selectedRatings.length > 0
                     || this.minPrice > this.availableMinPrice
                     || this.maxPrice < this.availableMaxPrice;
             }
@@ -224,8 +224,8 @@
                 </span>
             </template>
 
-            <template x-if="minRating">
-                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium" x-text="`${minRating} stars`"></span>
+            <template x-if="selectedRatings.length > 0">
+                <span class="inline-flex items-center rounded-full border bg-background px-3 py-1 text-xs font-medium" x-text="`Rating: ${selectedRatings.slice().sort((a, b) => b - a).map(r => `${r} stars`).join(', ')}`"></span>
             </template>
 
             <template x-if="isFeatured">
@@ -381,7 +381,7 @@
                         <span x-text="nearbyEnabled ? 'Nearby: On' : 'Near Me'"></span>
                     </button>
 
-                    <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || minRating || nearbyEnabled">
+                    <template x-if="searchQuery || selectedCategories.length > 0 || selectedLocations.length > 0 || isFeatured || dealTypes.length > 0 || minPrice > availableMinPrice || maxPrice < availableMaxPrice || selectedRatings.length > 0 || nearbyEnabled">
                         <button @click="resetFilters" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
                             Clear All Filters
