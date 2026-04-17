@@ -1,25 +1,30 @@
 
 import { Fragment, useState } from 'react';
+import { useRemember } from '@inertiajs/react';
 import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { router } from '@inertiajs/react';
 import AdminPagination from '@/components/AdminPagination';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 interface AdminDealsProps {
   deals: any;
-  displayTypes: Array<{ id: number; name: string }>;
+  featuredDisplayType?: { id: number; name: string } | null;
   filters?: { search?: string; status?: string };
 }
 
-const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
+const AdminDeals = ({ deals, featuredDisplayType = null, filters }: AdminDealsProps) => {
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
-  const [expandedDealIds, setExpandedDealIds] = useState<Set<number>>(new Set());
+  /** Persist across Inertia visits so rows stay open after PATCH (e.g. toggling featured). */
+  const [expandedDealIds, setExpandedDealIds] = useRemember<number[]>([], 'admin.deals.expandedRows');
   const status = filters?.status || 'all';
   const items = deals?.data || [];
 
@@ -32,11 +37,17 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
     router.get('/admin/deals', { status: s !== 'all' ? s : undefined, search: searchTerm || undefined }, { preserveState: true, replace: true });
   };
 
-  const saveOfferDisplayTypes = (offerPivotId: number, ids: number[]) => {
+  const saveOfferDisplayTypes = (dealId: number, offerPivotId: number, ids: number[]) => {
     router.patch(
       `/admin/deals/offers/${offerPivotId}/display-types`,
       { display_type_ids: ids },
-      { preserveScroll: true, preserveState: true }
+      {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          setExpandedDealIds((prev) => (prev.includes(dealId) ? prev : [...prev, dealId]));
+        },
+      }
     );
   };
 
@@ -58,10 +69,8 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
 
   const toggleDealExpand = (dealId: number) => {
     setExpandedDealIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(dealId)) next.delete(dealId);
-      else next.add(dealId);
-      return next;
+      const list = Array.isArray(prev) ? prev : [];
+      return list.includes(dealId) ? list.filter((id) => id !== dealId) : [...list, dealId];
     });
   };
 
@@ -80,7 +89,7 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
           </thead>
           <tbody>
             {dealsList.length > 0 ? dealsList.map((deal) => {
-              const isExpanded = expandedDealIds.has(deal.id);
+              const isExpanded = expandedDealIds.includes(deal.id);
               const offers = Array.isArray(deal.offers) ? deal.offers : [];
 
               return (
@@ -155,62 +164,107 @@ const AdminDeals = ({ deals, displayTypes, filters }: AdminDealsProps) => {
                   </tr>
                   {isExpanded && (
                     <tr key={`child-${deal.id}`}>
-                      <td colSpan={5} className="p-0">
-                        <div className="bg-muted/20 border-b px-6 py-4">
-                          <h4 className="text-sm font-semibold mb-3">Child Offers</h4>
+                      <td colSpan={5} className="p-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="border-b bg-gradient-to-b from-muted/40 to-muted/15 px-4 py-5 sm:px-6">
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold tracking-tight">Offers for this deal</h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Manage pricing, status, and whether an offer is featured in curated placements.
+                            </p>
+                          </div>
                           {offers.length > 0 ? (
-                            <div className="space-y-2">
-                              {offers.map((offer: any) => (
-                                <div key={offer.id} className="rounded border bg-background p-3">
-                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div className="text-xs font-medium">
-                                      {offer.offerTypeTitle}
-                                      <span className="ml-2 text-muted-foreground">#{offer.id}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline">
-                                        {offer.discountedPrice !== null ? `Rs. ${Number(offer.discountedPrice).toFixed(2)}` : 'N/A'}
-                                      </Badge>
-                                      <select
-                                        value={offer.status || 'active'}
-                                        onChange={(e) => updateOfferStatus(offer.id, e.target.value)}
-                                        className="h-7 rounded border px-2 text-[10px] bg-background"
-                                      >
-                                        <option value="draft">Draft</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                        <option value="expired">Expired</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="mt-1 text-xs text-muted-foreground">
-                                    {offer.originalPrice !== null ? `Original: Rs. ${Number(offer.originalPrice).toFixed(2)}` : ''}
-                                  </div>
-                                  <div className="mt-2 flex flex-wrap gap-1">
-                                    {displayTypes.map((dt) => {
-                                      const selected = (offer.displayTypeIds || []).includes(dt.id);
-                                      const nextIds = selected
-                                        ? (offer.displayTypeIds || []).filter((id: number) => id !== dt.id)
-                                        : [...(offer.displayTypeIds || []), dt.id];
-                                      return (
-                                        <Button
-                                          key={dt.id}
-                                          variant={selected ? 'default' : 'outline'}
-                                          size="sm"
-                                          className="h-6 px-2 text-[10px]"
-                                          onClick={() => saveOfferDisplayTypes(offer.id, nextIds)}
+                            <div className="space-y-3">
+                              {offers.map((offer: any) => {
+                                const isFeatured =
+                                  !!featuredDisplayType &&
+                                  (offer.displayTypeIds || []).includes(featuredDisplayType.id);
+                                return (
+                                  <div
+                                    key={offer.id}
+                                    className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm ring-1 ring-border/60"
+                                  >
+                                    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between">
+                                      <div className="min-w-0 flex-1 space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="font-semibold leading-tight">{offer.offerTypeTitle}</span>
+                                          <Badge variant="outline" className="font-mono text-[10px]">
+                                            #{offer.id}
+                                          </Badge>
+                                        </div>
+                                        {offer.endDate && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Ends {new Date(offer.endDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                                        <div className="text-right">
+                                          <div className="text-lg font-semibold tabular-nums">
+                                            {offer.discountedPrice !== null
+                                              ? `Rs. ${Number(offer.discountedPrice).toFixed(2)}`
+                                              : '—'}
+                                          </div>
+                                          <div className="text-[11px] text-muted-foreground">Final price</div>
+                                        </div>
+                                        <select
+                                          value={offer.status || 'active'}
+                                          onChange={(e) => updateOfferStatus(offer.id, e.target.value)}
+                                          className="h-9 w-full min-w-[140px] rounded-md border bg-background px-2 text-xs sm:w-auto"
                                         >
-                                          {dt.name}
-                                        </Button>
-                                      );
-                                    })}
+                                          <option value="draft">Draft</option>
+                                          <option value="pending">Pending</option>
+                                          <option value="active">Active</option>
+                                          <option value="inactive">Inactive</option>
+                                          <option value="expired">Expired</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                    <Separator />
+                                    <div className="flex flex-col gap-4 bg-muted/25 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                      <div className="text-sm">
+                                        <span className="text-xs text-muted-foreground">Original price</span>
+                                        <div className="font-medium tabular-nums">
+                                          {offer.originalPrice !== null
+                                            ? `Rs. ${Number(offer.originalPrice).toFixed(2)}`
+                                            : '—'}
+                                        </div>
+                                      </div>
+                                      {featuredDisplayType && (
+                                        <div className="flex w-full flex-col gap-3 rounded-lg border bg-background p-3 sm:max-w-md sm:flex-row sm:items-center sm:justify-between">
+                                          <div className="flex gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15">
+                                              <Star className="h-5 w-5 text-amber-600" fill="currentColor" />
+                                            </div>
+                                            <div className="space-y-0.5">
+                                              <Label htmlFor={`featured-${offer.id}`} className="text-sm font-medium leading-none">
+                                                Featured offer
+                                              </Label>
+                                              <p className="text-xs text-muted-foreground">
+                                                When enabled, this offer can appear in featured placements (for example Discover).
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <Switch
+                                            id={`featured-${offer.id}`}
+                                            checked={isFeatured}
+                                            onCheckedChange={(checked) =>
+                                              saveOfferDisplayTypes(
+                                                deal.id,
+                                                offer.id,
+                                                checked ? [featuredDisplayType.id] : []
+                                              )
+                                            }
+                                            className="shrink-0 data-[state=checked]:bg-amber-600"
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           ) : (
-                            <p className="text-sm text-muted-foreground">No child offers attached.</p>
+                            <p className="text-sm text-muted-foreground">No offers attached to this deal yet.</p>
                           )}
                         </div>
                       </td>

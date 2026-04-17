@@ -50,7 +50,7 @@ const AdminDealView = () => {
       <Card>
         <CardHeader>
           <CardTitle>Child Offer Types</CardTitle>
-          <CardDescription>Rows from `deal_offer_type` with display tags.</CardDescription>
+          <CardDescription>Rows from `deal_offer_type`. Featured status is managed per offer.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {Array.isArray(deal?.offers) && deal.offers.length > 0 ? (
@@ -67,12 +67,10 @@ const AdminDealView = () => {
                   Start: {o.startsAt || '-'} • End: {o.endsAt || '-'}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {(o.displayTypes || []).length > 0 ? (
-                    o.displayTypes.map((name: string) => (
-                      <Badge key={name} variant="secondary">{name}</Badge>
-                    ))
+                  {(o.displayTypes || []).includes('featured') ? (
+                    <Badge className="bg-amber-600 hover:bg-amber-600">Featured</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">No display tags</span>
+                    <span className="text-xs text-muted-foreground">Not featured</span>
                   )}
                 </div>
               </div>

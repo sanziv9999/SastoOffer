@@ -359,13 +359,14 @@ class AdminController extends Controller
             })
             ->withQueryString();
 
+        $featuredType = DisplayType::featured();
+
         return Inertia::render('admin/AdminDeals', [
             'deals' => $deals,
-            'displayTypes' => DisplayType::query()
-                ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (DisplayType $dt) => ['id' => $dt->id, 'name' => $dt->name])
-                ->all(),
+            'featuredDisplayType' => [
+                'id' => $featuredType->id,
+                'name' => $featuredType->name,
+            ],
             'filters' => [
                 'search' => $search,
                 'status' => $status ?? 'all',
@@ -616,6 +617,9 @@ class AdminController extends Controller
 
         $ids = collect($data['display_type_ids'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
 
+        $featuredId = (int) DisplayType::featured()->id;
+        $ids = array_values(array_intersect($ids, [$featuredId]));
+
         // Strict per-offer sync (never touches sibling offer rows of same deal).
         DB::table('deal_offer_display')
             ->where('deal_offer_type_id', $dealOfferType->id)
@@ -637,22 +641,19 @@ class AdminController extends Controller
         }
 
         // Keep featured rank in sync using normalized bridge table.
-        $featuredId = (int) (DisplayType::where('name', 'featured')->value('id') ?? 0);
-        if ($featuredId > 0) {
-            $hasFeatured = DB::table('deal_offer_display as dod')
-                ->join('deal_offer_type as dot', 'dot.id', '=', 'dod.deal_offer_type_id')
-                ->where('dot.deal_id', $dealOfferType->deal_id)
-                ->where('dod.display_as', $featuredId)
-                ->exists();
+        $hasFeatured = DB::table('deal_offer_display as dod')
+            ->join('deal_offer_type as dot', 'dot.id', '=', 'dod.deal_offer_type_id')
+            ->where('dot.deal_id', $dealOfferType->deal_id)
+            ->where('dod.display_as', $featuredId)
+            ->exists();
 
-            if ($hasFeatured) {
-                FeaturedDealRank::firstOrCreate(
-                    ['deal_id' => $dealOfferType->deal_id],
-                    ['rank' => ((int) (FeaturedDealRank::max('rank') ?? 0)) + 1]
-                );
-            } else {
-                FeaturedDealRank::where('deal_id', $dealOfferType->deal_id)->delete();
-            }
+        if ($hasFeatured) {
+            FeaturedDealRank::firstOrCreate(
+                ['deal_id' => $dealOfferType->deal_id],
+                ['rank' => ((int) (FeaturedDealRank::max('rank') ?? 0)) + 1]
+            );
+        } else {
+            FeaturedDealRank::where('deal_id', $dealOfferType->deal_id)->delete();
         }
 
         return back()->with('success', 'Offer display tags updated.');
