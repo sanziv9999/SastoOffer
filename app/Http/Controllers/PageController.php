@@ -127,19 +127,33 @@ class PageController extends Controller
             ->withCount('reviews')
             ->whereHas('deal', function($q) use ($query, $wordTokens, $tagTokens) {
                 $q->where(function($w) use ($query, $wordTokens, $tagTokens) {
-                    // Match title, descriptions
+                    // Match title, descriptions, and vendor address fields.
                     $w->where('title', 'like', '%' . $query . '%')
                         ->orWhere('short_description', 'like', '%' . $query . '%')
-                        ->orWhere('long_description', 'like', '%' . $query . '%');
+                        ->orWhere('long_description', 'like', '%' . $query . '%')
+                        ->orWhereHas('vendor.defaultAddress', function ($aq) use ($query) {
+                            $aq->where('district', 'like', '%' . $query . '%')
+                                ->orWhere('municipality', 'like', '%' . $query . '%')
+                                ->orWhere('tole', 'like', '%' . $query . '%')
+                                ->orWhere('province', 'like', '%' . $query . '%')
+                                ->orWhere('ward_no', 'like', '%' . $query . '%');
+                        });
                     
-                    // Match individual tokens in title and descriptions
+                    // Match individual tokens in title/descriptions/address.
                     foreach ($wordTokens as $token) {
                         $token = trim((string) $token);
                         if ($token === '') continue;
                         $like = '%' . $token . '%';
                         $w->orWhere('title', 'like', $like)
                             ->orWhere('short_description', 'like', $like)
-                            ->orWhere('long_description', 'like', $like);
+                            ->orWhere('long_description', 'like', $like)
+                            ->orWhereHas('vendor.defaultAddress', function ($aq) use ($like) {
+                                $aq->where('district', 'like', $like)
+                                    ->orWhere('municipality', 'like', $like)
+                                    ->orWhere('tole', 'like', $like)
+                                    ->orWhere('province', 'like', $like)
+                                    ->orWhere('ward_no', 'like', $like);
+                            });
                     }
                     
                     // Match against highlight tags using LIKE for partial matching
@@ -369,7 +383,14 @@ class PageController extends Controller
                         // Keep full-phrase matching as a broad recall boost.
                         $w->where('title', 'like', '%' . $query . '%')
                             ->orWhere('short_description', 'like', '%' . $query . '%')
-                            ->orWhere('long_description', 'like', '%' . $query . '%');
+                            ->orWhere('long_description', 'like', '%' . $query . '%')
+                            ->orWhereHas('vendor.defaultAddress', function ($aq) use ($query) {
+                                $aq->where('district', 'like', '%' . $query . '%')
+                                    ->orWhere('municipality', 'like', '%' . $query . '%')
+                                    ->orWhere('tole', 'like', '%' . $query . '%')
+                                    ->orWhere('province', 'like', '%' . $query . '%')
+                                    ->orWhere('ward_no', 'like', '%' . $query . '%');
+                            });
 
                         // Then match per-token to reduce "no results" for sentence searches.
                         foreach ($wordTokens as $token) {
@@ -380,7 +401,14 @@ class PageController extends Controller
                                 $like = '%' . $token . '%';
                                 $tw->where('title', 'like', $like)
                                     ->orWhere('short_description', 'like', $like)
-                                    ->orWhere('long_description', 'like', $like);
+                                    ->orWhere('long_description', 'like', $like)
+                                    ->orWhereHas('vendor.defaultAddress', function ($aq) use ($like) {
+                                        $aq->where('district', 'like', $like)
+                                            ->orWhere('municipality', 'like', $like)
+                                            ->orWhere('tole', 'like', $like)
+                                            ->orWhere('province', 'like', $like)
+                                            ->orWhere('ward_no', 'like', $like);
+                                    });
                             });
                         }
 
