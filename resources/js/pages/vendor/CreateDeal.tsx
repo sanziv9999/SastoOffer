@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, Upload, X, ImagePlus, Sparkles, Loader2,
   Bold, Italic, List, ListOrdered,
-  Tag, Info, Star, GripVertical
+  Tag, Info, Star, GripVertical, ChevronUp, ChevronDown
 } from 'lucide-react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 
@@ -98,6 +98,18 @@ const CreateDeal = () => {
     const next = [...dealImages];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
+    setDealImages(next);
+  };
+
+  const moveImageByStep = (id: string, direction: 'up' | 'down') => {
+    const index = dealImages.findIndex((img) => img.id === id);
+    if (index < 0) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= dealImages.length) return;
+
+    const next = [...dealImages];
+    const [moved] = next.splice(index, 1);
+    next.splice(targetIndex, 0, moved);
     setDealImages(next);
   };
 
@@ -304,10 +316,30 @@ const CreateDeal = () => {
                       <button
                         type="button"
                         onClick={() => removeImage(img.id)}
-                        className="rounded-full bg-black/60 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="rounded-full bg-black/60 p-1 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         title="Remove image"
                       >
                         <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-1 right-1 flex items-center gap-1 sm:hidden">
+                      <button
+                        type="button"
+                        onClick={() => moveImageByStep(img.id, 'up')}
+                        disabled={index === 0}
+                        className="rounded-full bg-black/65 p-1 text-white disabled:opacity-40"
+                        title="Move earlier"
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveImageByStep(img.id, 'down')}
+                        disabled={index === dealImages.length - 1}
+                        className="rounded-full bg-black/65 p-1 text-white disabled:opacity-40"
+                        title="Move later"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     {featuredImageId === img.id && (
