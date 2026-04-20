@@ -6,6 +6,7 @@ use App\Http\Requests\StoreAddressRequest;
 use App\Models\Address;
 use App\Models\CustomerProfile;
 use App\Models\Deal;
+use App\Models\DealOfferType;
 use App\Models\OfferType;
 use App\Models\Order;
 use App\Models\Review;
@@ -292,17 +293,100 @@ class DashboardController extends Controller
 
     public function reviews()
     {
+        $user = auth()->user();
+
+        $reviewModels = Review::where('user_id', $user->id)
+            ->where('reviewable_type', DealOfferType::class)
+            ->with(['reviewable.deal.images'])
+            ->latest()
+            ->get();
+
+        $reviews = $reviewModels->map(function (Review $review) {
+            /** @var DealOfferType|null $pivot */
+            $pivot = $review->reviewable;
+            $deal = $pivot?->deal;
+
+            return [
+                'id' => $review->id,
+                'dealId' => $deal?->id,
+                'rating' => (int) $review->rating,
+                'comment' => $review->comment,
+                'createdAt' => $review->created_at?->toIso8601String(),
+                'deal' => $deal ? [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'slug' => $deal->slug,
+                    'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&fit=crop'),
+                ] : null,
+            ];
+        })->values()->all();
+
+        $deals = $reviewModels
+            ->map(fn (Review $review) => $review->reviewable?->deal)
+            ->filter()
+            ->unique('id')
+            ->map(fn (Deal $deal) => [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'slug' => $deal->slug,
+                'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&fit=crop'),
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('dashboard/Reviews', [
-            'reviews' => [],
-            'deals' => [],
+            'reviews' => $reviews,
+            'deals' => $deals,
         ]);
     }
 
     public function editReview($id)
     {
+        $user = auth()->user();
+
+        $reviewModels = Review::where('user_id', $user->id)
+            ->where('reviewable_type', DealOfferType::class)
+            ->with(['reviewable.deal.images'])
+            ->latest()
+            ->get();
+
+        $reviews = $reviewModels->map(function (Review $review) {
+            /** @var DealOfferType|null $pivot */
+            $pivot = $review->reviewable;
+            $deal = $pivot?->deal;
+
+            return [
+                'id' => $review->id,
+                'dealId' => $deal?->id,
+                'rating' => (int) $review->rating,
+                'comment' => $review->comment,
+                'createdAt' => $review->created_at?->toIso8601String(),
+                'deal' => $deal ? [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'slug' => $deal->slug,
+                    'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&fit=crop'),
+                ] : null,
+            ];
+        })->values()->all();
+
+        $deals = $reviewModels
+            ->map(fn (Review $review) => $review->reviewable?->deal)
+            ->filter()
+            ->unique('id')
+            ->map(fn (Deal $deal) => [
+                'id' => $deal->id,
+                'title' => $deal->title,
+                'slug' => $deal->slug,
+                'image' => $deal->featuredImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&fit=crop'),
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('dashboard/EditReview', [
-            'reviews' => [],
-            'deals' => [],
+            'reviewId' => (string) $id,
+            'reviews' => $reviews,
+            'deals' => $deals,
         ]);
     }
 
