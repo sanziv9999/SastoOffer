@@ -239,14 +239,14 @@ const CreateDeal = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex items-start sm:items-center gap-3 sm:gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/vendor/deals"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create New Deal</h1>
-          <p className="text-muted-foreground">Fill in the details to create and publish your deal</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Create New Deal</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Fill in the details to create and publish your deal</p>
         </div>
       </div>
 
@@ -428,14 +428,14 @@ const CreateDeal = () => {
             <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" /> Tags & SEO</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input placeholder="Add a tag…" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] lg:grid-cols-[1fr_auto_auto_auto] gap-2">
+              <Input placeholder="Add a tag…" className="h-10" value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
-              <Button type="button" variant="outline" onClick={addTag}>Add</Button>
-              <Button type="button" variant="outline" onClick={clearAllTags} disabled={data.tags.length === 0}>
+              <Button type="button" variant="outline" onClick={addTag} className="h-10 w-full sm:w-auto">Add</Button>
+              <Button type="button" variant="outline" onClick={clearAllTags} disabled={data.tags.length === 0} className="h-10 w-full sm:w-auto">
                 Clear All
               </Button>
-              <Button type="button" variant="default" onClick={generateAITags} disabled={isGeneratingTags} className="gap-2 shrink-0">
+              <Button type="button" variant="default" onClick={generateAITags} disabled={isGeneratingTags} className="h-10 w-full sm:w-auto gap-2 shrink-0">
                 {isGeneratingTags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 AI Suggest
               </Button>
@@ -446,7 +446,7 @@ const CreateDeal = () => {
             {data.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {data.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1">
+                  <Badge key={tag} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1 text-xs">
                     {tag}
                     <button type="button" onClick={() => removeTag(tag)} className="ml-0.5 hover:text-destructive"><X className="h-3 w-3" /></button>
                   </Badge>
@@ -456,9 +456,9 @@ const CreateDeal = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3 pb-8">
-          <Button type="button" variant="outline" asChild><Link href="/vendor/deals">Cancel</Link></Button>
-          <Button type="submit" size="lg" disabled={submitting} className="px-8 shadow-lg shadow-primary/20">
+        <div className="grid grid-cols-1 sm:flex sm:justify-end gap-2 sm:gap-3 pb-8">
+          <Button type="button" variant="outline" asChild className="h-10 w-full sm:w-auto"><Link href="/vendor/deals">Cancel</Link></Button>
+          <Button type="submit" size="lg" disabled={submitting} className="h-10 w-full sm:w-auto px-6 sm:px-8 shadow-lg shadow-primary/20">
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
