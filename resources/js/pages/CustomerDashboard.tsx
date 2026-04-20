@@ -120,8 +120,8 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
       </div>
 
       {/* Stats Cards */}
-      <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-4">
-        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
+        <Card>
           <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Total Purchases</CardTitle>
             <ShoppingBag className="hidden md:block h-4 w-4 text-muted-foreground" />
@@ -133,7 +133,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
             </p>
           </CardContent>
         </Card>
-        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+        <Card>
           <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
             <Tag className="hidden md:block h-4 w-4 text-muted-foreground" />
@@ -145,7 +145,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
             </p>
           </CardContent>
         </Card>
-        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+        <Card>
           <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
             <Wallet className="hidden md:block h-4 w-4 text-muted-foreground" />
@@ -157,7 +157,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
             </p>
           </CardContent>
         </Card>
-        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+        <Card>
           <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Favorite Deals</CardTitle>
             <Heart className="hidden md:block h-4 w-4 text-muted-foreground" />
