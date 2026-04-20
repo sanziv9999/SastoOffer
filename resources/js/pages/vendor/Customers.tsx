@@ -59,43 +59,155 @@ const Customers = ({ customers }: CustomersProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
-                  <th className="h-10 px-4 text-left font-medium">Customer</th>
-                  <th className="h-10 px-4 text-left font-medium hidden md:table-cell">Contact</th>
-                  <th className="h-10 px-4 text-left font-medium">Orders</th>
-                  <th className="h-10 px-4 text-left font-medium">Spent</th>
-                  <th className="h-10 px-4 text-left font-medium hidden sm:table-cell">Deals</th>
-                  <th className="h-10 px-4 text-left font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((customer: any) => (
-                  <tr key={customer.id} className="border-b hover:bg-muted/50 transition-colors">
-                    <td className="p-4">
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1 md:hidden">
-                        <Mail className="h-3 w-3" />{customer.email}
+          <div className="space-y-3">
+            {/* Mobile: stacked customer cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.length > 0 ? (
+                filtered.map((customer: any) => (
+                  <div key={customer.id} className="rounded-lg border p-3 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{customer.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 shrink-0" />
+                          {customer.email}
+                        </p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 truncate mt-0.5">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {customer.city || 'N/A'}
+                        </p>
                       </div>
-                    </td>
-                    <td className="p-4 hidden md:table-cell">
-                      <div className="flex items-center gap-1 text-xs"><Mail className="h-3 w-3" />{customer.email}</div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{customer.city}</div>
-                    </td>
-                    <td className="p-4 font-medium">{customer.totalOrders || 0}</td>
-                    <td className="p-4 font-medium">Rs. {customer.totalSpent?.toFixed(2) || '0.00'}</td>
-                    <td className="p-4 hidden sm:table-cell font-medium">{customer.dealsPurchased || 0}</td>
-                    <td className="p-4">
-                      <Badge variant={customer.status === 'active' ? 'default' : 'secondary'} className={customer.status === 'active' ? 'bg-green-500' : ''}>
+                      <Badge
+                        variant={customer.status === 'active' ? 'default' : 'secondary'}
+                        className={customer.status === 'active' ? 'bg-green-500' : ''}
+                      >
                         {customer.status}
                       </Badge>
-                    </td>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Orders</p>
+                        <p className="font-semibold">{customer.totalOrders || 0}</p>
+                      </div>
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Deals</p>
+                        <p className="font-semibold">{customer.dealsPurchased || 0}</p>
+                      </div>
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Spent</p>
+                        <p className="font-semibold">Rs. {customer.totalSpent?.toFixed(2) || '0.00'}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border p-2.5 text-xs">
+                      <p className="text-muted-foreground mb-1">Bought / Claimed</p>
+                      {Array.isArray(customer.boughtItems) && customer.boughtItems.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {customer.boughtItems.map((item: string, idx: number) => (
+                            <p key={`${customer.id}-item-${idx}`} className="truncate text-foreground">{item}</p>
+                          ))}
+                          {(customer.boughtItemsCount || customer.boughtItems.length) > customer.boughtItems.length && (
+                            <p className="text-muted-foreground">
+                              +{(customer.boughtItemsCount || customer.boughtItems.length) - customer.boughtItems.length} more
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No product/service history yet.</p>
+                      )}
+                      <div className="mt-1.5">
+                        <p className="text-muted-foreground mb-0.5">
+                          Claimed: <span className="font-semibold text-foreground">{customer.claimedCount || 0}</span>
+                        </p>
+                        {Array.isArray(customer.claimedItems) && customer.claimedItems.length > 0 && (
+                          <div className="space-y-0.5">
+                            {customer.claimedItems.map((item: string, idx: number) => (
+                              <p key={`${customer.id}-claimed-${idx}`} className="truncate text-foreground">
+                                - {item}
+                              </p>
+                            ))}
+                            {(customer.claimedItemsCount || customer.claimedItems.length) > customer.claimedItems.length && (
+                              <p className="text-muted-foreground">
+                                +{(customer.claimedItemsCount || customer.claimedItems.length) - customer.claimedItems.length} more claimed
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-md border p-8 text-center text-muted-foreground">
+                  No customers found.
+                </div>
+              )}
+            </div>
+
+            {/* Desktop/tablet: table */}
+            <div className="hidden md:block rounded-md border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="h-10 px-4 text-left font-medium">Customer</th>
+                    <th className="h-10 px-4 text-left font-medium hidden md:table-cell">Contact</th>
+                    <th className="h-10 px-4 text-left font-medium">Orders</th>
+                    <th className="h-10 px-4 text-left font-medium">Spent</th>
+                    <th className="h-10 px-4 text-left font-medium hidden sm:table-cell">Deals</th>
+                    <th className="h-10 px-4 text-left font-medium hidden lg:table-cell">Bought / Claimed</th>
+                    <th className="h-10 px-4 text-left font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((customer: any) => (
+                    <tr key={customer.id} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="p-4">
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 md:hidden">
+                          <Mail className="h-3 w-3" />{customer.email}
+                        </div>
+                      </td>
+                      <td className="p-4 hidden md:table-cell">
+                        <div className="flex items-center gap-1 text-xs"><Mail className="h-3 w-3" />{customer.email}</div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{customer.city}</div>
+                      </td>
+                      <td className="p-4 font-medium">{customer.totalOrders || 0}</td>
+                      <td className="p-4 font-medium">Rs. {customer.totalSpent?.toFixed(2) || '0.00'}</td>
+                      <td className="p-4 hidden sm:table-cell font-medium">{customer.dealsPurchased || 0}</td>
+                      <td className="p-4 hidden lg:table-cell">
+                        {Array.isArray(customer.boughtItems) && customer.boughtItems.length > 0 ? (
+                          <div className="text-xs">
+                            <div className="space-y-0.5 max-w-[220px]">
+                              {customer.boughtItems.map((item: string, idx: number) => (
+                                <p key={`${customer.id}-desktop-bought-${idx}`} className="truncate" title={item}>
+                                  - {item}
+                                </p>
+                              ))}
+                              {(customer.boughtItemsCount || customer.boughtItems.length) > customer.boughtItems.length && (
+                                <p className="text-muted-foreground">
+                                  +{(customer.boughtItemsCount || customer.boughtItems.length) - customer.boughtItems.length} more
+                                </p>
+                              )}
+                            </div>
+                            <p className="text-muted-foreground mt-1">
+                              Claimed: <span className="font-medium text-foreground">{customer.claimedCount || 0}</span>
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No product/service history</p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <Badge variant={customer.status === 'active' ? 'default' : 'secondary'} className={customer.status === 'active' ? 'bg-green-500' : ''}>
+                          {customer.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>

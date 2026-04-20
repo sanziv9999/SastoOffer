@@ -450,6 +450,37 @@ class VendorAnalyticsController extends Controller
                     ->unique()
                     ->count();
 
+                $boughtItems = $customerOrders
+                    ->flatMap(function (Order $order) {
+                        return $order->items->map(function ($item) {
+                            return trim((string) ($item->title ?? $item->name ?? ''));
+                        });
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $claimedCount = $customerOrders
+                    ->flatMap(fn (Order $order) => $order->items)
+                    ->filter(function ($item) {
+                        $meta = $item->meta ?? [];
+                        return is_array($meta) && ! empty($meta['claimed_at']);
+                    })
+                    ->count();
+
+                $claimedItems = $customerOrders
+                    ->flatMap(fn (Order $order) => $order->items)
+                    ->filter(function ($item) {
+                        $meta = $item->meta ?? [];
+                        return is_array($meta) && ! empty($meta['claimed_at']);
+                    })
+                    ->map(function ($item) {
+                        return trim((string) ($item->title ?? $item->name ?? ''));
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values();
+
                 return [
                     'id' => $customer->id,
                     'name' => $customer->name,
@@ -462,6 +493,11 @@ class VendorAnalyticsController extends Controller
                     'status' => $lastOrderAt && $lastOrderAt->gte(now()->subDays(90)) ? 'active' : 'inactive',
                     'rating' => null,
                     'lastOrderAt' => $lastOrderAt?->toIso8601String(),
+                    'boughtItems' => $boughtItems->take(3)->all(),
+                    'boughtItemsCount' => $boughtItems->count(),
+                    'claimedItems' => $claimedItems->take(3)->all(),
+                    'claimedItemsCount' => $claimedItems->count(),
+                    'claimedCount' => $claimedCount,
                 ];
             })
             ->filter()
