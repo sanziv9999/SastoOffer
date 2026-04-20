@@ -39,10 +39,9 @@ import { format } from 'date-fns';
 
 interface VendorReviewsProps {
     reviews: any[];
-    deals: any[];
 }
 
-const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) => {
+const VendorReviews = ({ reviews: initialReviews }: VendorReviewsProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [ratingFilter, setRatingFilter] = useState('all');
     const [visibilityFilter, setVisibilityFilter] = useState('all');
@@ -119,19 +118,20 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
         : '0.0';
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Customer Reviews</h1>
-                    <p className="text-muted-foreground">Manage your reputation and engage with your customers.</p>
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Customer Reviews</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">Manage your reputation and engage with your customers.</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <Card className="flex items-center px-5 py-3 gap-4 bg-muted/20 rounded-xl">
-                        <div className="flex flex-col">
+                <div className="w-full md:w-auto">
+                    <Card className="w-full md:w-auto px-3 sm:px-5 py-3 bg-muted/20 rounded-xl">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                        <div className="flex flex-col min-w-[88px]">
                             <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Average Rating</span>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xl font-bold">{averageRating}</span>
+                                <span className="text-lg sm:text-xl font-bold">{averageRating}</span>
                                 <div className="flex">
                                     {[1, 2, 3, 4, 5].map((i) => (
                                         <Star key={i} className={`h-3 w-3 ${i <= Math.round(parseFloat(averageRating)) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
@@ -139,27 +139,28 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                 </div>
                             </div>
                         </div>
-                        <Separator orientation="vertical" className="h-8" />
-                        <div className="flex flex-col">
+                        <Separator orientation="vertical" className="h-8 hidden sm:block" />
+                        <div className="flex flex-col min-w-[60px]">
                             <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Total</span>
-                            <span className="text-xl font-bold">{reviews.length}</span>
+                            <span className="text-lg sm:text-xl font-bold">{reviews.length}</span>
                         </div>
                         {hiddenCount > 0 && (
                             <>
-                                <Separator orientation="vertical" className="h-8" />
-                                <div className="flex flex-col">
+                                <Separator orientation="vertical" className="h-8 hidden sm:block" />
+                                <div className="flex flex-col min-w-[70px]">
                                     <span className="text-sm font-medium text-muted-foreground uppercase text-[10px] tracking-wider">Hidden</span>
-                                    <span className="text-xl font-bold text-orange-500">{hiddenCount}</span>
+                                    <span className="text-lg sm:text-xl font-bold text-orange-500">{hiddenCount}</span>
                                 </div>
                             </>
                         )}
+                        </div>
                     </Card>
                 </div>
             </div>
 
             {/* Filters */}
             <Card>
-                <CardContent className="p-4 flex flex-col md:flex-row gap-4">
+                <CardContent className="p-3 sm:p-4 flex flex-col gap-3">
                     <div className="relative flex-grow">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
@@ -169,9 +170,9 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         <Select value={ratingFilter} onValueChange={setRatingFilter}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-full">
                                 <Filter className="h-4 w-4 mr-2" />
                                 <SelectValue placeholder="Rating" />
                             </SelectTrigger>
@@ -185,7 +186,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                             </SelectContent>
                         </Select>
                         <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Visibility" />
                             </SelectTrigger>
                             <SelectContent>
@@ -195,7 +196,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                             </SelectContent>
                         </Select>
                         <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
                             <SelectContent>
@@ -217,21 +218,21 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                             key={review.id}
                             className={`overflow-hidden transition-colors rounded-xl ${review.isHidden ? 'opacity-70 border-dashed' : ''}`}
                         >
-                            <CardHeader className="pb-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex gap-4">
-                                        <div className="h-10 w-10 border rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground overflow-hidden">
+                            <CardHeader className="pb-3 px-3 sm:px-6">
+                                <div className="flex justify-between items-start gap-2">
+                                    <div className="flex gap-3 sm:gap-4 min-w-0">
+                                        <div className="h-9 w-9 sm:h-10 sm:w-10 border rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground overflow-hidden shrink-0">
                                             {review.customerName?.charAt(0) || 'C'}
                                         </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <CardTitle className="text-base">{review.customerName || 'Anonymous'}</CardTitle>
-                                                <Badge variant="outline" className="text-[10px] h-4">Verified Purchase</Badge>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                <CardTitle className="text-sm sm:text-base truncate">{review.customerName || 'Anonymous'}</CardTitle>
+                                                <Badge variant="outline" className="text-[10px] h-4">Verified</Badge>
                                                 {review.isHidden && (
                                                     <Badge variant="secondary" className="text-[10px] h-4 bg-orange-100 text-orange-700">Hidden</Badge>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-1 mt-1">
+                                            <div className="flex flex-wrap items-center gap-1 mt-1">
                                                 {[1, 2, 3, 4, 5].map((i) => (
                                                     <Star key={i} className={`h-3 w-3 ${i <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
                                                 ))}
@@ -243,7 +244,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -258,7 +259,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                     </DropdownMenu>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pb-3 text-sm">
+                            <CardContent className="pb-3 px-3 sm:px-6 text-sm">
                                 <div className="mb-2 flex items-center gap-1.5">
                                     {review.type === 'vendor'
                                         ? <Store className="h-3 w-3 text-muted-foreground" />
@@ -279,7 +280,7 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
                                     </p>
                                 </div>
                             </CardContent>
-                            <CardFooter className="pt-0 flex flex-col items-stretch gap-4">
+                            <CardFooter className="pt-0 px-3 sm:px-6 flex flex-col items-stretch gap-3 sm:gap-4">
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                     <Button
                                         variant="ghost"
@@ -340,10 +341,10 @@ const VendorReviews = ({ reviews: initialReviews, deals }: VendorReviewsProps) =
             </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-                <span>
+                <span className="text-[11px] sm:text-xs">
                     Showing <span className="text-foreground font-medium">{filteredCount}</span> review{filteredCount === 1 ? '' : 's'}
                 </span>
-                <span>
+                <span className="text-[11px] sm:text-xs text-right">
                     Visible: <span className="text-foreground font-medium">{visibleCount}</span>
                     {hiddenCount > 0 && (
                         <> · Hidden: <span className="text-orange-500 font-medium">{hiddenCount}</span></>
