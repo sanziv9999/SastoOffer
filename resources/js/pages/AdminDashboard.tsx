@@ -96,7 +96,7 @@ const AdminDashboard = ({
             placeholder="Search users, deals..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="md:w-80 rounded-r-none"
+            className="w-full md:w-80 rounded-r-none"
           />
           <Button type="submit" size="icon" className="rounded-l-none">
             <Search className="h-4 w-4" />
@@ -133,59 +133,59 @@ const AdminDashboard = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
         <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">
               Total Revenue
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
-            {stats?.revenueChange && <p className={`text-xs ${stats.revenueChange.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+          <CardContent className="pt-0 pb-3 md:pb-6">
+            <div className="text-lg md:text-2xl font-bold">Rs. {stats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+            {stats?.revenueChange && <p className={`hidden md:block text-xs ${stats.revenueChange.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
               {stats.revenueChange} from last month
             </p>}
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">
               Users
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pt-0 pb-3 md:pb-6">
+            <div className="text-lg md:text-2xl font-bold">{stats?.totalUsers || 0}</div>
+            <p className="hidden md:block text-xs text-muted-foreground">
               {stats?.totalVendors || 0} vendors
             </p>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-violet-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">
               Active Deals
             </CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
+            <Tag className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeDealsCount || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pt-0 pb-3 md:pb-6">
+            <div className="text-lg md:text-2xl font-bold">{stats?.activeDealsCount || 0}</div>
+            <p className="hidden md:block text-xs text-muted-foreground">
               {pendingDeals?.length || 0} pending approval
             </p>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">
               Sales
             </CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <ShoppingBag className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalSales || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pt-0 pb-3 md:pb-6">
+            <div className="text-lg md:text-2xl font-bold">{stats?.totalSales || 0}</div>
+            <p className="hidden md:block text-xs text-muted-foreground">
               {stats?.redeemedSalesCount || 0} redeemed
             </p>
           </CardContent>
@@ -206,7 +206,46 @@ const AdminDashboard = ({
         <CardContent>
           {pendingDeals?.length > 0 ? (
             <div className="rounded-md border">
-              <div className="relative w-full overflow-auto">
+              <div className="block md:hidden divide-y">
+                {pendingDeals.map((deal) => {
+                  const offers = Array.isArray(deal.offers) ? deal.offers : [];
+                  return (
+                    <div key={deal.id} className="p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        {deal.image && (
+                          <img src={deal.image} alt={deal.title} className="h-12 w-12 rounded object-cover flex-shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold line-clamp-2">{deal.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {deal.vendorName || 'Unknown Vendor'} · {deal.type}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {deal.id} · {offers.length} offer{offers.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Price</p>
+                          <p className="font-semibold">Rs. {deal.discountedPrice?.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Submitted</p>
+                          <p>{deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full" asChild>
+                        <Link href={`/admin/deals/${deal.id}/view`}>
+                          Review <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                        </Link>
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="hidden md:block relative w-full overflow-auto">
                 <table className="w-full caption-bottom text-sm">
                   <thead className="border-b">
                     <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
@@ -423,27 +462,27 @@ const AdminDashboard = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="users" className="space-y-4">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <TabsTrigger value="users">
+            <TabsList className="w-full justify-start overflow-x-auto gap-2">
+              <TabsTrigger value="users" className="shrink-0">
                 <Users className="h-4 w-4 mr-2" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="vendors">
+              <TabsTrigger value="vendors" className="shrink-0">
                 <Store className="h-4 w-4 mr-2" />
                 Vendors
               </TabsTrigger>
-              <TabsTrigger value="deals">
+              <TabsTrigger value="deals" className="shrink-0">
                 <Package className="h-4 w-4 mr-2" />
                 Deals
               </TabsTrigger>
-              <TabsTrigger value="reports">
+              <TabsTrigger value="reports" className="shrink-0">
                 <FileText className="h-4 w-4 mr-2" />
                 Reports
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="users" className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h3 className="text-lg font-semibold">Registered Users</h3>
                 <Button asChild>
                   <Link href="/admin/users">
@@ -453,7 +492,39 @@ const AdminDashboard = ({
               </div>
 
               <div className="rounded-md border">
-                <div className="relative w-full overflow-auto">
+                <div className="block md:hidden divide-y">
+                  {recentUsers?.map(user => (
+                    <div key={user.id} className="p-4 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.name} className="h-9 w-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            {user.name?.charAt(0)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{user.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Badge
+                          variant={
+                            user.role === 'admin' ? 'default' :
+                              user.role === 'vendor' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block relative w-full overflow-auto">
                   <table className="w-full caption-bottom text-sm">
                     <thead className="border-b">
                       <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
@@ -526,7 +597,7 @@ const AdminDashboard = ({
             </TabsContent>
 
             <TabsContent value="vendors" className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h3 className="text-lg font-semibold">Registered Vendors</h3>
                 <Button asChild>
                   <Link href="/admin/vendors">
@@ -536,7 +607,32 @@ const AdminDashboard = ({
               </div>
 
               <div className="rounded-md border">
-                <div className="relative w-full overflow-auto">
+                <div className="block md:hidden divide-y">
+                  {vendorsList?.map(vendor => (
+                    <div key={vendor.id} className="p-4 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {vendor.logo ? (
+                          <img src={vendor.logo} alt={vendor.businessName} className="h-9 w-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            {vendor.businessName?.charAt(0)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{vendor.businessName}</p>
+                          <p className="text-xs text-muted-foreground truncate">{vendor.contactEmail}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span>{vendor.averageRating?.toFixed(1) || '0.0'}/5.0</span>
+                        <span className="text-xs text-muted-foreground">
+                          {vendor.createdAt ? new Date(vendor.createdAt).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block relative w-full overflow-auto">
                   <table className="w-full caption-bottom text-sm">
                     <thead className="border-b">
                       <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
