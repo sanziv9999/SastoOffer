@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +8,16 @@ import { useToast } from '@/hooks/use-toast';
 import Link from '@/components/Link';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { Review, Deal } from '@/types';
+import { router, usePage } from '@inertiajs/react';
 
 interface EditReviewProps {
+    reviewId?: string | number;
     reviews: Review[];
     deals: Deal[];
 }
 
-const EditReview = ({ reviews, deals }: EditReviewProps) => {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+const EditReview = ({ reviewId, reviews, deals }: EditReviewProps) => {
+    const page = usePage<any>();
     const { toast } = useToast();
 
     const [review, setReview] = useState<Review | null>(null);
@@ -27,13 +27,14 @@ const EditReview = ({ reviews, deals }: EditReviewProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const foundReview = reviews.find(r => r.id === id);
+        const currentReviewId = String(reviewId ?? page.props.reviewId ?? '');
+        const foundReview = reviews.find(r => String(r.id) === currentReviewId);
         if (foundReview) {
             setReview(foundReview);
             setRating(foundReview.rating);
             setComment(foundReview.comment);
 
-            const foundDeal = deals.find(d => d.id === foundReview.dealId);
+            const foundDeal = deals.find(d => String(d.id) === String(foundReview.dealId));
             if (foundDeal) setDeal(foundDeal);
         } else {
             toast({
@@ -41,9 +42,9 @@ const EditReview = ({ reviews, deals }: EditReviewProps) => {
                 description: "The review you're trying to edit doesn't exist.",
                 variant: "destructive"
             });
-            navigate('/dashboard/reviews');
+            router.visit('/dashboard/reviews');
         }
-    }, [id, reviews, deals, navigate, toast]);
+    }, [reviewId, page.props.reviewId, reviews, deals, toast]);
 
     const handleSave = async () => {
         if (!comment.trim()) {
@@ -55,17 +56,23 @@ const EditReview = ({ reviews, deals }: EditReviewProps) => {
             return;
         }
 
+        if (!review) return;
+
         setIsSubmitting(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        toast({
-            title: "Success",
-            description: "Your review has been updated successfully."
+        router.put(`/reviews/${review.id}`, {
+            rating,
+            comment: comment.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast({
+                    title: "Success",
+                    description: "Your review has been updated successfully."
+                });
+                router.visit('/dashboard/reviews');
+            },
+            onFinish: () => setIsSubmitting(false),
         });
-
-        setIsSubmitting(false);
-        navigate('/dashboard/reviews');
     };
 
     if (!review) return null;
@@ -120,12 +127,29 @@ const EditReview = ({ reviews, deals }: EditReviewProps) => {
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-between border-t p-6 mt-6">
-                    <Button variant="outline" className="text-destructive hover:bg-destructive/10" disabled={isSubmitting}>
+                    <Button
+                        variant="outline"
+                        className="text-destructive hover:bg-destructive/10"
+                        disabled={isSubmitting}
+                        onClick={() => {
+                            if (!review) return;
+                            router.delete(`/reviews/${review.id}`, {
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                    toast({
+                                        title: "Review deleted",
+                                        description: "Your review has been removed."
+                                    });
+                                    router.visit('/dashboard/reviews');
+                                },
+                            });
+                        }}
+                    >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Review
                     </Button>
                     <div className="flex gap-3">
-                        <Button variant="ghost" onClick={() => navigate('/dashboard/reviews')} disabled={isSubmitting}>
+                        <Button variant="ghost" onClick={() => router.visit('/dashboard/reviews')} disabled={isSubmitting}>
                             Cancel
                         </Button>
                         <Button onClick={handleSave} disabled={isSubmitting}>
