@@ -305,109 +305,207 @@ const Orders = ({ orders }: OrdersProps) => {
   );
 
   const renderOrdersTable = (ordersList: VendorOrder[]) => (
-    <div className="rounded-xl border border-border/80 bg-card shadow-sm overflow-x-auto">
-      <table className="w-full text-sm min-w-[720px]">
-        <thead className="border-b bg-muted/40">
-          <tr>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground w-10"></th>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Order</th>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Customer</th>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Placed</th>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Summary</th>
-            <th className="h-11 px-3 text-right font-semibold text-xs uppercase tracking-wide text-muted-foreground">Amount</th>
-            <th className="h-11 px-3 text-center font-semibold text-xs uppercase tracking-wide text-muted-foreground w-[100px]">View</th>
-            <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground min-w-[140px]">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ordersList.map(order => {
-            const isExpanded = expandedRows.has(order.id);
-            return (
-              <Fragment key={order.id}>
-                <tr
-                  className={`border-b border-border/60 hover:bg-muted/40 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/25' : ''} ${rowStatusAccent(order.status)}`}
-                  onClick={() => toggleRow(order.id)}
-                >
-                  <td className="p-3 w-10 align-middle">
-                    {isExpanded
-                      ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      : <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    }
-                  </td>
-                  <td className="p-3 align-middle">
+    <div className="space-y-3">
+      {/* Mobile: stacked cards */}
+      <div className="md:hidden space-y-3">
+        {ordersList.length > 0 ? (
+          ordersList.map((order) => (
+            <Card key={order.id} className="border-border/80">
+              <CardContent className="p-3 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <Link
                       href={route('vendor.orders.show', order.orderId)}
-                      onClick={(e) => e.stopPropagation()}
                       className="font-mono text-sm font-semibold text-primary hover:underline"
                     >
                       {order.id}
                     </Link>
-                  </td>
-                  <td className="p-3 align-middle">
-                    <div className="font-semibold text-foreground">{order.customer}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">{order.customerEmail}</div>
-                  </td>
-                  <td className="p-3 align-middle hidden lg:table-cell">
-                    <div className="text-sm font-medium">
-                      {order.date ? format(new Date(order.date), 'MMM d, yyyy') : '—'}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {order.date ? formatDistanceToNow(new Date(order.date), { addSuffix: true }) : ''}
-                    </div>
-                  </td>
-                  <td className="p-3 align-middle">
-                    <div className="font-medium">{order.quantity} line{order.items && order.items.length !== 1 ? 's' : ''}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[220px] hidden md:block" title={order.items?.map(i => i.title).join(', ')}>
-                      {order.items?.map(i => i.title).join(', ')}
-                    </div>
-                  </td>
-                  <td className="p-3 align-middle text-right">
-                    <div className="font-semibold tabular-nums">Rs. {order.total?.toFixed(2)}</div>
-                    {order.discountTotal > 0 && (
-                      <div className="text-xs text-emerald-600 font-medium">− Rs. {order.discountTotal.toFixed(2)}</div>
+                    <p className="text-sm font-semibold truncate">{order.customer}</p>
+                    <p className="text-xs text-muted-foreground truncate">{order.customerEmail}</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" asChild>
+                    <Link href={route('vendor.orders.show', order.orderId)}>
+                      View
+                      <ExternalLink className="h-3 w-3 opacity-70" />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="rounded-md border p-2.5">
+                  <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Products / Services</p>
+                  <div className="space-y-2">
+                    {(order.items || []).slice(0, 3).map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="h-8 w-8 rounded object-cover border shrink-0"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <p className="text-xs text-foreground truncate flex-1">{item.title}</p>
+                      </div>
+                    ))}
+                    {(order.items || []).length > 3 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        +{(order.items || []).length - 3} more
+                      </p>
                     )}
-                  </td>
-                  <td className="p-3 align-middle text-center" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="outline" size="sm" className="h-8 gap-1" asChild>
-                      <Link href={route('vendor.orders.show', order.orderId)}>
-                        View
-                        <ExternalLink className="h-3 w-3 opacity-70" />
-                      </Link>
-                    </Button>
-                  </td>
-                  <td className="p-3 align-middle" onClick={(e) => e.stopPropagation()}>
-                    <Select
-                      value={order.status}
-                      onValueChange={(value) => updateOrderStatus(order, value as OrderStatus)}
+                  </div>
+                </div>
+
+                <div>
+                  <Select
+                    value={order.status}
+                    onValueChange={(value) => updateOrderStatus(order, value as OrderStatus)}
+                  >
+                    <SelectTrigger
+                      disabled={updatingOrderId === order.orderId}
+                      className={`w-full h-9 rounded-lg border-none shadow-none text-xs font-semibold ${getStatusColor(order.status)}`}
                     >
-                      <SelectTrigger
-                        disabled={updatingOrderId === order.orderId}
-                        className={`w-full max-w-[150px] h-9 rounded-lg border-none shadow-none text-xs font-semibold ${getStatusColor(order.status)}`}
+                      <div className="flex items-center gap-1.5 focus:outline-none">
+                        {getStatusIcon(order.status)}
+                        <SelectValue placeholder="Status" className="capitalize" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="redeemed">Redeemed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="text-[11px] text-muted-foreground border-t pt-2 flex items-center justify-between gap-2">
+                  <span>
+                    {order.date ? format(new Date(order.date), 'MMM d, yyyy') : '—'}
+                    {order.date ? ` • ${formatDistanceToNow(new Date(order.date), { addSuffix: true })}` : ''}
+                  </span>
+                  <span className="font-semibold text-foreground tabular-nums">
+                    Rs. {order.total?.toFixed(2)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="rounded-xl border border-border/80 bg-card shadow-sm p-8 text-center text-muted-foreground">
+            No orders match your filters.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop/tablet: table */}
+      <div className="hidden md:block rounded-xl border border-border/80 bg-card shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
+          <thead className="border-b bg-muted/40">
+            <tr>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground w-10"></th>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Order</th>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Customer</th>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Placed</th>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground">Summary</th>
+              <th className="h-11 px-3 text-right font-semibold text-xs uppercase tracking-wide text-muted-foreground">Amount</th>
+              <th className="h-11 px-3 text-center font-semibold text-xs uppercase tracking-wide text-muted-foreground w-[100px]">View</th>
+              <th className="h-11 px-3 text-left font-semibold text-xs uppercase tracking-wide text-muted-foreground min-w-[140px]">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordersList.map(order => {
+              const isExpanded = expandedRows.has(order.id);
+              return (
+                <Fragment key={order.id}>
+                  <tr
+                    className={`border-b border-border/60 hover:bg-muted/40 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/25' : ''} ${rowStatusAccent(order.status)}`}
+                    onClick={() => toggleRow(order.id)}
+                  >
+                    <td className="p-3 w-10 align-middle">
+                      {isExpanded
+                        ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      }
+                    </td>
+                    <td className="p-3 align-middle">
+                      <Link
+                        href={route('vendor.orders.show', order.orderId)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-mono text-sm font-semibold text-primary hover:underline"
                       >
-                        <div className="flex items-center gap-1.5 focus:outline-none">
-                          {getStatusIcon(order.status)}
-                          <SelectValue placeholder="Status" className="capitalize" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="redeemed">Redeemed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                        <SelectItem value="refunded">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                </tr>
-                {isExpanded && renderExpandedRow(order)}
-              </Fragment>
-            );
-          })}
-          {ordersList.length === 0 && (
-            <tr><td colSpan={8} className="p-12 text-center text-muted-foreground">No orders match your filters.</td></tr>
-          )}
-        </tbody>
-      </table>
+                        {order.id}
+                      </Link>
+                    </td>
+                    <td className="p-3 align-middle">
+                      <div className="font-semibold text-foreground">{order.customer}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[200px]">{order.customerEmail}</div>
+                    </td>
+                    <td className="p-3 align-middle hidden lg:table-cell">
+                      <div className="text-sm font-medium">
+                        {order.date ? format(new Date(order.date), 'MMM d, yyyy') : '—'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {order.date ? formatDistanceToNow(new Date(order.date), { addSuffix: true }) : ''}
+                      </div>
+                    </td>
+                    <td className="p-3 align-middle">
+                      <div className="font-medium">{order.quantity} line{order.items && order.items.length !== 1 ? 's' : ''}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[220px] hidden md:block" title={order.items?.map(i => i.title).join(', ')}>
+                        {order.items?.map(i => i.title).join(', ')}
+                      </div>
+                    </td>
+                    <td className="p-3 align-middle text-right">
+                      <div className="font-semibold tabular-nums">Rs. {order.total?.toFixed(2)}</div>
+                      {order.discountTotal > 0 && (
+                        <div className="text-xs text-emerald-600 font-medium">− Rs. {order.discountTotal.toFixed(2)}</div>
+                      )}
+                    </td>
+                    <td className="p-3 align-middle text-center" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="outline" size="sm" className="h-8 gap-1" asChild>
+                        <Link href={route('vendor.orders.show', order.orderId)}>
+                          View
+                          <ExternalLink className="h-3 w-3 opacity-70" />
+                        </Link>
+                      </Button>
+                    </td>
+                    <td className="p-3 align-middle" onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={order.status}
+                        onValueChange={(value) => updateOrderStatus(order, value as OrderStatus)}
+                      >
+                        <SelectTrigger
+                          disabled={updatingOrderId === order.orderId}
+                          className={`w-full max-w-[150px] h-9 rounded-lg border-none shadow-none text-xs font-semibold ${getStatusColor(order.status)}`}
+                        >
+                          <div className="flex items-center gap-1.5 focus:outline-none">
+                            {getStatusIcon(order.status)}
+                            <SelectValue placeholder="Status" className="capitalize" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="redeemed">Redeemed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="refunded">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                  </tr>
+                  {isExpanded && renderExpandedRow(order)}
+                </Fragment>
+              );
+            })}
+            {ordersList.length === 0 && (
+              <tr><td colSpan={8} className="p-12 text-center text-muted-foreground">No orders match your filters.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
