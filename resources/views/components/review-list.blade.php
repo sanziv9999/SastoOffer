@@ -57,16 +57,21 @@
             @auth
                 @if($userReview)
                     <h3 class="font-semibold mb-3 text-lg">Update Your Review</h3>
-                    <form method="POST" action="{{ route('reviews.update', $userReview['id']) }}" x-data="{ rating: {{ $userReview['rating'] }}, hoveredStar: 0 }">
+                    <form method="POST" action="{{ route('reviews.update', $userReview['id']) }}" x-data="{ rating: {{ $userReview['rating'] }}, hoveredStar: 0 }" class="space-y-4">
                         @csrf
                         @method('PUT')
                 @else
                     <h3 class="font-semibold mb-3 text-lg">{{ $reviewableType === 'vendor' ? 'Rate This Vendor' : 'Write a Review' }}</h3>
-                    <form method="POST" action="{{ route('reviews.store') }}" x-data="{ rating: 0, hoveredStar: 0 }">
+                    <form method="POST" action="{{ route('reviews.store') }}" x-data="{ rating: 0, hoveredStar: 0 }" class="space-y-4">
                         @csrf
                         <input type="hidden" name="reviewable_type" value="{{ $reviewableType }}">
                         <input type="hidden" name="reviewable_id" value="{{ $reviewableId }}">
                 @endif
+                    @if ($errors->any())
+                        <div class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                            {{ $errors->first() }}
+                        </div>
+                    @endif
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-2">Rating</label>
                         <div class="flex gap-1">
@@ -91,20 +96,25 @@
                         <textarea name="comment" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="{{ $reviewableType === 'vendor' ? 'How was your experience with this vendor?' : 'Share your experience...' }}">{{ ($userReview['comment'] ?? '') }}</textarea>
                     </div>
                     <div class="flex gap-2">
-                        <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+                        <button
+                            type="submit"
+                            :disabled="rating < 1"
+                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 disabled:pointer-events-none disabled:opacity-50"
+                        >
                             {{ $userReview ? 'Update Review' : 'Submit Review' }}
                         </button>
-                        @if($userReview)
-                            <form method="POST" action="{{ route('reviews.destroy', $userReview['id']) }}" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" onclick="return confirm('Delete your review?')" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-destructive">
-                                    Delete
-                                </button>
-                            </form>
-                        @endif
                     </div>
                 </form>
+
+                @if($userReview)
+                    <form method="POST" action="{{ route('reviews.destroy', $userReview['id']) }}" class="mt-2 inline-block">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" onclick="return confirm('Delete your review?')" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-destructive">
+                            Delete
+                        </button>
+                    </form>
+                @endif
             @else
                 <div class="text-center py-8">
                     <p class="text-muted-foreground mb-3">Please log in to write a review.</p>
