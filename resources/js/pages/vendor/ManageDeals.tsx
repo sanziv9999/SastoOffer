@@ -279,7 +279,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
+            <TabsList className="w-full max-w-full overflow-x-auto flex-nowrap whitespace-nowrap justify-start">
               <TabsTrigger value="all">All ({allDeals.length})</TabsTrigger>
               <TabsTrigger value="active">Active ({allDeals.filter((d: any) => d.status === 'active').length})</TabsTrigger>
               <TabsTrigger value="draft">Draft ({allDeals.filter((d: any) => d.status === 'draft').length})</TabsTrigger>
