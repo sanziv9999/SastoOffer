@@ -13,30 +13,19 @@
     @endphp
 
     <div class="min-h-screen pb-12">
-        {{-- Cover Image --}}
-        <div class="h-44 md:h-56 w-full relative">
-            <img
-                src="{{ $coverUrl }}"
-                alt="{{ $vendor->business_name }} cover"
-                class="w-full h-full object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        </div>
-
-        <div class="container mx-auto px-4 relative">
+        <div class="max-w-6xl mx-auto px-4 relative pt-4 md:pt-6">
             @php
                 $activeDeals = $deals?->where('status', 'active')->values() ?? collect();
-                $allDeals = $deals ?? collect();
                 $vendorLat = $vendor->defaultAddress->latitude ?? null;
                 $vendorLng = $vendor->defaultAddress->longitude ?? null;
                 $hasCoords = $vendorLat !== null && $vendorLng !== null && $vendorLat !== '' && $vendorLng !== '';
             @endphp
 
             {{-- Compact vendor header --}}
-            <div class="-mt-14 md:-mt-16 mb-6">
+            <div class="mb-4">
                 <div class="bg-card rounded-xl shadow-sm border p-4 md:p-5">
                     <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-background shadow-sm bg-white shrink-0">
+                        <div class="w-14 h-14 rounded-lg overflow-hidden border bg-white shrink-0">
                             <img
                                 src="{{ $logoUrl }}"
                                 alt="{{ $vendor->business_name }} logo"
@@ -47,7 +36,7 @@
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                                 <div>
-                                    <h1 class="text-xl md:text-2xl font-semibold tracking-tight">{{ $vendor->business_name }}</h1>
+                                    <h1 class="text-lg md:text-xl font-semibold tracking-tight">{{ $vendor->business_name }}</h1>
                                     <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                                         <span class="inline-flex items-center gap-1.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -67,6 +56,12 @@
                                     <a href="/search?vendorId={{ $vendor->id }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">
                                         Browse All Offers
                                     </a>
+                                    <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                        Follow
+                                    </button>
+                                    <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                        Chat
+                                    </button>
                                     <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4" data-tab-trigger="about">
                                         View Profile Details
                                     </button>
@@ -78,7 +73,7 @@
             </div>
 
             {{-- Tab navigation --}}
-            <div class="mb-6">
+            <div class="mb-6 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
                 <div class="inline-flex w-full md:w-auto items-center rounded-lg border bg-muted/40 p-1 gap-1" role="tablist" aria-label="Vendor profile tabs">
                     <button
                         type="button"
@@ -101,77 +96,46 @@
                         Profile / About
                     </button>
                 </div>
+                <div class="w-full lg:w-[320px]">
+                    <label for="vendor-store-search" class="sr-only">Search in Store</label>
+                    <div class="relative">
+                        <input
+                            id="vendor-store-search"
+                            type="search"
+                            placeholder="Search in Store"
+                            class="w-full rounded-md border border-input bg-background py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                </div>
             </div>
 
             {{-- Products & Services tab --}}
             <section id="tab-products" class="vendor-tab-panel opacity-100 translate-y-0 transition-all duration-300 ease-out" role="tabpanel">
-                <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                    <div class="xl:col-span-3 space-y-6">
-                        <div class="bg-card rounded-xl border p-5 md:p-6">
-                            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                                <div>
-                                    <p class="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Featured Section</p>
-                                    <h2 class="text-2xl font-semibold tracking-tight mt-1">Products &amp; Services</h2>
-                                    <p class="text-sm text-muted-foreground mt-1">
-                                        Explore current offers and service listings from {{ $vendor->business_name }}.
-                                    </p>
-                                </div>
-                                <span class="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
-                                    {{ $activeDeals->count() }} Active
-                                </span>
-                            </div>
+                @if($activeDeals->isEmpty())
+                    <div class="bg-card rounded-xl border border-dashed p-12 text-center">
+                        <div class="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                         </div>
-
-                        @if($activeDeals->isEmpty())
-                            <div class="bg-card rounded-xl border border-dashed p-12 text-center">
-                                <div class="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-                                </div>
-                                <h3 class="font-medium text-lg">No active offers right now</h3>
-                                <p class="text-muted-foreground mb-6">This vendor does not have active listings at the moment.</p>
-                                <a href="/search" class="text-primary hover:underline font-medium">Browse other deals</a>
-                            </div>
-                        @else
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                                @foreach($activeDeals as $deal)
-                                    <x-deal-card :deal="$deal" :featured="$deal['featured']" />
-                                @endforeach
-                            </div>
-                        @endif
+                        <h3 class="font-medium text-lg">No active offers right now</h3>
+                        <p class="text-muted-foreground mb-6">This vendor does not have active listings at the moment.</p>
+                        <a href="/search" class="text-primary hover:underline font-medium">Browse other deals</a>
                     </div>
-
-                    <aside class="xl:col-span-1 space-y-4">
-                        <div class="bg-card rounded-xl border p-5">
-                            <h3 class="text-sm font-semibold mb-3">Quick Snapshot</h3>
-                            <div class="space-y-3 text-sm">
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="text-muted-foreground">Category</span>
-                                    <span class="font-medium text-right">{{ $vendor->primaryCategory->name ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="text-muted-foreground">Business Type</span>
-                                    <span class="font-medium capitalize text-right">{{ $vendor->business_type ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="text-muted-foreground">Location</span>
-                                    <span class="font-medium text-right">{{ $vendor->defaultAddress->district ?? 'N/A' }}</span>
-                                </div>
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="text-muted-foreground">Listings</span>
-                                    <span class="font-medium text-right">{{ $allDeals->count() }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4"
-                            data-tab-trigger="about"
-                        >
-                            More About This Vendor
-                        </button>
-                    </aside>
-                </div>
+                @else
+                    <div id="vendor-products-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                        @foreach($activeDeals as $deal)
+                            @php
+                                $searchText = strtolower(trim(($deal['title'] ?? '') . ' ' . ($deal['categoryName'] ?? '') . ' ' . ($deal['offerTypeTitle'] ?? '')));
+                            @endphp
+                            <article class="vendor-product-item" data-search="{{ $searchText }}">
+                                <x-deal-card :deal="$deal" :featured="false" :compact="true" />
+                            </article>
+                        @endforeach
+                    </div>
+                    <p id="vendor-products-empty-search" class="hidden text-sm text-muted-foreground mt-4">
+                        No matching products/services found.
+                    </p>
+                @endif
             </section>
 
             {{-- Profile / About tab --}}
@@ -308,6 +272,9 @@
                 products: document.getElementById('tab-products'),
                 about: document.getElementById('tab-about'),
             };
+            var searchInput = document.getElementById('vendor-store-search');
+            var productItems = Array.from(document.querySelectorAll('.vendor-product-item'));
+            var emptySearchState = document.getElementById('vendor-products-empty-search');
 
             function setTab(tabName) {
                 Object.entries(panels).forEach(function ([name, panel]) {
@@ -354,7 +321,27 @@
                 });
             });
 
+            function applyStoreSearch() {
+                if (!searchInput || productItems.length === 0) return;
+                var q = searchInput.value.trim().toLowerCase();
+                var visibleCount = 0;
+                productItems.forEach(function (item) {
+                    var hay = item.getAttribute('data-search') || '';
+                    var isVisible = q === '' || hay.includes(q);
+                    item.classList.toggle('hidden', !isVisible);
+                    if (isVisible) visibleCount += 1;
+                });
+                if (emptySearchState) {
+                    emptySearchState.classList.toggle('hidden', visibleCount > 0);
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyStoreSearch);
+            }
+
             setTab('products');
+            applyStoreSearch();
         });
     </script>
 </x-layout>

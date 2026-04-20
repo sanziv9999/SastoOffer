@@ -1,3 +1,7 @@
+@php
+    $hideCategoryNav = request()->routeIs('vendor-profile.show');
+@endphp
+
 <header
     class="bg-background shadow-sm sticky top-0 z-50 transition-all duration-300"
     x-data="{
@@ -471,13 +475,14 @@
                 </div>
             </div>
             
-            <div 
-                class="relative group transition-all duration-300 origin-top hidden md:block"
-                x-show="showCategories"
-                x-collapse
-            >
-                <div class="py-2">
-                    <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
+            @unless($hideCategoryNav)
+                <div 
+                    class="relative group transition-all duration-300 origin-top hidden md:block"
+                    x-show="showCategories"
+                    x-collapse
+                >
+                    <div class="py-2">
+                        <nav class="flex flex-wrap items-center gap-0.5" x-data="{ openCategory: null }">
                         @php
                             $topCategories = collect($parentCategories)->take(6);
                             $moreCategories = collect($parentCategories)->slice(6);
@@ -657,9 +662,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
                             All Deals
                         </a>
-                    </nav>
+                        </nav>
+                    </div>
                 </div>
-            </div>
+            @endunless
 
             {{-- Mobile menu --}}
             <div 

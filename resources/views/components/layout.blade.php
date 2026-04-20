@@ -193,7 +193,10 @@
         </div>
 
         {{-- Fixed spacer for navbar height --}}
-        <div class="h-28 md:h-32"></div>
+        @php
+            $isVendorProfilePage = request()->routeIs('vendor-profile.show');
+        @endphp
+        <div class="{{ $isVendorProfilePage ? 'h-20 md:h-20' : 'h-28 md:h-32' }}"></div>
 
         <main class="flex-grow">
             {{ $slot }}
