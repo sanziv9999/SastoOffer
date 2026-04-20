@@ -278,7 +278,79 @@ const OrderShow = ({ order }: OrderShowProps) => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked line-item cards */}
+          <div className="md:hidden p-3 space-y-3">
+            {order.items?.map((item) => (
+              <div key={item.id} className="rounded-lg border bg-background p-3">
+                <div className="flex gap-3">
+                  {item.dealId ? (
+                    <Link href={route('vendor.deals.view', item.dealId)} className="shrink-0">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="h-14 w-14 rounded-lg object-cover border bg-background shadow-sm"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center border">
+                          <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </Link>
+                  ) : item.image ? (
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="h-14 w-14 rounded-lg object-cover shrink-0 border bg-background shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0 border">
+                      <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    {item.dealId ? (
+                      <Link
+                        href={route('vendor.deals.view', item.dealId)}
+                        className="font-semibold text-sm leading-snug hover:text-primary transition-colors block break-words"
+                      >
+                        {item.title}
+                      </Link>
+                    ) : (
+                      <p className="font-semibold text-sm leading-snug break-words">{item.title}</p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground mt-1">{item.offerType}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded-md border p-2">
+                    <p className="text-muted-foreground">Qty</p>
+                    <p className="font-medium">{item.quantity}</p>
+                  </div>
+                  <div className="rounded-md border p-2">
+                    <p className="text-muted-foreground">Unit</p>
+                    {item.originalPrice > item.unitPrice ? (
+                      <>
+                        <p className="line-through text-muted-foreground text-[11px]">{formatRs(item.originalPrice)}</p>
+                        <p className="font-medium text-emerald-600">{formatRs(item.unitPrice)}</p>
+                      </>
+                    ) : (
+                      <p className="font-medium">{formatRs(item.unitPrice)}</p>
+                    )}
+                  </div>
+                  <div className="rounded-md border p-2">
+                    <p className="text-muted-foreground">Line total</p>
+                    <p className="font-semibold tabular-nums">{formatRs(item.lineTotal)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop/tablet: table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
