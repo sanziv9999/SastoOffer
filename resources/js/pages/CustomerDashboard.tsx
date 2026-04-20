@@ -298,7 +298,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                           >
                             {purchase.redeemed ? "Used" : "Active"}
                           </Badge>
-                          <Button variant="ghost" size="sm" asChild>
+                          <Button variant="outline" size="sm" asChild>
                             <a href={getDealHref(purchaseDeal, purchase.dealId)}>
                               View Offer
                             </a>
@@ -356,7 +356,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                           </div>
                           <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2">
                             <Badge className="bg-green-500">Active</Badge>
-                            <Button variant="ghost" size="sm" asChild>
+                            <Button variant="outline" size="sm" asChild>
                               <a href={getDealHref(purchaseDeal, purchase.dealId)}>
                                 View Offer
                               </a>
