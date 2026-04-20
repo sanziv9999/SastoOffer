@@ -597,7 +597,7 @@ const Orders = ({ orders }: OrdersProps) => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
+            <TabsList className="w-full max-w-full overflow-x-auto flex-nowrap whitespace-nowrap justify-start">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="paid">Paid</TabsTrigger>
