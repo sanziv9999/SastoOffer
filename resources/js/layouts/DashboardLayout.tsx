@@ -26,7 +26,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full overflow-x-hidden">
         <Sidebar>
           <SidebarHeader>
             <div className="p-4">
@@ -51,9 +51,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </SidebarFooter>
         </Sidebar>
-        <div className="flex-1 p-6 lg:p-10">
-          <div className="flex justify-end mb-4">
-            <SidebarTrigger />
+        <div className="flex-1 min-w-0 p-3 sm:p-4 lg:p-8">
+          <div className="flex justify-end mb-3 sm:mb-4">
+            <SidebarTrigger className="h-9 w-9" />
           </div>
           {children || <Outlet />}
         </div>

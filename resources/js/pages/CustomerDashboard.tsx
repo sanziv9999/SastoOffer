@@ -25,7 +25,6 @@ import {
   TabsTrigger
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -46,7 +45,6 @@ interface CustomerDashboardProps {
 
 const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purchases }: CustomerDashboardProps) => {
   const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
   const [dashboardData, setDashboardData] = useState<{
     stats: CustomerDashboardProps['stats'];
     recommendations: any[];
@@ -101,12 +99,6 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
     return () => controller.abort();
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // router.get('/dashboard', { search: searchTerm }, { preserveState: true });
-    console.log('Searching for:', searchTerm);
-  };
-
   const getDealById = (dealId: string | number) => {
     return dashboardData.deals?.find((deal: any) => deal.id === dealId);
   };
@@ -118,73 +110,61 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user?.name}!</h1>
           <p className="text-muted-foreground">
             Discover amazing deals and manage your purchases
           </p>
         </div>
-
-        <form onSubmit={handleSearch} className="flex w-full md:w-auto">
-          <Input
-            placeholder="Search your purchases..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="md:w-64 rounded-r-none"
-          />
-          <Button type="submit" size="icon" className="rounded-l-none">
-            <Search className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-4">
+        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Total Purchases</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <ShoppingBag className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 md:pt-0">
             <div className="text-2xl font-bold">{dashboardData.stats?.totalPurchases || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="hidden md:block text-xs text-muted-foreground">
               Across all categories
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
+            <Tag className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 md:pt-0">
             <div className="text-2xl font-bold">{dashboardData.stats?.activeOffers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="hidden md:block text-xs text-muted-foreground">
               Ready to redeem
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <Wallet className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 md:pt-0">
             <div className="text-2xl font-bold">Rs. {dashboardData.stats?.totalSavings?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="hidden md:block text-xs text-muted-foreground">
               Money saved with deals
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="min-w-[150px] flex-shrink-0 md:min-w-0">
+          <CardHeader className="pb-1 md:flex md:flex-row md:items-center md:justify-between md:space-y-0 md:pb-2">
             <CardTitle className="text-sm font-medium">Favorite Deals</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
+            <Heart className="hidden md:block h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 md:pt-0">
             <div className="text-2xl font-bold">{dashboardData.stats?.favoriteDealsCount || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="hidden md:block text-xs text-muted-foreground">
               Saved for later
             </p>
           </CardContent>
@@ -276,7 +256,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="recent" className="space-y-4">
-            <TabsList>
+            <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="recent">Recent Purchases</TabsTrigger>
               <TabsTrigger value="active">Active Offers</TabsTrigger>
             </TabsList>
@@ -289,7 +269,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                     return (
                       <div
                         key={purchase.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         {purchaseDeal && (
                           <img
@@ -298,11 +278,11 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                             className="h-12 w-12 rounded object-cover flex-shrink-0"
                           />
                         )}
-                        <div className="flex-grow">
+                        <div className="flex-grow min-w-0">
                           <h4 className="font-medium">
                             {purchaseDeal ? purchaseDeal.title : 'Unknown Deal'}
                           </h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
@@ -311,7 +291,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                             <span className="font-medium">Rs. {purchase.totalPrice?.toFixed(2)}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2">
                           <Badge
                             variant={purchase.redeemed ? "outline" : "default"}
                             className={purchase.redeemed ? "" : "bg-green-500"}
@@ -350,9 +330,9 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                     .map((purchase: any) => {
                       const purchaseDeal = purchase.deal || getDealById(purchase.dealId);
                       return (
-                        <div
+                      <div
                           key={purchase.id}
-                          className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           {purchaseDeal && (
                             <img
@@ -361,11 +341,11 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                               className="h-12 w-12 rounded object-cover flex-shrink-0"
                             />
                           )}
-                          <div className="flex-grow">
+                          <div className="flex-grow min-w-0">
                             <h4 className="font-medium">
                               {purchaseDeal ? purchaseDeal.title : 'Unknown Deal'}
                             </h4>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 Purchased {formatDistanceToNow(new Date(purchase.createdAt), { addSuffix: true })}
@@ -374,7 +354,7 @@ const CustomerDashboard = ({ stats, recommendations, recentActivity, deals, purc
                               <span className="font-medium">Rs. {purchase.totalPrice?.toFixed(2)}</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2">
                             <Badge className="bg-green-500">Active</Badge>
                             <Button variant="ghost" size="sm" asChild>
                               <a href={getDealHref(purchaseDeal, purchase.dealId)}>
