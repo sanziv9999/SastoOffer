@@ -7,9 +7,6 @@ import {
   ShoppingBag,
   Tag,
   Plus,
-  Package,
-  Filter,
-  Search,
   Star,
   MessageSquare,
   ArrowUpRight,
@@ -23,17 +20,8 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -92,9 +80,6 @@ const VendorDashboard = ({
 }: VendorDashboardProps) => {
   const { user } = useAuth();
   const { flash } = usePage().props as any;
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     if (flash?.success) toast.success(flash.success);
@@ -114,13 +99,6 @@ const VendorDashboard = ({
     totalReviews: 0,
     avgRating: 0,
   };
-
-  const filteredDeals = vendorDeals.filter(deal => {
-    const matchesSearch = deal.title.toLowerCase().includes(searchTerm.toLowerCase()) || deal.id?.toString().includes(searchTerm);
-    const matchesStatusDropdown = statusFilter === 'all' ? true : deal.status === statusFilter;
-    const matchesTab = activeTab === 'all' ? true : deal.status === activeTab;
-    return matchesSearch && matchesStatusDropdown && matchesTab;
-  });
 
   const maxSale = monthlySales.length > 0 ? Math.max(...monthlySales.map(s => s.amount), 1) : 1;
 
@@ -337,150 +315,6 @@ const VendorDashboard = ({
         </Button>
       </div>
 
-      {/* Manage Deals */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Deals</CardTitle>
-          <CardDescription>Create, edit, and monitor your deals</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-            <form onSubmit={(e) => e.preventDefault()} className="flex w-full md:w-auto">
-              <Input
-                placeholder="Search deals..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="rounded-r-none w-full md:w-80"
-              />
-              <Button type="submit" size="icon" className="rounded-l-none">
-                <Search className="h-4 w-4" />
-              </Button>
-            </form>
-
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-40">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button asChild>
-                <Link href="/vendor/deals/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Deal
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all">All ({vendorDeals.length})</TabsTrigger>
-              <TabsTrigger value="active">Active ({vendorDeals.filter(d => d.status === 'active').length})</TabsTrigger>
-              <TabsTrigger value="draft">Draft ({vendorDeals.filter(d => d.status === 'draft').length})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({vendorDeals.filter(d => d.status === 'pending').length})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab} className="space-y-4">
-              {filteredDeals?.length > 0 ? (
-                <div className="rounded-md border">
-                  <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm">
-                      <thead className="border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50">
-                          <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
-                          <th className="h-12 px-4 text-left align-middle font-medium">Expires</th>
-                          <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredDeals.map((deal: any) => (
-                          <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
-                            <td className="p-4 align-middle">
-                              <div className="flex items-center gap-3">
-                                {deal.image && (
-                                  <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />
-                                )}
-                                <div>
-                                  <div className="font-medium">
-                                    {deal.title.length > 30 ? `${deal.title.substring(0, 30)}...` : deal.title}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="p-4 align-middle">
-                              <div>
-                                <div className="font-medium">Rs. {deal.discountedPrice?.toFixed(2)}</div>
-                                <div className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice?.toFixed(2)}</div>
-                              </div>
-                            </td>
-                            <td className="p-4 align-middle">
-                              <Badge variant="outline" className={`border-0 ${statusColors[deal.status] || ''}`}>
-                                {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
-                              </Badge>
-                            </td>
-                            <td className="p-4 align-middle">
-                              <div>
-                                <div className="font-medium">{deal.quantitySold || 0} sold</div>
-                                {deal.maxQuantity ? (
-                                  <div className="text-xs text-muted-foreground">of {deal.maxQuantity}</div>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="p-4 align-middle text-sm">
-                              {deal.endDate ? formatDistanceToNow(new Date(deal.endDate), { addSuffix: true }) : 'No expiry'}
-                            </td>
-                            <td className="p-4 align-middle text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
-                                </Button>
-                                <Button variant="ghost" size="sm" asChild>
-                                  <Link href={`/vendor/deals/${deal.id}`}>View</Link>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="border rounded-md p-8 text-center">
-                  <Package className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No deals found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {vendorDeals.length === 0
-                      ? "You haven't created any deals yet. Get started by creating your first deal."
-                      : 'No deals match the current filters.'}
-                  </p>
-                  {vendorDeals.length === 0 && (
-                    <Button asChild>
-                      <Link href="/vendor/deals/create">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Your First Deal
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
     </div>
   );
 };
