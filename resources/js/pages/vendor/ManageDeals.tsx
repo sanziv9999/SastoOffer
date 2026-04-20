@@ -61,73 +61,139 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
 
   const renderTable = (dealsList: any[]) => (
     dealsList.length > 0 ? (
-      <div className="rounded-md border">
-        <div className="relative w-full overflow-auto">
-          <table className="w-full caption-bottom text-sm">
-            <thead className="border-b bg-muted/20">
-              <tr>
-                <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Inventory</th>
-                <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dealsList.map(deal => (
-                <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
-                  <td className="p-4 align-middle">
-                    <div className="flex items-center gap-3">
-                      {deal.image && <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />}
-                      <div>
-                        <div className="font-medium">{deal.title.length > 30 ? `${deal.title.substring(0, 30)}...` : deal.title}</div>
-                        <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
-                      </div>
+      <div className="space-y-3">
+        {/* Mobile: stacked cards */}
+        <div className="md:hidden space-y-3">
+          {dealsList.map((deal) => {
+            const sold = Number(deal.quantitySold || 0);
+            const maxQty = deal.maxQuantity !== null && deal.maxQuantity !== undefined
+              ? Number(deal.maxQuantity)
+              : null;
+            const totalQty = maxQty !== null ? sold + maxQty : null;
+
+            return (
+              <Card key={deal.id} className="rounded-lg">
+                <CardContent className="p-3 space-y-3">
+                  <div className="flex items-start gap-3">
+                    {deal.image && (
+                      <img src={deal.image} alt={deal.title} className="h-12 w-12 rounded object-cover shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm line-clamp-2">{deal.title}</div>
+                      <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
                     </div>
-                  </td>
-                  <td className="p-4 align-middle">
-                    <div className="font-medium">Rs. {Number(deal.price ?? 0).toFixed(2)}</div>
-                  </td>
-                  <td className="p-4 align-middle">
                     <Badge variant="outline" className={getStatusBadge(deal.status)}>
                       {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
                     </Badge>
-                  </td>
-                  <td className="p-4 align-middle">
-                    <div className="font-medium">{deal.quantitySold || 0} sold</div>
-                    <div className="text-xs text-muted-foreground">
-                      Est. Rs. {(Number(deal.quantitySold || 0) * Number(deal.price || 0)).toFixed(2)}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md border p-2">
+                      <p className="text-muted-foreground">Price</p>
+                      <p className="font-semibold text-sm">Rs. {Number(deal.price ?? 0).toFixed(2)}</p>
                     </div>
-                  </td>
-                  <td className="p-4 align-middle">
-                    <div className="text-sm text-muted-foreground">
-                      {deal.maxQuantity !== null && deal.maxQuantity !== undefined ? (
-                        <span className="text-foreground">
-                          {Number(deal.quantitySold || 0)}/{Number(deal.quantitySold || 0) + Number(deal.maxQuantity)}
-                        </span>
-                      ) : (
-                        <span className="text-foreground">Unlimited</span>
-                      )}
+                    <div className="rounded-md border p-2">
+                      <p className="text-muted-foreground">Sales</p>
+                      <p className="font-semibold text-sm">{sold} sold</p>
                     </div>
-                  </td>
-                  <td className="p-4 align-middle text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
-                      </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/vendor/deals/${deal.id}/offers`}>Offers</Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/vendor/deals/${deal.id}`}>View</Link>
-                      </Button>
+                    <div className="rounded-md border p-2">
+                      <p className="text-muted-foreground">Est. Revenue</p>
+                      <p className="font-semibold text-sm">Rs. {(sold * Number(deal.price || 0)).toFixed(2)}</p>
                     </div>
-                  </td>
+                    <div className="rounded-md border p-2">
+                      <p className="text-muted-foreground">Inventory</p>
+                      <p className="font-semibold text-sm">
+                        {totalQty !== null ? `${sold}/${totalQty}` : 'Unlimited'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" size="sm" asChild className="h-8 text-xs">
+                      <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild className="h-8 text-xs">
+                      <Link href={`/vendor/deals/${deal.id}/offers`}>Offers</Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                      <Link href={`/vendor/deals/${deal.id}`}>View</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop/tablet: table */}
+        <div className="hidden md:block rounded-md border">
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="border-b bg-muted/20">
+                <tr>
+                  <th className="h-12 px-4 text-left align-middle font-medium">Deal</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium">Inventory</th>
+                  <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {dealsList.map(deal => (
+                  <tr key={deal.id} className="border-b transition-colors hover:bg-muted/50">
+                    <td className="p-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        {deal.image && <img src={deal.image} alt={deal.title} className="h-10 w-10 rounded object-cover" />}
+                        <div>
+                          <div className="font-medium">{deal.title.length > 30 ? `${deal.title.substring(0, 30)}...` : deal.title}</div>
+                          <div className="text-xs text-muted-foreground">ID: {deal.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="font-medium">Rs. {Number(deal.price ?? 0).toFixed(2)}</div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <Badge variant="outline" className={getStatusBadge(deal.status)}>
+                        {deal.status?.charAt(0).toUpperCase() + deal.status?.slice(1)}
+                      </Badge>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="font-medium">{deal.quantitySold || 0} sold</div>
+                      <div className="text-xs text-muted-foreground">
+                        Est. Rs. {(Number(deal.quantitySold || 0) * Number(deal.price || 0)).toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="text-sm text-muted-foreground">
+                        {deal.maxQuantity !== null && deal.maxQuantity !== undefined ? (
+                          <span className="text-foreground">
+                            {Number(deal.quantitySold || 0)}/{Number(deal.quantitySold || 0) + Number(deal.maxQuantity)}
+                          </span>
+                        ) : (
+                          <span className="text-foreground">Unlimited</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/vendor/deals/${deal.id}/edit`}>Edit</Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/vendor/deals/${deal.id}/offers`}>Offers</Link>
+                        </Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/vendor/deals/${deal.id}`}>View</Link>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     ) : (
