@@ -1,12 +1,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { User, Bell, Shield, MapPin } from 'lucide-react';
+import { User, Shield, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -252,10 +251,9 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
           <TabsTrigger value="address"><MapPin className="h-4 w-4 mr-2" />Address</TabsTrigger>
-          <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
           <TabsTrigger value="security"><Shield className="h-4 w-4 mr-2" />Security</TabsTrigger>
         </TabsList>
 
@@ -267,7 +265,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveProfile} className="space-y-4">
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                   <div className="h-20 w-20 rounded-full overflow-hidden border bg-muted flex items-center justify-center">
                     {avatarPreview ? (
                       <img src={avatarPreview} alt="Profile" className="h-full w-full object-cover" />
@@ -288,6 +286,7 @@ const Settings = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => avatarInputRef.current?.click()}
+                      className="w-full sm:w-auto"
                     >
                       Change Photo
                     </Button>
@@ -333,35 +332,10 @@ const Settings = () => {
                     </Select>
                   </div>
                 </div>
-                <Button type="submit" disabled={savingProfile}>
+                <Button type="submit" disabled={savingProfile} className="w-full sm:w-auto">
                   {savingProfile ? 'Saving...' : 'Save Changes'}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Choose what notifications you receive</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { label: 'Deal Alerts', desc: 'Get notified about new deals near you' },
-                { label: 'Coupon Reminders', desc: 'Reminders before your coupons expire' },
-                { label: 'Price Drops', desc: 'Alerts when prices drop on saved deals' },
-                { label: 'Weekly Digest', desc: 'Weekly summary of best deals' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              ))}
             </CardContent>
           </Card>
         </TabsContent>
@@ -455,13 +429,13 @@ const Settings = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <Label>Pin Location on Map</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={handleLocateMe}>
+                    <Button type="button" variant="outline" size="sm" onClick={handleLocateMe} className="w-full sm:w-auto">
                       Use Current Location
                     </Button>
                   </div>
-                  <div className="h-[420px] w-full rounded-lg overflow-hidden border z-10 relative">
+                  <div className="h-[300px] sm:h-[360px] md:h-[420px] w-full rounded-lg overflow-hidden border z-10 relative">
                     <MapContainer
                       center={mapPosition}
                       zoom={13}
@@ -482,7 +456,7 @@ const Settings = () => {
                   </p>
                 </div>
 
-                <Button type="submit" disabled={savingAddress}>
+                <Button type="submit" disabled={savingAddress} className="w-full sm:w-auto">
                   {savingAddress ? 'Saving...' : 'Save Address'}
                 </Button>
               </form>
