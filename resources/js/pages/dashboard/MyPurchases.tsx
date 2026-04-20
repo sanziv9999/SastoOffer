@@ -131,7 +131,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
       <div key={order.id} className="border rounded-xl bg-card hover:shadow-sm transition-all overflow-hidden">
         {/* Header */}
         <div
-          className="flex items-center justify-between gap-4 p-4 border-b bg-muted/20 cursor-pointer"
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border-b bg-muted/20 cursor-pointer"
           onClick={() => toggleExpand(order.id)}
         >
           <div className="min-w-0 flex-1">
@@ -159,12 +159,12 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-wrap w-full md:w-auto items-center gap-2 flex-shrink-0">
             {order.canCancel && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-[11px]"
+                className="h-8 px-3 text-xs flex-1 sm:flex-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   openCancelDialog(order);
@@ -177,7 +177,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[11px]"
+              className="h-8 px-3 text-xs flex-1 sm:flex-none"
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveOrder(order);
@@ -199,13 +199,23 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
 
         {/* Quick summary when collapsed */}
         {!isExpanded && (
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/5">
-            <span className="text-xs text-muted-foreground">
-              {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
-              <span className="mx-1.5 text-muted-foreground/40">·</span>
-              {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
-            </span>
-            <span className="font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 py-3 border-b bg-muted/5">
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">When</p>
+              <p className="text-sm font-medium">{formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Items</p>
+              <p className="text-sm font-medium">{order.itemCount}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Status</p>
+              <p className="text-sm font-medium">{cfg.label}</p>
+            </div>
+            <div className="text-left md:text-right">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total</p>
+              <p className="text-base font-bold text-teal-950">Rs. {order.grandTotal.toFixed(2)}</p>
+            </div>
           </div>
         )}
 
@@ -214,7 +224,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
           <>
             <div className="divide-y">
               {order.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 px-4">
+                <div key={item.id} className="flex items-start gap-3 p-3 px-4">
                   {item.image ? (
                     <button
                       type="button"
@@ -245,7 +255,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                         const url = getDealUrl(item);
                         if (url) window.location.href = url;
                       }}
-                      className="text-sm font-medium truncate block hover:text-primary transition-colors text-left max-w-full"
+                      className="text-sm font-medium block hover:text-primary transition-colors text-left max-w-full line-clamp-2 md:line-clamp-1"
                     >
                       {item.title}
                     </button>
@@ -268,8 +278,11 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
                         <span className="text-xs font-medium text-green-600">Rs. {item.unitPrice.toFixed(2)}</span>
                       </div>
                     )}
+                    <p className="mt-1.5 text-sm font-semibold text-teal-950 md:hidden">Rs. {item.lineTotal.toFixed(2)}</p>
                   </div>
-                  <p className="text-sm font-semibold text-teal-950 flex-shrink-0">Rs. {item.lineTotal.toFixed(2)}</p>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="hidden md:block text-sm font-semibold text-teal-950">Rs. {item.lineTotal.toFixed(2)}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -370,11 +383,12 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+          <div className="flex flex-wrap w-full sm:w-auto items-center gap-2 justify-start sm:justify-end">
             {order.canCancel && (
               <Button
                 size="sm"
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => openCancelDialog(order)}
               >
                 Cancel order
@@ -486,8 +500,53 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full caption-bottom text-sm min-w-[760px]">
+            <div className="block md:hidden space-y-3 p-4">
+              {order.items.map((item) => {
+                const dealUrl = getDealUrl(item);
+                const discount = hasDiscount(item);
+                return (
+                  <div key={item.id} className="rounded-lg border p-3 bg-background">
+                    <div className="flex items-start gap-3">
+                      {item.image ? (
+                        <img src={item.image} alt={item.title} className="h-12 w-12 rounded-lg object-cover border flex-shrink-0" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        {dealUrl ? (
+                          <Link href={dealUrl} className="font-semibold text-sm block line-clamp-2 hover:underline">
+                            {item.title}
+                          </Link>
+                        ) : (
+                          <p className="font-semibold text-sm line-clamp-2">{item.title}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">{item.offerType} · Qty {item.quantity}</p>
+                        <p className="text-[11px] mt-1.5">
+                          <span className="text-muted-foreground">Claim code: </span>
+                          <span className="font-mono">{item.claimToken || 'Not available'}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t flex items-center justify-between">
+                      <div className="text-xs">
+                        {discount && (
+                          <>
+                            <span className="line-through text-muted-foreground/60">Rs. {item.originalPrice.toFixed(2)}</span>
+                            <span className="text-emerald-600 font-medium ml-2">Rs. {item.unitPrice.toFixed(2)}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="font-semibold tabular-nums">{formatMoney(item.lineTotal)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full caption-bottom text-sm min-w-[700px]">
                 <thead>
                   <tr className="border-b bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="px-4 py-3">Item</th>
@@ -642,7 +701,7 @@ const MyPurchases = ({ purchases }: MyPurchasesProps) => {
           </div>
 
           <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
+            <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="all">All ({orders.length})</TabsTrigger>
               <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
               <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
