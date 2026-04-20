@@ -178,53 +178,106 @@ const DealView = () => {
         </CardHeader>
         <CardContent>
           {Array.isArray(deal?.offers) && deal.offers.length > 0 ? (
-            <div className="rounded-md border overflow-hidden">
-              <div className="relative w-full overflow-auto">
-                <table className="w-full caption-bottom text-sm min-w-[760px]">
-                  <thead className="border-b bg-muted/30">
-                    <tr>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Offer</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Status</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Original</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Final</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Discount</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Validity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deal.offers.map((o: any) => (
-                      <tr key={o.id} className="border-b transition-colors hover:bg-muted/50">
-                        <td className="p-4 align-middle">
-                          <div className="font-medium flex items-center gap-2">
-                            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                            {o.display_name}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">#{o.id}</div>
-                        </td>
-                        <td className="p-4 align-middle">
-                          <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
-                            {o.pivot?.status || 'active'}
-                          </Badge>
-                        </td>
-                        <td className="p-4 align-middle font-medium tabular-nums">{formatRs(o.pivot?.original_price)}</td>
-                        <td className="p-4 align-middle font-semibold tabular-nums">{formatRs(o.pivot?.final_price)}</td>
-                        <td className="p-4 align-middle">
-                          {o.pivot?.discountPercentage !== null &&
-                          o.pivot?.discountPercentage !== undefined &&
-                          String(o.pivot?.discountPercentage) !== '' ? (
-                            <span className="text-sm font-medium text-emerald-600">{o.pivot.discountPercentage}%</span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 align-middle text-xs text-muted-foreground">
-                          {o.pivot?.starts_at ? `From ${o.pivot.starts_at}` : 'From -'} ·{' '}
+            <div className="space-y-3">
+              {/* Mobile: stacked offer cards */}
+              <div className="md:hidden space-y-3">
+                {deal.offers.map((o: any) => (
+                  <div key={o.id} className="rounded-lg border p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm flex items-center gap-1.5">
+                          <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">{o.display_name}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">#{o.id}</div>
+                      </div>
+                      <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
+                        {o.pivot?.status || 'active'}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Original</p>
+                        <p className="font-semibold tabular-nums">{formatRs(o.pivot?.original_price)}</p>
+                      </div>
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Final</p>
+                        <p className="font-semibold tabular-nums">{formatRs(o.pivot?.final_price)}</p>
+                      </div>
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Discount</p>
+                        {o.pivot?.discountPercentage !== null &&
+                        o.pivot?.discountPercentage !== undefined &&
+                        String(o.pivot?.discountPercentage) !== '' ? (
+                          <p className="font-semibold text-emerald-600">{o.pivot.discountPercentage}%</p>
+                        ) : (
+                          <p className="text-muted-foreground">-</p>
+                        )}
+                      </div>
+                      <div className="rounded-md border p-2">
+                        <p className="text-muted-foreground">Validity</p>
+                        <p className="text-[11px] text-foreground">
+                          {o.pivot?.starts_at ? `From ${o.pivot.starts_at}` : 'From -'}
+                        </p>
+                        <p className="text-[11px] text-foreground">
                           {o.pivot?.ends_at ? `To ${o.pivot.ends_at}` : 'To -'}
-                        </td>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop/tablet: table */}
+              <div className="hidden md:block rounded-md border overflow-hidden">
+                <div className="relative w-full overflow-auto">
+                  <table className="w-full caption-bottom text-sm min-w-[760px]">
+                    <thead className="border-b bg-muted/30">
+                      <tr>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Offer</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Status</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Original</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Final</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Discount</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-xs uppercase tracking-wide text-muted-foreground">Validity</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {deal.offers.map((o: any) => (
+                        <tr key={o.id} className="border-b transition-colors hover:bg-muted/50">
+                          <td className="p-4 align-middle">
+                            <div className="font-medium flex items-center gap-2">
+                              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                              {o.display_name}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">#{o.id}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge variant={o.pivot?.status === 'active' ? 'default' : 'secondary'}>
+                              {o.pivot?.status || 'active'}
+                            </Badge>
+                          </td>
+                          <td className="p-4 align-middle font-medium tabular-nums">{formatRs(o.pivot?.original_price)}</td>
+                          <td className="p-4 align-middle font-semibold tabular-nums">{formatRs(o.pivot?.final_price)}</td>
+                          <td className="p-4 align-middle">
+                            {o.pivot?.discountPercentage !== null &&
+                            o.pivot?.discountPercentage !== undefined &&
+                            String(o.pivot?.discountPercentage) !== '' ? (
+                              <span className="text-sm font-medium text-emerald-600">{o.pivot.discountPercentage}%</span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="p-4 align-middle text-xs text-muted-foreground">
+                            {o.pivot?.starts_at ? `From ${o.pivot.starts_at}` : 'From -'} ·{' '}
+                            {o.pivot?.ends_at ? `To ${o.pivot.ends_at}` : 'To -'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : (
