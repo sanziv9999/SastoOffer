@@ -139,82 +139,82 @@ const VendorDashboard = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vendor Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Vendor Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Welcome back, {vendor.business_name || user?.name}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button asChild>
+        <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+          <Button asChild className="h-9 text-xs sm:text-sm">
             <Link href="/vendor/deals/create">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Create Deal
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="h-9 text-xs sm:text-sm">
             <Link href="/vendor/settings">Edit Profile</Link>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <Banknote className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="rounded-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-[11px] sm:text-sm font-medium leading-tight">Total Revenue</CardTitle>
+            <Banknote className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Rs. {stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-sm sm:text-2xl font-bold leading-tight">Rs. {stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {stats.totalOrders} {stats.totalOrders === 1 ? 'order' : 'orders'} total
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Items Sold</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+        <Card className="rounded-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-[11px] sm:text-sm font-medium leading-tight">Items Sold</CardTitle>
+            <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSales}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-sm sm:text-2xl font-bold leading-tight">{stats.totalSales}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {stats.uniqueCustomers} unique {stats.uniqueCustomers === 1 ? 'customer' : 'customers'}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Deals</CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
+        <Card className="rounded-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-[11px] sm:text-sm font-medium leading-tight">Active Deals</CardTitle>
+            <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeDeals}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-sm sm:text-2xl font-bold leading-tight">{stats.activeDeals}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {stats.totalDeals - stats.activeDeals} inactive
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reviews</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        <Card className="rounded-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-[11px] sm:text-sm font-medium leading-tight">Reviews</CardTitle>
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-sm sm:text-2xl font-bold flex items-center gap-1.5 sm:gap-2 leading-tight">
               {stats.totalReviews}
               {stats.avgRating > 0 && (
-                <span className="text-sm font-normal flex items-center gap-0.5 text-yellow-600">
-                  <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                <span className="text-[11px] sm:text-sm font-normal flex items-center gap-0.5 text-yellow-600">
+                  <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-yellow-500 text-yellow-500" />
                   {stats.avgRating}
                 </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {stats.avgRating > 0 ? `${stats.avgRating} avg rating` : 'No reviews yet'}
             </p>
           </CardContent>
@@ -310,29 +310,29 @@ const VendorDashboard = ({
       </div>
 
       {/* Quick Links */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+      <div className="grid gap-2 sm:gap-3 grid-cols-2 md:grid-cols-4">
+        <Button variant="outline" className="h-auto py-2.5 sm:py-3 px-2 sm:px-3 flex-col gap-1" asChild>
           <Link href="/vendor/orders">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-            <span className="text-xs">Orders</span>
+            <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <span className="text-[11px] sm:text-xs">Orders</span>
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+        <Button variant="outline" className="h-auto py-2.5 sm:py-3 px-2 sm:px-3 flex-col gap-1" asChild>
           <Link href="/vendor/customers">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-xs">Customers</span>
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <span className="text-[11px] sm:text-xs">Customers</span>
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+        <Button variant="outline" className="h-auto py-2.5 sm:py-3 px-2 sm:px-3 flex-col gap-1" asChild>
           <Link href="/vendor/reviews">
-            <Star className="h-5 w-5 text-primary" />
-            <span className="text-xs">Reviews</span>
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <span className="text-[11px] sm:text-xs">Reviews</span>
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1" asChild>
+        <Button variant="outline" className="h-auto py-2.5 sm:py-3 px-2 sm:px-3 flex-col gap-1" asChild>
           <Link href="/vendor/analytics">
-            <Banknote className="h-5 w-5 text-primary" />
-            <span className="text-xs">Analytics</span>
+            <Banknote className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <span className="text-[11px] sm:text-xs">Analytics</span>
           </Link>
         </Button>
       </div>
