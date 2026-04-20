@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Deal;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\User;
 use App\Services\ActivityMailer;
 use App\Services\FirstXCustomerOfferService;
 use App\Services\DealInventoryService;
@@ -532,6 +533,115 @@ class VendorAnalyticsController extends Controller
 
         return \Inertia\Inertia::render('vendor/CustomerHistory', [
             'history' => $history,
+        ]);
+    }
+
+    public function customerHistoryShow(Request $request, User $customer)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor) {
+            return \Inertia\Inertia::render('vendor/CustomerHistory', [
+                'customer' => null,
+                'orders' => [],
+                'boughtItems' => [],
+                'claimedItems' => [],
+            ]);
+        }
+
+        $orders = Order::where('vendor_id', $vendor->id)
+            ->where('user_id', $customer->id)
+            ->with(['items'])
+            ->latest()
+            ->get();
+
+        $boughtItems = $orders
+            ->flatMap(fn (Order $order) => $order->items->pluck('title'))
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $boughtItemsDetailed = $orders
+            ->flatMap(fn (Order $order) => $order->items)
+            ->map(function (OrderItem $item) {
+                $meta = is_array($item->meta) ? $item->meta : [];
+                return [
+                    'title' => trim((string) ($item->title ?? '')),
+                    'image' => $meta['deal_image'] ?? '',
+                ];
+            })
+            ->filter(fn ($item) => ! empty($item['title']))
+            ->unique('title')
+            ->values();
+
+        $claimedItems = $orders
+            ->flatMap(fn (Order $order) => $order->items)
+            ->filter(function (OrderItem $item) {
+                $meta = $item->meta ?? [];
+                return is_array($meta) && ! empty($meta['claimed_at']);
+            })
+            ->map(function (OrderItem $item) {
+                return trim((string) ($item->title ?? ''));
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $claimedItemsDetailed = $orders
+            ->flatMap(fn (Order $order) => $order->items)
+            ->filter(function (OrderItem $item) {
+                $meta = $item->meta ?? [];
+                return is_array($meta) && ! empty($meta['claimed_at']);
+            })
+            ->map(function (OrderItem $item) {
+                $meta = is_array($item->meta) ? $item->meta : [];
+                return [
+                    'title' => trim((string) ($item->title ?? '')),
+                    'image' => $meta['deal_image'] ?? '',
+                ];
+            })
+            ->filter(fn ($item) => ! empty($item['title']))
+            ->unique('title')
+            ->values();
+
+        $mappedOrders = $orders->map(function (Order $order) {
+            return [
+                'id' => $order->id,
+                'orderNumber' => $order->order_number,
+                'status' => $order->status,
+                'date' => $order->created_at?->toIso8601String(),
+                'subtotal' => (float) $order->subtotal,
+                'discountTotal' => (float) $order->discount_total,
+                'total' => (float) $order->grand_total,
+                'items' => $order->items->map(function (OrderItem $item) {
+                    $meta = is_array($item->meta) ? $item->meta : [];
+                    return [
+                        'id' => $item->id,
+                        'title' => $item->title,
+                        'quantity' => (int) $item->quantity,
+                        'lineTotal' => (float) $item->line_total,
+                        'image' => $meta['deal_image'] ?? '',
+                        'offerType' => $meta['offer_type'] ?? 'Offer',
+                        'isClaimed' => ! empty($meta['claimed_at']),
+                        'claimedAt' => $meta['claimed_at'] ?? null,
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return \Inertia\Inertia::render('vendor/CustomerHistory', [
+            'customer' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+            ],
+            'orders' => $mappedOrders,
+            'boughtItems' => $boughtItems,
+            'claimedItems' => $claimedItems,
+            'boughtItemsDetailed' => $boughtItemsDetailed->all(),
+            'claimedItemsDetailed' => $claimedItemsDetailed->all(),
         ]);
     }
 

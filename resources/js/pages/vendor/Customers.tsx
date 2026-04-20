@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import Link from '@/components/Link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -101,7 +102,15 @@ const Customers = ({ customers }: CustomersProps) => {
                     </div>
 
                     <div className="rounded-md border p-2.5 text-xs">
-                      <p className="text-muted-foreground mb-1">Bought / Claimed</p>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-muted-foreground">Bought / Claimed</p>
+                        <Link
+                          href={route('vendor.customers.history.show', customer.id)}
+                          className="text-[11px] font-medium text-primary hover:underline"
+                        >
+                          View list
+                        </Link>
+                      </div>
                       {Array.isArray(customer.boughtItems) && customer.boughtItems.length > 0 ? (
                         <div className="space-y-0.5">
                           {customer.boughtItems.map((item: string, idx: number) => (
@@ -193,9 +202,23 @@ const Customers = ({ customers }: CustomersProps) => {
                             <p className="text-muted-foreground mt-1">
                               Claimed: <span className="font-medium text-foreground">{customer.claimedCount || 0}</span>
                             </p>
+                            <Link
+                              href={route('vendor.customers.history.show', customer.id)}
+                              className="inline-block mt-1 text-[11px] font-medium text-primary hover:underline"
+                            >
+                              View list
+                            </Link>
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">No product/service history</p>
+                          <div>
+                            <p className="text-xs text-muted-foreground">No product/service history</p>
+                            <Link
+                              href={route('vendor.customers.history.show', customer.id)}
+                              className="inline-block mt-1 text-[11px] font-medium text-primary hover:underline"
+                            >
+                              View list
+                            </Link>
+                          </div>
                         )}
                       </td>
                       <td className="p-4">
