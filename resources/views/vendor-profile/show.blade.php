@@ -24,50 +24,48 @@
             {{-- Compact vendor header --}}
             <div class="mb-4">
                 <div class="bg-card rounded-xl shadow-sm border p-4 md:p-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div class="w-14 h-14 rounded-lg overflow-hidden border bg-white shrink-0">
-                            <img
-                                src="{{ $logoUrl }}"
-                                alt="{{ $vendor->business_name }} logo"
-                                class="w-full h-full object-cover"
-                            />
-                        </div>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-14 h-14 rounded-lg overflow-hidden border bg-white shrink-0">
+                                <img
+                                    src="{{ $logoUrl }}"
+                                    alt="{{ $vendor->business_name }} logo"
+                                    class="w-full h-full object-cover"
+                                />
+                            </div>
 
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                                <div>
-                                    <h1 class="text-lg md:text-xl font-semibold tracking-tight">{{ $vendor->business_name }}</h1>
-                                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                                        <span class="inline-flex items-center gap-1.5">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                            <span class="font-medium text-foreground">{{ number_format($vendor->reviews_avg_rating ?? 0, 1) }}</span>
-                                            <span>({{ $vendor->reviews_count ?? 0 }} reviews)</span>
-                                        </span>
-                                        @if($vendor->primaryCategory)
-                                            <span class="h-1 w-1 rounded-full bg-border"></span>
-                                            <span>{{ $vendor->primaryCategory->name }}</span>
-                                        @endif
+                            <div class="min-w-0 flex-1">
+                                <h1 class="text-lg md:text-xl font-semibold tracking-tight leading-tight">{{ $vendor->business_name }}</h1>
+                                <div class="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs md:text-sm text-muted-foreground">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <span class="font-medium text-foreground">{{ number_format($vendor->reviews_avg_rating ?? 0, 1) }}</span>
+                                        <span>({{ $vendor->reviews_count ?? 0 }} reviews)</span>
+                                    </span>
+                                    @if($vendor->primaryCategory)
                                         <span class="h-1 w-1 rounded-full bg-border"></span>
-                                        <span>{{ $activeDeals->count() }} active offers</span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <a href="/search?vendorId={{ $vendor->id }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">
-                                        Browse All Offers
-                                    </a>
-                                    <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4" data-tab-trigger="about">
-                                        View Profile Details
-                                    </button>
+                                        <span>{{ $vendor->primaryCategory->name }}</span>
+                                    @endif
+                                    <span class="h-1 w-1 rounded-full bg-border"></span>
+                                    <span>{{ $activeDeals->count() }} active offers</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <a href="/search?vendorId={{ $vendor->id }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3">
+                                Browse All Offers
+                            </a>
+                            <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3" data-tab-trigger="about">
+                                View Profile Details
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
             {{-- Tab navigation --}}
-            <div class="mb-6 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+            <div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div class="inline-flex w-full md:w-auto items-center rounded-lg border bg-muted/40 p-1 gap-1" role="tablist" aria-label="Vendor profile tabs">
                     <button
                         type="button"
@@ -100,7 +98,7 @@
                         Reviews
                     </button>
                 </div>
-                <div class="w-full lg:w-[320px]">
+                <div class="w-full lg:w-[320px] sticky top-20 z-20 rounded-lg border border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-1 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0">
                     <label for="vendor-store-search" class="sr-only">Search in Store</label>
                     <div class="relative">
                         <input

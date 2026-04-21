@@ -1,5 +1,6 @@
 @php
     $hideCategoryNav = request()->routeIs('vendor-profile.show');
+    $hideGlobalSearch = request()->routeIs('vendor-profile.show');
 @endphp
 
 <header
@@ -79,6 +80,7 @@
                     </div>
                 </a>
 
+                @unless($hideGlobalSearch)
                 <div class="hidden md:flex flex-1 max-w-xl mx-6 relative">
                     <form 
                         @submit.prevent="submitSearch()"
@@ -148,6 +150,7 @@
                         </template>
                     </div>
                 </div>
+                @endunless
 
                 {{-- Right side actions --}}
                 <div class="flex items-center gap-2" x-data="{ cityOpen: false, userOpen: false }">
@@ -435,6 +438,7 @@
             </div>
 
             {{-- Mobile search --}}
+            @unless($hideGlobalSearch)
             <div class="md:hidden pb-3 relative">
                 <form 
                     @submit.prevent="submitSearch()"
@@ -488,6 +492,7 @@
                     </div>
                 </div>
             </div>
+            @endunless
             
             @unless($hideCategoryNav)
                 <div 
