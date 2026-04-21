@@ -56,12 +56,6 @@
                                     <a href="/search?vendorId={{ $vendor->id }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">
                                         Browse All Offers
                                     </a>
-                                    <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                                        Follow
-                                    </button>
-                                    <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                                        Chat
-                                    </button>
                                     <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4" data-tab-trigger="about">
                                         View Profile Details
                                     </button>
