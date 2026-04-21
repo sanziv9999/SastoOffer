@@ -40,25 +40,34 @@
                 </div>
             @endif
 
-            <div class="absolute top-1 right-1 flex flex-col gap-1 z-20">
-                <button @click.prevent="toggleWishlist({{ $deal['id'] }})" class="p-1 bg-white/90 backdrop-blur-sm rounded-full shadow-sm text-slate-600 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" :fill="wishlistedIds.includes({{ $deal['id'] }}) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" :class="wishlistedIds.includes({{ $deal['id'] }}) ? 'text-red-500' : ''"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <div class="absolute top-1.5 right-1.5 flex flex-col gap-1.5 z-20">
+                <button @click.prevent="toggleWishlist({{ $deal['id'] }})" class="w-8 h-8 bg-white/95 backdrop-blur-sm rounded-full shadow-md text-slate-700 hover:text-red-500 transition-colors flex items-center justify-center ring-1 ring-slate-200/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" :fill="wishlistedIds.includes({{ $deal['id'] }}) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" :class="wishlistedIds.includes({{ $deal['id'] }}) ? 'text-red-500' : ''"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                 </button>
             </div>
         </div>
 
-        <div class="p-2 flex flex-col flex-1 gap-1">
-            <div class="text-[9px] font-bold text-slate-800 truncate">
+        <div class="p-2.5 flex flex-col flex-1 gap-1.5">
+            <div class="text-[10px] sm:text-xs font-semibold text-slate-700 truncate">
                 {{ $vendorName }}
             </div>
-            <h3 class="text-[10px] font-bold text-slate-900 line-clamp-1 truncate leading-tight">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-tight">
                 {{ $deal['title'] }}
             </h3>
             
-            <div class="mt-auto pt-1 flex items-center justify-between">
-                <div class="text-[11px] font-black text-primary">Rs. {{ number_format($discountedPrice) }}</div>
-                <button @click.prevent="cart.addItem({{ $pivotId }})" class="text-slate-400 hover:text-primary transition-colors z-20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <div class="mt-auto pt-1.5 flex items-center justify-between border-t border-slate-100">
+                <div class="flex items-baseline gap-1">
+                    <div class="text-sm sm:text-base font-extrabold text-slate-900 leading-none">
+                        <span class="text-[10px] sm:text-xs font-bold mr-0.5">Rs.</span>{{ number_format($discountedPrice) }}
+                    </div>
+                    @if($originalPrice > $discountedPrice)
+                        <div class="text-[10px] sm:text-xs text-slate-400 font-semibold line-through">
+                            {{ number_format($originalPrice) }}
+                        </div>
+                    @endif
+                </div>
+                <button @click.prevent="cart.addItem({{ $pivotId }})" class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 hover:bg-primary/10 hover:text-primary transition-colors z-20 flex items-center justify-center ring-1 ring-slate-200/70">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 </button>
             </div>
         </div>
@@ -85,12 +94,12 @@
             @endif
 
             {{-- Quality Actions --}}
-            <div class="absolute top-4 right-4 flex flex-col gap-2 z-20">
-                <button @click.prevent="toggleWishlist({{ $deal['id'] }})" class="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-slate-600 hover:text-red-500 transition-all transform active:scale-90">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" :fill="wishlistedIds.includes({{ $deal['id'] }}) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" :class="wishlistedIds.includes({{ $deal['id'] }}) ? 'text-red-500' : ''"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <div class="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col gap-2 z-20">
+                <button @click.prevent="toggleWishlist({{ $deal['id'] }})" class="w-10 h-10 bg-white/95 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-slate-700 hover:text-red-500 transition-all transform active:scale-90 ring-1 ring-slate-200/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="wishlistedIds.includes({{ $deal['id'] }}) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" :class="wishlistedIds.includes({{ $deal['id'] }}) ? 'text-red-500' : ''"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                 </button>
-                <button @click.prevent="cart.addItem({{ $pivotId }})" class="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-slate-600 hover:text-primary transition-all transform active:scale-90">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                <button @click.prevent="cart.addItem({{ $pivotId }})" class="w-10 h-10 bg-white/95 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-slate-700 hover:text-primary transition-all transform active:scale-90 ring-1 ring-slate-200/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 </button>
             </div>
         </div>
