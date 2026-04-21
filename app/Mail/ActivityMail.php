@@ -21,6 +21,12 @@ class ActivityMail extends Mailable implements ShouldQueue
         public ?string $actionUrl = null,
         public ?string $metaLabel = null,
         public ?string $metaValue = null,
+        public ?string $orderNumber = null,
+        public ?string $partnerLabel = null,
+        public ?string $partnerName = null,
+        public ?string $orderTotalFormatted = null,
+        public array $lineItems = [],
+        public ?string $statusLabel = null,
     ) {}
 
     public function envelope(): Envelope

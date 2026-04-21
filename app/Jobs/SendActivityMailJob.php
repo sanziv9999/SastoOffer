@@ -26,6 +26,12 @@ class SendActivityMailJob implements ShouldQueue
         public ?string $actionUrl = null,
         public ?string $metaLabel = null,
         public ?string $metaValue = null,
+        public ?string $orderNumber = null,
+        public ?string $partnerLabel = null,
+        public ?string $partnerName = null,
+        public ?string $orderTotalFormatted = null,
+        public array $lineItems = [],
+        public ?string $statusLabel = null,
     ) {}
 
     public function handle(): void
@@ -43,6 +49,12 @@ class SendActivityMailJob implements ShouldQueue
             actionUrl: $this->actionUrl,
             metaLabel: $this->metaLabel,
             metaValue: $this->metaValue,
+            orderNumber: $this->orderNumber,
+            partnerLabel: $this->partnerLabel,
+            partnerName: $this->partnerName,
+            orderTotalFormatted: $this->orderTotalFormatted,
+            lineItems: $this->lineItems,
+            statusLabel: $this->statusLabel,
         ));
 
         $dispatch->update(['sent_at' => now()]);
