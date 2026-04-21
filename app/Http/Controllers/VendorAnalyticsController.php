@@ -775,7 +775,7 @@ class VendorAnalyticsController extends Controller
         $vendor = $user->vendorProfile;
 
         if (! $vendor) {
-            return \Inertia\Inertia::render('vendor/Reviews', ['reviews' => [], 'deals' => []]);
+            return \Inertia\Inertia::render('vendor/Reviews', ['reviews' => [], 'deals' => [], 'vendorReplyLabel' => 'Reply from Vendor']);
         }
 
         $vendorReviews = \App\Models\Review::where('reviewable_type', \App\Models\VendorProfile::class)
@@ -832,6 +832,7 @@ class VendorAnalyticsController extends Controller
         return \Inertia\Inertia::render('vendor/Reviews', [
             'reviews' => $allReviews,
             'deals' => $deals,
+            'vendorReplyLabel' => 'Reply from '.($vendor->business_name ?: ($user->name ?? 'Vendor')),
         ]);
     }
 }

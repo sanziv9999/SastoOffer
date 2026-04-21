@@ -39,9 +39,10 @@ import { format } from 'date-fns';
 
 interface VendorReviewsProps {
     reviews: any[];
+    vendorReplyLabel?: string;
 }
 
-const VendorReviews = ({ reviews: initialReviews }: VendorReviewsProps) => {
+const VendorReviews = ({ reviews: initialReviews, vendorReplyLabel = 'Reply from Vendor' }: VendorReviewsProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [ratingFilter, setRatingFilter] = useState('all');
     const [visibilityFilter, setVisibilityFilter] = useState('all');
@@ -323,12 +324,12 @@ const VendorReviews = ({ reviews: initialReviews }: VendorReviewsProps) => {
                                     </div>
                                 )}
 
-                                {/* Persistent Merchant Reply */}
+                                {/* Persistent Vendor Reply */}
                                 {review.merchantReply && (
                                     <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
                                         <div className="flex items-center gap-2 text-sm font-bold text-primary mb-2">
                                             <CheckCircle2 className="h-4 w-4" />
-                                            Response from Merchant
+                                            {vendorReplyLabel}
                                         </div>
                                         <p className="text-sm italic">
                                             "{review.merchantReply.comment}"

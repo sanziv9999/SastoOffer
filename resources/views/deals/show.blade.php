@@ -33,6 +33,9 @@
         // Pass a safe array into the Blade js helper (never use complex expressions inside the directive).
         $offersForJs = is_array($deal['offers'] ?? null) ? ($deal['offers'] ?? []) : [];
     }
+    $canVendorReply = auth()->check()
+        && !empty($deal['vendor']['id'])
+        && (int) (auth()->user()->vendorProfile?->id ?? 0) === (int) $deal['vendor']['id'];
 @endphp
 
 <x-layout>
@@ -564,6 +567,8 @@
                     :user-review="$userReview"
                     reviewable-type="deal_offer"
                     :reviewable-id="$deal['offerPivotId']"
+                    :vendor-reply-label="'Reply from ' . ($deal['vendor']['business_name'] ?? 'Vendor')"
+                    :can-vendor-reply="$canVendorReply"
                 />
             </div>
         @endif

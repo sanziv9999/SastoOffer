@@ -749,6 +749,29 @@ class DealController extends Controller
         }
 
         $deal->load(['category.parent', 'images', 'offerTypes', 'vendor.defaultAddress']);
+        $offerTypeIds = $deal->offerTypes->pluck('id');
+        $dealReviews = \App\Models\Review::query()
+            ->where('reviewable_type', \App\Models\DealOfferType::class)
+            ->whereIn('reviewable_id', $offerTypeIds)
+            ->with(['user', 'reviewable'])
+            ->latest()
+            ->get()
+            ->map(function (\App\Models\Review $review) {
+                return [
+                    'id' => (string) $review->id,
+                    'customerName' => $review->user?->name ?? 'Anonymous',
+                    'rating' => (int) $review->rating,
+                    'comment' => (string) ($review->comment ?? ''),
+                    'createdAt' => $review->created_at?->toIso8601String(),
+                    'offerTypeName' => $review->reviewable?->offerType?->display_name ?? 'Offer',
+                    'isHidden' => (bool) $review->is_hidden,
+                    'merchantReply' => $review->vendor_reply ? [
+                        'comment' => $review->vendor_reply,
+                        'createdAt' => $review->vendor_replied_at?->toIso8601String(),
+                    ] : null,
+                ];
+            })
+            ->values();
 
         return \Inertia\Inertia::render('vendor/DealView', [
             'deal' => [
@@ -792,6 +815,7 @@ class DealController extends Controller
                         ],
                     ];
                 })->values()->toArray(),
+                'reviews' => $dealReviews,
             ],
         ]);
     }

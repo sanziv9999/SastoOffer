@@ -1,4 +1,4 @@
-@props(['reviews', 'userReview' => null, 'reviewableType', 'reviewableId'])
+@props(['reviews', 'userReview' => null, 'reviewableType', 'reviewableId', 'vendorReplyLabel' => 'Vendor Reply', 'canVendorReply' => false])
 
 @php
     $reviewsList = collect($reviews ?? []);
@@ -173,13 +173,53 @@
                     </template>
                     <template x-if="rv.vendorReply">
                         <div class="mt-3 bg-primary/5 border border-primary/10 rounded-lg p-3">
-                            <p class="text-xs font-semibold text-primary mb-1">Vendor Reply</p>
+                            <p class="text-xs font-semibold text-primary mb-1">{{ $vendorReplyLabel }}</p>
                             <p class="text-sm italic">"<span x-text="rv.vendorReply"></span>"</p>
                             <template x-if="rv.vendorRepliedAt">
                                 <span class="text-[10px] text-muted-foreground mt-1 block" x-text="new Date(rv.vendorRepliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
                             </template>
                         </div>
                     </template>
+                    @if($canVendorReply)
+                        <template x-if="!rv.vendorReply">
+                            <div class="mt-3" x-data="{ open: false }">
+                                <button
+                                    type="button"
+                                    @click="open = !open"
+                                    class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
+                                >
+                                    Reply as Vendor
+                                </button>
+                                <div x-show="open" x-collapse class="mt-2 rounded-lg border bg-muted/20 p-3">
+                                    <form method="POST" :action="`/vendor/reviews/${rv.id}/reply`" class="space-y-2">
+                                        @csrf
+                                        <textarea
+                                            name="vendor_reply"
+                                            rows="3"
+                                            required
+                                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                            placeholder="Write your reply to this review..."
+                                        ></textarea>
+                                        <div class="flex justify-end gap-2">
+                                            <button
+                                                type="button"
+                                                @click="open = false"
+                                                class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors border border-input bg-background hover:bg-accent h-8 px-3"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
+                                            >
+                                                Post Reply
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </template>
+                    @endif
                 </div>
             </template>
 

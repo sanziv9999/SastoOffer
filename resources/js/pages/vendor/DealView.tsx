@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import Link from '@/components/Link';
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { ChevronRight, ExternalLink, ImageIcon, Package, Tag } from 'lucide-react';
+import { ChevronRight, ExternalLink, ImageIcon, Package, Reply, Star, Tag } from 'lucide-react';
+import { format } from 'date-fns';
 
 const DealView = () => {
   const { deal } = usePage().props as any;
@@ -33,6 +34,23 @@ const DealView = () => {
   const activeOffers = Array.isArray(deal?.offers)
     ? deal.offers.filter((o: any) => (o.pivot?.status || 'active') === 'active').length
     : 0;
+  const dealReviews = Array.isArray(deal?.reviews) ? deal.reviews : [];
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+
+  const submitReply = (reviewId: string) => {
+    if (!replyText.trim() || submittingReply) return;
+    setSubmittingReply(true);
+    router.post(`/vendor/reviews/${reviewId}/reply`, { vendor_reply: replyText }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setReplyingTo(null);
+        setReplyText('');
+      },
+      onFinish: () => setSubmittingReply(false),
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -336,6 +354,72 @@ const DealView = () => {
           </CardContent>
         </Card>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Customer Reviews</CardTitle>
+          <CardDescription>Reply to reviews for this deal directly from here.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {dealReviews.length > 0 ? (
+            dealReviews.map((review: any) => (
+              <div key={review.id} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">{review.customerName || 'Anonymous'}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className={`h-3.5 w-3.5 ${i <= Number(review.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />
+                        ))}
+                      </div>
+                      {review.createdAt && (
+                        <span className="text-xs text-muted-foreground">{format(new Date(review.createdAt), 'MMM dd, yyyy')}</span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="outline">{review.offerTypeName || 'Offer'}</Badge>
+                </div>
+
+                <p className="text-sm text-muted-foreground whitespace-pre-line">{review.comment || 'No comment provided.'}</p>
+
+                {review.merchantReply ? (
+                  <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-xs font-semibold text-primary">Your reply</p>
+                    <p className="mt-1 text-sm">{review.merchantReply.comment}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {replyingTo === review.id ? (
+                      <>
+                        <textarea
+                          className="w-full min-h-[90px] rounded-md border bg-background p-3 text-sm outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="Write your reply..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} disabled={submittingReply}>Cancel</Button>
+                          <Button size="sm" onClick={() => submitReply(review.id)} disabled={submittingReply || !replyText.trim()}>
+                            {submittingReply ? 'Posting...' : 'Post Reply'}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => { setReplyingTo(review.id); setReplyText(''); }}>
+                        <Reply className="mr-2 h-3.5 w-3.5" />
+                        Reply
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No reviews for this deal yet.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
