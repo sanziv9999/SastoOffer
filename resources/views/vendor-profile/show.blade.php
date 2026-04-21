@@ -65,7 +65,7 @@
             </div>
 
             {{-- Tab navigation --}}
-            <div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div class="inline-flex w-full md:w-auto items-center rounded-lg border bg-muted/40 p-1 gap-1" role="tablist" aria-label="Vendor profile tabs">
                     <button
                         type="button"
@@ -98,7 +98,7 @@
                         Reviews
                     </button>
                 </div>
-                <div class="w-full lg:w-[320px] sticky top-20 z-20 rounded-lg border border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-1 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0">
+                <div class="hidden lg:block w-full lg:w-[320px]">
                     <label for="vendor-store-search" class="sr-only">Search in Store</label>
                     <div class="relative">
                         <input
@@ -109,6 +109,19 @@
                         />
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     </div>
+                </div>
+            </div>
+
+            <div class="lg:hidden sticky top-16 z-30 -mx-4 px-4 py-2 mb-3 bg-background border-y border-border/60 shadow-sm">
+                <label for="vendor-store-search-mobile" class="sr-only">Search in Store</label>
+                <div class="relative">
+                    <input
+                        id="vendor-store-search-mobile"
+                        type="search"
+                        placeholder="Search in Store"
+                        class="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </div>
             </div>
 
@@ -279,7 +292,8 @@
                 about: document.getElementById('tab-about'),
                 reviews: document.getElementById('tab-reviews'),
             };
-            var searchInput = document.getElementById('vendor-store-search');
+            var desktopSearchInput = document.getElementById('vendor-store-search');
+            var mobileSearchInput = document.getElementById('vendor-store-search-mobile');
             var productItems = Array.from(document.querySelectorAll('.vendor-product-item'));
             var emptySearchState = document.getElementById('vendor-products-empty-search');
 
@@ -329,8 +343,11 @@
             });
 
             function applyStoreSearch() {
-                if (!searchInput || productItems.length === 0) return;
-                var q = searchInput.value.trim().toLowerCase();
+                if (productItems.length === 0) return;
+                var activeInput = mobileSearchInput && mobileSearchInput.value.trim() !== ''
+                    ? mobileSearchInput
+                    : desktopSearchInput;
+                var q = activeInput ? activeInput.value.trim().toLowerCase() : '';
                 var visibleCount = 0;
                 productItems.forEach(function (item) {
                     var hay = item.getAttribute('data-search') || '';
@@ -343,8 +360,23 @@
                 }
             }
 
-            if (searchInput) {
-                searchInput.addEventListener('input', applyStoreSearch);
+            function syncSearchInputs(source, target) {
+                if (!source || !target) return;
+                target.value = source.value;
+            }
+
+            if (desktopSearchInput) {
+                desktopSearchInput.addEventListener('input', function () {
+                    syncSearchInputs(desktopSearchInput, mobileSearchInput);
+                    applyStoreSearch();
+                });
+            }
+
+            if (mobileSearchInput) {
+                mobileSearchInput.addEventListener('input', function () {
+                    syncSearchInputs(mobileSearchInput, desktopSearchInput);
+                    applyStoreSearch();
+                });
             }
 
             setTab('deals');
