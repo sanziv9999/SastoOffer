@@ -35,7 +35,7 @@
             <img src="{{ $deal['image'] }}" alt="{{ $deal['title'] }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             
             @if($showDiscount && $discountPercentage > 0)
-                <div class="absolute bottom-1 left-1 px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-black rounded-sm shadow-md z-10">
+                <div class="absolute bottom-1 left-1 px-2 py-1 bg-red-600 text-white text-xs font-black rounded-md shadow-md z-10 leading-none">
                     -{{ $discountPercentage }}%
                 </div>
             @endif
@@ -48,9 +48,6 @@
         </div>
 
         <div class="p-2.5 flex flex-col flex-1 gap-1.5">
-            <div class="text-[10px] sm:text-xs font-semibold text-slate-700 truncate">
-                {{ $vendorName }}
-            </div>
             <h3 class="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-tight">
                 {{ $deal['title'] }}
             </h3>
@@ -82,7 +79,7 @@
             
             {{-- Elite Discount Badge --}}
             @if($showDiscount && $discountPercentage > 0)
-                <div class="absolute bottom-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tight uppercase">
+                <div class="absolute bottom-3 left-3 z-10 bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-md shadow-xl tracking-tight uppercase leading-none">
                     Save {{ $discountPercentage }}%
                 </div>
             @endif
@@ -108,9 +105,6 @@
         <div class="p-3 flex flex-col flex-1 gap-1.5">
             {{-- Header: Vendor & Title --}}
             <div class="space-y-0.5">
-                <div class="text-[11px] font-bold text-slate-600 truncate leading-none">
-                    {{ $vendorName }}
-                </div>
                 <a href="{{ $dealUrl }}" class="block">
                     <h3 class="text-base font-bold text-slate-900 leading-tight line-clamp-2 hover:text-primary transition-colors">
                         {{ $deal['title'] }}
