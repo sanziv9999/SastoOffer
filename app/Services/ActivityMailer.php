@@ -6,6 +6,7 @@ use App\Jobs\SendActivityMailJob;
 use App\Mail\ActivityMail;
 use App\Models\MailDispatch;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\VendorProfile;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -226,6 +227,55 @@ class ActivityMailer
         );
     }
 
+    public function sendOrderClaimedCustomer(Order $order, ?OrderItem $orderItem = null): bool
+    {
+        $order->loadMissing(['user', 'vendor', 'items']);
+        if (! $order->user) {
+            return false;
+        }
+
+        $claimScope = $orderItem ? ('item:' . $orderItem->id) : 'order';
+
+        return $this->sendForUser(
+            user: $order->user,
+            mailType: 'order.claimed.customer',
+            payload: [
+                'order_number' => $order->order_number,
+                'order_id' => $order->id,
+                'vendor_name' => $order->vendor?->business_name,
+                'claimed_item_title' => $orderItem?->title,
+                'line_items' => $this->lineItemsForOrder($order),
+                'order_total_formatted' => $this->formatNpr($order->grand_total),
+            ],
+            uniqueKey: 'order:' . $order->id . ':claimed:' . $claimScope . ':customer',
+        );
+    }
+
+    public function sendOrderClaimedVendor(Order $order, ?OrderItem $orderItem = null): bool
+    {
+        $order->loadMissing(['vendor.user', 'items', 'user']);
+        $vendorUser = $order->vendor?->user;
+        if (! $vendorUser) {
+            return false;
+        }
+
+        $claimScope = $orderItem ? ('item:' . $orderItem->id) : 'order';
+
+        return $this->sendForUser(
+            user: $vendorUser,
+            mailType: 'order.claimed.vendor',
+            payload: [
+                'order_number' => $order->order_number,
+                'order_id' => $order->id,
+                'customer_name' => $order->user?->name,
+                'claimed_item_title' => $orderItem?->title,
+                'line_items' => $this->lineItemsForOrder($order),
+                'order_total_formatted' => $this->formatNpr($order->grand_total),
+            ],
+            uniqueKey: 'order:' . $order->id . ':claimed:' . $claimScope . ':vendor',
+        );
+    }
+
     protected function sendOnce(
         string $recipientEmail,
         string $mailType,
@@ -420,6 +470,46 @@ class ActivityMailer
                 'orderTotalFormatted' => $payload['order_total_formatted'] ?? null,
                 'lineItems' => $payload['line_items'] ?? [],
                 'statusLabel' => 'New sale',
+            ],
+            'order.claimed.customer' => [
+                'subject' => 'Claim verified: ' . ($payload['order_number'] ?? ''),
+                'title' => 'Your claim was verified',
+                'lines' => [
+                    (string) ($payload['claimed_item_title'] ?? '')
+                        ? 'Your claim for "' . $payload['claimed_item_title'] . '" has been verified by the vendor.'
+                        : 'Your claim has been verified by the vendor.',
+                    'You can review the latest order details and redemption status in My Purchases.',
+                ],
+                'actionText' => 'View My Purchases',
+                'actionUrl' => url('/dashboard/purchases'),
+                'metaLabel' => 'Reference',
+                'metaValue' => (string) ($payload['order_number'] ?? ''),
+                'orderNumber' => $payload['order_number'] ?? null,
+                'partnerLabel' => 'Vendor',
+                'partnerName' => $payload['vendor_name'] ?? null,
+                'orderTotalFormatted' => $payload['order_total_formatted'] ?? null,
+                'lineItems' => $payload['line_items'] ?? [],
+                'statusLabel' => 'Claim verified',
+            ],
+            'order.claimed.vendor' => [
+                'subject' => 'Claim processed: ' . ($payload['order_number'] ?? ''),
+                'title' => 'Claim recorded successfully',
+                'lines' => [
+                    (string) ($payload['claimed_item_title'] ?? '')
+                        ? 'You marked "' . $payload['claimed_item_title'] . '" as claimed for this order.'
+                        : 'You verified a claim for this order.',
+                    'Keep tracking the remaining items and order lifecycle in Vendor Orders.',
+                ],
+                'actionText' => 'Open Vendor Orders',
+                'actionUrl' => url('/vendor/orders'),
+                'metaLabel' => 'Reference',
+                'metaValue' => (string) ($payload['order_number'] ?? ''),
+                'orderNumber' => $payload['order_number'] ?? null,
+                'partnerLabel' => 'Customer',
+                'partnerName' => $payload['customer_name'] ?? null,
+                'orderTotalFormatted' => $payload['order_total_formatted'] ?? null,
+                'lineItems' => $payload['line_items'] ?? [],
+                'statusLabel' => 'Claim processed',
             ],
             'order.status_changed.customer' => $this->buildOrderStatusChangedCustomerMessage($payload),
             'order.status_changed.vendor' => $this->buildOrderStatusChangedVendorMessage($payload),

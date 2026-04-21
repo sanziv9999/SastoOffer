@@ -394,6 +394,8 @@ class VendorAnalyticsController extends Controller
             });
 
             try {
+                $activityMailer->sendOrderClaimedCustomer($orderByNumber);
+                $activityMailer->sendOrderClaimedVendor($orderByNumber);
                 $activityMailer->sendOrderStatusChangedCustomer($orderByNumber, 'redeemed');
                 $activityMailer->sendOrderStatusChangedVendor($orderByNumber, 'redeemed');
             } catch (\Throwable $e) {
@@ -468,12 +470,24 @@ class VendorAnalyticsController extends Controller
 
         if ($previousStatus !== $newStatus) {
             try {
+                $activityMailer->sendOrderClaimedCustomer($order, $orderItem);
+                $activityMailer->sendOrderClaimedVendor($order, $orderItem);
                 $activityMailer->sendOrderStatusChangedCustomer($order, $newStatus);
                 $activityMailer->sendOrderStatusChangedVendor($order, $newStatus);
             } catch (\Throwable $e) {
                 Log::warning('Order claim status mail failed', [
                     'order_id' => $order->id,
                     'status' => $newStatus,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } else {
+            try {
+                $activityMailer->sendOrderClaimedCustomer($order, $orderItem);
+                $activityMailer->sendOrderClaimedVendor($order, $orderItem);
+            } catch (\Throwable $e) {
+                Log::warning('Order claim mail failed', [
+                    'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
             }
