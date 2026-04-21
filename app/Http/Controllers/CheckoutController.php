@@ -140,10 +140,40 @@ class CheckoutController extends Controller
             abort(403);
         }
 
-        $order->load('items', 'vendor');
+        $ordersInGroup = Order::query()
+            ->where('user_id', auth()->id())
+            ->where('order_number', $order->order_number)
+            ->with(['items', 'vendor'])
+            ->get();
+
+        if ($ordersInGroup->isEmpty()) {
+            $order->load('items', 'vendor');
+            $ordersInGroup = collect([$order]);
+        }
+
+        $allItems = $ordersInGroup->flatMap(fn (Order $groupOrder) => $groupOrder->items);
+        $vendorNames = $ordersInGroup
+            ->pluck('vendor.business_name')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $statuses = $ordersInGroup->pluck('status')->filter()->values();
+        $statusPriority = ['pending', 'paid', 'redeemed', 'cancelled', 'refunded'];
+        $aggregatedStatus = collect($statusPriority)->first(fn ($status) => $statuses->contains($status)) ?? (string) $order->status;
 
         return view('orders.confirmation', [
             'order' => $order,
+            'allItems' => $allItems,
+            'summary' => [
+                'status' => $aggregatedStatus,
+                'vendorName' => $vendorNames->count() > 1
+                    ? 'Multiple vendors (' . $vendorNames->count() . ')'
+                    : ($vendorNames->first() ?? ($order->vendor?->business_name ?? 'Unknown Vendor')),
+                'subtotal' => (float) $ordersInGroup->sum('subtotal'),
+                'discountTotal' => (float) $ordersInGroup->sum('discount_total'),
+                'grandTotal' => (float) $ordersInGroup->sum('grand_total'),
+            ],
         ]);
     }
 

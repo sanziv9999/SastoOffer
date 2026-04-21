@@ -10,7 +10,7 @@
                 </div>
                 <h1 class="text-3xl font-extrabold tracking-tight text-teal-950 mb-2">Offer Claimed!</h1>
                 <p class="text-muted-foreground">
-                    Your claim <span class="font-mono font-semibold text-teal-900">{{ $order->order_number }}</span> has been created and is <span class="font-semibold text-amber-600">{{ $order->status }}</span>.
+                    Your claim <span class="font-mono font-semibold text-teal-900">{{ $order->order_number }}</span> has been created and is <span class="font-semibold text-amber-600">{{ $summary['status'] ?? $order->status }}</span>.
                 </p>
             </div>
 
@@ -23,17 +23,17 @@
                             <p class="text-lg font-mono font-bold text-teal-950">{{ $order->order_number }}</p>
                         </div>
                         <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1">
-                            {{ ucfirst($order->status) }}
+                            {{ ucfirst($summary['status'] ?? $order->status) }}
                         </span>
                     </div>
-                    @if($order->vendor)
-                        <p class="text-sm text-muted-foreground mt-1">Vendor: <span class="font-medium text-teal-900">{{ $order->vendor->business_name }}</span></p>
+                    @if(!empty($summary['vendorName']))
+                        <p class="text-sm text-muted-foreground mt-1">Vendor: <span class="font-medium text-teal-900">{{ $summary['vendorName'] }}</span></p>
                     @endif
                 </div>
 
                 {{-- Items --}}
                 <div class="divide-y">
-                    @foreach($order->items as $item)
+                    @foreach(($allItems ?? $order->items) as $item)
                         <div class="flex items-center gap-4 p-4">
                             @if(!empty($item->meta['deal_image']))
                                 <img src="{{ $item->meta['deal_image'] }}" alt="{{ $item->title }}" class="h-14 w-14 rounded-lg object-cover flex-shrink-0 border">
@@ -58,20 +58,20 @@
 
                 {{-- Totals --}}
                 <div class="p-6 border-t bg-muted/20 space-y-2">
-                    @if((float)$order->discount_total > 0)
+                    @if((float)($summary['discountTotal'] ?? $order->discount_total) > 0)
                         <div class="flex justify-between text-sm text-muted-foreground">
                             <span>Savings</span>
-                            <span class="text-green-600 font-medium">- Rs. {{ number_format($order->discount_total, 2) }}</span>
+                            <span class="text-green-600 font-medium">- Rs. {{ number_format(($summary['discountTotal'] ?? $order->discount_total), 2) }}</span>
                         </div>
                     @endif
                     <div class="flex justify-between text-sm text-muted-foreground">
                         <span>Subtotal</span>
-                        <span>Rs. {{ number_format($order->subtotal, 2) }}</span>
+                        <span>Rs. {{ number_format(($summary['subtotal'] ?? $order->subtotal), 2) }}</span>
                     </div>
                     <div class="border-t pt-3 flex justify-between items-end">
                         <span class="text-base font-bold text-teal-950">Total</span>
                         <span class="text-2xl font-bold text-teal-950">
-                            <span class="text-xs font-normal mr-0.5 opacity-70">Rs.</span>{{ number_format($order->grand_total, 2) }}
+                            <span class="text-xs font-normal mr-0.5 opacity-70">Rs.</span>{{ number_format(($summary['grandTotal'] ?? $order->grand_total), 2) }}
                         </span>
                     </div>
                 </div>
