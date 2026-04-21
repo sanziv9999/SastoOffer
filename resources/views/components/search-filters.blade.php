@@ -21,7 +21,7 @@
         <label class="block text-sm font-medium mb-2">Search Deals</label>
         <div class="relative">
             <input
-                type="search"
+                type="text"
                 x-model="localSearchQuery"
                 placeholder="Search within results..."
                 class="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
@@ -261,7 +261,7 @@
             {{-- Inline search --}}
             <div class="relative mb-2">
                 <input
-                    type="search"
+                    type="text"
                     x-model="locationSearch"
                     placeholder="Search locations..."
                     class="w-full h-8 pl-7 pr-3 rounded-md border border-input bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
