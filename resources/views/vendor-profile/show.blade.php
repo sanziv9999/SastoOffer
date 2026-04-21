@@ -74,10 +74,10 @@
                         class="vendor-tab-btn rounded-md px-4 py-2.5 text-sm font-medium transition-colors bg-background text-foreground shadow-sm"
                         role="tab"
                         aria-selected="true"
-                        aria-controls="tab-products"
-                        data-tab="products"
+                        aria-controls="tab-deals"
+                        data-tab="deals"
                     >
-                        Products &amp; Services
+                        Deals
                     </button>
                     <button
                         type="button"
@@ -87,7 +87,17 @@
                         aria-controls="tab-about"
                         data-tab="about"
                     >
-                        Profile / About
+                        About
+                    </button>
+                    <button
+                        type="button"
+                        class="vendor-tab-btn rounded-md px-4 py-2.5 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="tab-reviews"
+                        data-tab="reviews"
+                    >
+                        Reviews
                     </button>
                 </div>
                 <div class="w-full lg:w-[320px]">
@@ -104,8 +114,8 @@
                 </div>
             </div>
 
-            {{-- Products & Services tab --}}
-            <section id="tab-products" class="vendor-tab-panel opacity-100 translate-y-0 transition-all duration-300 ease-out" role="tabpanel">
+            {{-- Deals tab --}}
+            <section id="tab-deals" class="vendor-tab-panel opacity-100 translate-y-0 transition-all duration-300 ease-out" role="tabpanel">
                 @if($activeDeals->isEmpty())
                     <div class="bg-card rounded-xl border border-dashed p-12 text-center">
                         <div class="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
@@ -191,15 +201,6 @@
                             </div>
                         </div>
 
-                        <div class="bg-card rounded-xl border p-5 md:p-6" id="vendor-reviews">
-                            <h3 class="text-xl font-semibold mb-4">Vendor Reviews</h3>
-                            <x-review-list
-                                :reviews="$reviews"
-                                :user-review="$userReview"
-                                reviewable-type="vendor"
-                                :reviewable-id="$vendor->id"
-                            />
-                        </div>
                     </div>
 
                     <aside class="lg:col-span-1">
@@ -255,6 +256,19 @@
                     </aside>
                 </div>
             </section>
+
+            {{-- Reviews tab --}}
+            <section id="tab-reviews" class="vendor-tab-panel hidden opacity-0 translate-y-2 transition-all duration-300 ease-out" role="tabpanel">
+                <div class="bg-card rounded-xl border p-5 md:p-6" id="vendor-reviews">
+                    <h3 class="text-xl font-semibold mb-4">Vendor Reviews</h3>
+                    <x-review-list
+                        :reviews="$reviews"
+                        :user-review="$userReview"
+                        reviewable-type="vendor"
+                        :reviewable-id="$vendor->id"
+                    />
+                </div>
+            </section>
         </div>
     </div>
 
@@ -263,8 +277,9 @@
             var buttons = Array.from(document.querySelectorAll('.vendor-tab-btn'));
             var triggerButtons = Array.from(document.querySelectorAll('[data-tab-trigger]'));
             var panels = {
-                products: document.getElementById('tab-products'),
+                deals: document.getElementById('tab-deals'),
                 about: document.getElementById('tab-about'),
+                reviews: document.getElementById('tab-reviews'),
             };
             var searchInput = document.getElementById('vendor-store-search');
             var productItems = Array.from(document.querySelectorAll('.vendor-product-item'));
@@ -309,7 +324,7 @@
             triggerButtons.forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var target = btn.dataset.tabTrigger;
-                    if (target === 'about' || target === 'products') {
+                    if (target === 'about' || target === 'deals' || target === 'reviews') {
                         setTab(target);
                     }
                 });
@@ -334,7 +349,7 @@
                 searchInput.addEventListener('input', applyStoreSearch);
             }
 
-            setTab('products');
+            setTab('deals');
             applyStoreSearch();
         });
     </script>
