@@ -115,7 +115,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                     <Button variant="outline" size="sm" asChild className="h-8 text-xs">
                       <Link href={`/vendor/deals/${deal.id}/offers`}>Offers</Link>
                     </Button>
-                    <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                    <Button variant="outline" size="sm" asChild className="h-8 text-xs">
                       <Link href={`/vendor/deals/${deal.id}`}>View</Link>
                     </Button>
                   </div>
@@ -184,7 +184,7 @@ const ManageDeals = ({ deals }: ManageDealsProps) => {
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/vendor/deals/${deal.id}/offers`}>Offers</Link>
                         </Button>
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button variant="outline" size="sm" asChild>
                           <Link href={`/vendor/deals/${deal.id}`}>View</Link>
                         </Button>
                       </div>
