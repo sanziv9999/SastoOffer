@@ -104,24 +104,27 @@ class VendorAnalyticsController extends Controller
         $user = auth()->user();
         $vendor = $user->vendorProfile;
         if (! $vendor) {
-            return \Inertia\Inertia::render('vendor/Analytics', [
+            return \Inertia\Inertia::render('vendor/Reports', [
                 'stats' => [
                     'totalRevenue' => 0,
                     'totalSales' => 0,
                     'totalOrders' => 0,
                     'avgOrderValue' => 0,
-                    'pageViews' => 0,
-                    'conversionRate' => 0,
                     'activeDealsCount' => 0,
                 ],
                 'topDeals' => [],
                 'monthlySales' => [],
+                'dailySales' => [],
+                'topCustomers' => [],
+                'offerMix' => [],
+                'categorySales' => [],
             ]);
         }
 
         $deals = $this->getVendorDeals();
         $salesOrders = Order::where('vendor_id', $vendor->id)
             ->whereNotIn('status', ['cancelled', 'refunded'])
+            ->with(['user', 'items.deal.category.parent'])
             ->get();
         $totalOrders = $salesOrders->count();
 
@@ -144,8 +147,6 @@ class VendorAnalyticsController extends Controller
             'totalSales' => $totalSales,
             'totalOrders' => $totalOrders,
             'avgOrderValue' => $totalOrders > 0 ? round($totalRevenue / $totalOrders, 2) : 0,
-            'pageViews' => 0,
-            'conversionRate' => 0,
             'activeDealsCount' => $deals->where('status', 'active')->count(),
         ];
 
@@ -153,10 +154,82 @@ class VendorAnalyticsController extends Controller
             ->sortByDesc('quantitySold')
             ->values();
 
-        return \Inertia\Inertia::render('vendor/Analytics', [
+        $dailySales = collect(range(6, 0))
+            ->map(function ($daysAgo) use ($salesOrders) {
+                $date = now()->subDays($daysAgo)->startOfDay();
+                $dayOrders = $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay($date));
+
+                return [
+                    'day' => $date->format('D'),
+                    'amount' => round((float) $dayOrders->sum('grand_total'), 2),
+                    'orders' => $dayOrders->count(),
+                ];
+            })
+            ->push([
+                'day' => now()->format('D'),
+                'amount' => round((float) $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay(now()))->sum('grand_total'), 2),
+                'orders' => $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay(now()))->count(),
+            ])
+            ->values();
+
+        $topCustomers = $salesOrders
+            ->filter(fn (Order $order) => $order->user !== null)
+            ->groupBy('user_id')
+            ->map(function ($ordersByCustomer) {
+                /** @var \Illuminate\Support\Collection<int, Order> $ordersByCustomer */
+                $first = $ordersByCustomer->first();
+                $customer = $first?->user;
+                $itemsCount = (int) $ordersByCustomer->sum(fn (Order $o) => $o->items->sum('quantity'));
+                $spent = round((float) $ordersByCustomer->sum('grand_total'), 2);
+
+                return [
+                    'userId' => $customer?->id,
+                    'name' => $customer?->name ?? 'Customer',
+                    'email' => $customer?->email ?? '',
+                    'orders' => $ordersByCustomer->count(),
+                    'items' => $itemsCount,
+                    'spent' => $spent,
+                ];
+            })
+            ->sortByDesc('spent')
+            ->values()
+            ->take(6)
+            ->values();
+
+        $allItems = $salesOrders->flatMap(fn (Order $order) => $order->items);
+
+        $offerMix = $allItems
+            ->groupBy(fn (OrderItem $item) => (string) ($item->meta['offer_type'] ?? 'Offer'))
+            ->map(fn ($items, $offerType) => [
+                'label' => $offerType,
+                'itemsSold' => (int) $items->sum('quantity'),
+                'revenue' => round((float) $items->sum('line_total'), 2),
+            ])
+            ->sortByDesc('itemsSold')
+            ->values();
+
+        $categorySales = $allItems
+            ->groupBy(function (OrderItem $item) {
+                return $item->deal?->category?->parent?->name
+                    ?? $item->deal?->category?->name
+                    ?? 'Uncategorized';
+            })
+            ->map(fn ($items, $categoryName) => [
+                'label' => $categoryName,
+                'itemsSold' => (int) $items->sum('quantity'),
+                'revenue' => round((float) $items->sum('line_total'), 2),
+            ])
+            ->sortByDesc('itemsSold')
+            ->values();
+
+        return \Inertia\Inertia::render('vendor/Reports', [
             'stats' => $stats,
             'topDeals' => $topDeals,
             'monthlySales' => $monthlySales,
+            'dailySales' => $dailySales,
+            'topCustomers' => $topCustomers,
+            'offerMix' => $offerMix,
+            'categorySales' => $categorySales,
         ]);
     }
 

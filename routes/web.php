@@ -126,7 +126,8 @@ Route::middleware(['auth', 'role:vendor'])->group(function () {
         Route::put('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'updateOffer'])->name('vendor.deals.offers.update');
         Route::delete('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'removeOffer'])->name('vendor.deals.offers.remove');
 
-        Route::get('/vendor/analytics', [VendorAnalyticsController::class, 'index'])->name('vendor.analytics');
+        Route::get('/vendor/reports', [VendorAnalyticsController::class, 'index'])->name('vendor.reports');
+        Route::get('/vendor/analytics', fn () => redirect()->route('vendor.reports'));
         Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
         Route::get('/vendor/orders/{order}', [VendorAnalyticsController::class, 'showOrder'])->name('vendor.orders.show');
         Route::patch('/vendor/orders/{order}/status', [VendorAnalyticsController::class, 'updateOrderStatus'])->name('vendor.orders.status');

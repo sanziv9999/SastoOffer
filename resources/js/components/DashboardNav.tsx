@@ -73,7 +73,7 @@ const DashboardNav = () => {
     { icon: Store, label: 'Overview', path: '/vendor' },
     { icon: Tags, label: 'Manage Deals', path: '/vendor/deals' },
     { icon: ClipboardList, label: 'Orders', path: '/vendor/orders', badge: Number(vendorMetrics?.open_orders ?? 0) },
-    { icon: BarChart3, label: 'Analytics', path: '/vendor/analytics' },
+    { icon: BarChart3, label: 'Reports', path: '/vendor/reports' },
     { icon: UserCheck, label: 'Customers', path: '/vendor/customers' },
     { icon: Star, label: 'Reviews', path: '/vendor/reviews' },
     { icon: Settings, label: 'Business Settings', path: '/vendor/settings' },

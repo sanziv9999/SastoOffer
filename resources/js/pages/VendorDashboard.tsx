@@ -308,9 +308,9 @@ const VendorDashboard = ({
           </Link>
         </Button>
         <Button variant="outline" className="h-auto py-2.5 sm:py-3 px-2 sm:px-3 flex-col gap-1" asChild>
-          <Link href="/vendor/analytics">
+          <Link href="/vendor/reports">
             <Banknote className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            <span className="text-[11px] sm:text-xs">Analytics</span>
+            <span className="text-[11px] sm:text-xs">Reports</span>
           </Link>
         </Button>
       </div>

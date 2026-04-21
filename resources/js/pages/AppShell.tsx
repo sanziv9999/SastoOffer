@@ -25,7 +25,7 @@ import EditReview from "./dashboard/EditReview";
 import VoucherDetail from "./dashboard/VoucherDetail";
 
 // Dashboard Sub-pages (Vendor)
-import VendorAnalytics from "./vendor/Analytics";
+import VendorReports from "./vendor/Reports";
 import VendorCreateDeal from "./vendor/CreateDeal";
 import VendorCustomerHistory from "./vendor/CustomerHistory";
 import VendorCustomers from "./vendor/Customers";
@@ -235,7 +235,7 @@ const AppShell = () => {
                     <Route path="create-deal" element={<VendorCreateDeal />} />
                     <Route path="deals" element={<VendorManageDeals deals={vendorDeals} />} />
                     <Route path="orders" element={<VendorOrders orders={vendorOrders} />} />
-                    <Route path="analytics" element={<VendorAnalytics stats={dummyStats.vendor} topDeals={vendorDeals.slice(0, 5)} />} />
+                    <Route path="reports" element={<VendorReports stats={dummyStats.vendor} topDeals={vendorDeals.slice(0, 5)} monthlySales={[]} dailySales={[]} topCustomers={[]} offerMix={[]} categorySales={[]} />} />
                     <Route path="customers" element={<VendorCustomers customers={vendorCustomers} />} />
                     <Route path="customer-history" element={<VendorCustomerHistory history={[]} />} />
                     <Route path="sales-history" element={<VendorSalesHistory sales={[]} />} />
