@@ -269,9 +269,18 @@ const VendorReviews = ({ reviews: initialReviews }: VendorReviewsProps) => {
                                         {review.type === 'vendor' ? 'Vendor Review' : 'Deal:'}
                                     </span>
                                     {review.type !== 'vendor' && (
-                                        <span className="font-medium text-primary text-xs">
-                                            {review.dealTitle || 'Unknown Deal'}
-                                        </span>
+                                        review.dealId ? (
+                                            <a
+                                                href={`/deals/${review.dealId}`}
+                                                className="font-medium text-primary text-xs hover:underline underline-offset-2"
+                                            >
+                                                {review.dealTitle || 'Unknown Deal'}
+                                            </a>
+                                        ) : (
+                                            <span className="font-medium text-primary text-xs">
+                                                {review.dealTitle || 'Unknown Deal'}
+                                            </span>
+                                        )
                                     )}
                                 </div>
                                 <div className="bg-muted/30 border rounded-lg px-4 py-3">
