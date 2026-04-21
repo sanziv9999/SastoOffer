@@ -98,7 +98,7 @@
                         Reviews
                     </button>
                 </div>
-                <div class="hidden lg:block w-full lg:w-[320px]">
+                <div id="vendor-store-search-desktop-wrap" class="hidden lg:block w-full lg:w-[320px]">
                     <label for="vendor-store-search" class="sr-only">Search in Store</label>
                     <div class="relative">
                         <input
@@ -112,7 +112,7 @@
                 </div>
             </div>
 
-            <div class="lg:hidden sticky top-16 z-30 -mx-4 px-4 py-2 mb-3 bg-background border-y border-border/60 shadow-sm">
+            <div id="vendor-store-search-mobile-wrap" class="lg:hidden sticky top-16 z-30 -mx-4 px-4 py-2 mb-3 bg-background border-y border-border/60 shadow-sm">
                 <label for="vendor-store-search-mobile" class="sr-only">Search in Store</label>
                 <div class="relative">
                     <input
@@ -296,6 +296,8 @@
             var mobileSearchInput = document.getElementById('vendor-store-search-mobile');
             var productItems = Array.from(document.querySelectorAll('.vendor-product-item'));
             var emptySearchState = document.getElementById('vendor-products-empty-search');
+            var desktopSearchWrap = document.getElementById('vendor-store-search-desktop-wrap');
+            var mobileSearchWrap = document.getElementById('vendor-store-search-mobile-wrap');
 
             function setTab(tabName) {
                 Object.entries(panels).forEach(function ([name, panel]) {
@@ -325,6 +327,14 @@
                     btn.classList.toggle('shadow-sm', active);
                     btn.classList.toggle('text-muted-foreground', !active);
                 });
+
+                var showStoreSearch = tabName === 'deals';
+                if (desktopSearchWrap) {
+                    desktopSearchWrap.style.display = showStoreSearch ? '' : 'none';
+                }
+                if (mobileSearchWrap) {
+                    mobileSearchWrap.style.display = showStoreSearch ? '' : 'none';
+                }
             }
 
             buttons.forEach(function (btn) {
