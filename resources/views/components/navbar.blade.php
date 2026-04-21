@@ -383,8 +383,22 @@
                     
                     @auth
                         <div class="relative">
-                            <button @click="userOpen = !userOpen" class="inline-flex items-center justify-center h-9 w-9 rounded-full hover:bg-muted transition-colors">
+                            <button @click="userOpen = !userOpen" class="inline-flex items-center gap-2 rounded-full hover:bg-muted transition-colors px-2 py-1">
+                                @php
+                                    $fullName = trim((string) auth()->user()->name);
+                                    $nameParts = preg_split('/\s+/', $fullName) ?: [];
+                                    $firstName = $nameParts[0] ?? $fullName;
+                                    $hasMoreNames = count($nameParts) > 1;
+                                @endphp
+                                <span
+                                    class="hidden sm:inline-block max-w-[120px] truncate text-sm font-medium text-foreground"
+                                    title="{{ $fullName }}"
+                                >
+                                    {{ $firstName }}{{ $hasMoreNames ? '...' : '' }}
+                                </span>
+                                <span class="inline-flex items-center justify-center h-9 w-9">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </span>
                             </button>
                             <div 
                                 x-show="userOpen" 
