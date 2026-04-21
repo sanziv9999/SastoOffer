@@ -8,6 +8,8 @@ use App\Models\MailDispatch;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\VendorProfile;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -91,8 +93,68 @@ class ActivityMailer
                 'line_items' => $this->lineItemsForOrder($order),
                 'order_total_formatted' => $this->formatNpr($order->grand_total),
             ],
-            // Deduplicate by shared checkout order number for customer notifications.
-            uniqueKey: 'order-number:' . $order->order_number . ':customer:' . $order->user_id,
+            // Deduplicate per concrete order so multi-vendor checkout sends all confirmations.
+            uniqueKey: 'order:' . $order->id . ':customer',
+        );
+    }
+
+    /**
+     * Send a single customer confirmation email containing all vendor items
+     * from the same checkout.
+     *
+     * @param iterable<int, Order>|SupportCollection<int, Order>|EloquentCollection<int, Order> $orders
+     */
+    public function sendOrderPlacedCustomerSummary(iterable $orders): bool
+    {
+        if ($orders instanceof EloquentCollection) {
+            $orders = $orders;
+        } elseif ($orders instanceof SupportCollection) {
+            $orders = new EloquentCollection($orders->all());
+        } else {
+            $orders = new EloquentCollection(is_array($orders) ? $orders : iterator_to_array($orders));
+        }
+
+        if ($orders->isEmpty()) {
+            return false;
+        }
+
+        /** @var Order|null $firstOrder */
+        $firstOrder = $orders->first();
+        if (! $firstOrder) {
+            return false;
+        }
+
+        $orders->loadMissing(['items', 'vendor', 'user']);
+
+        $user = $firstOrder->user;
+        if (! $user) {
+            return false;
+        }
+
+        $orderNumber = (string) ($firstOrder->order_number ?? '');
+        $vendorNames = $orders
+            ->pluck('vendor.business_name')
+            ->filter(fn ($name) => is_string($name) && trim($name) !== '')
+            ->unique()
+            ->values();
+
+        $vendorSummary = match ($vendorNames->count()) {
+            0 => null,
+            1 => (string) $vendorNames->first(),
+            default => 'Multiple vendors (' . $vendorNames->count() . ')',
+        };
+
+        return $this->sendForUser(
+            user: $user,
+            mailType: 'order.placed.customer.summary',
+            payload: [
+                'order_number' => $orderNumber,
+                'order_ids' => $orders->pluck('id')->values()->all(),
+                'vendor_name' => $vendorSummary,
+                'line_items' => $this->lineItemsForOrders($orders),
+                'order_total_formatted' => $this->formatNpr($orders->sum('grand_total')),
+            ],
+            uniqueKey: 'order-number:' . $orderNumber . ':customer-summary:' . $user->id,
         );
     }
 
@@ -323,6 +385,24 @@ class ActivityMailer
                 'lineItems' => $payload['line_items'] ?? [],
                 'statusLabel' => 'Order placed',
             ],
+            'order.placed.customer.summary' => [
+                'subject' => 'Order confirmed: ' . ($payload['order_number'] ?? ''),
+                'title' => 'Your offers are confirmed',
+                'lines' => [
+                    'Thank you for your purchase. Your checkout included items from one or more vendors.',
+                    'All claimed offers are summarized below with product image and price.',
+                ],
+                'actionText' => 'View My Purchases',
+                'actionUrl' => url('/dashboard/purchases'),
+                'metaLabel' => 'Reference',
+                'metaValue' => (string) ($payload['order_number'] ?? ''),
+                'orderNumber' => $payload['order_number'] ?? null,
+                'partnerLabel' => 'Vendors',
+                'partnerName' => $payload['vendor_name'] ?? null,
+                'orderTotalFormatted' => $payload['order_total_formatted'] ?? null,
+                'lineItems' => $payload['line_items'] ?? [],
+                'statusLabel' => 'Order placed',
+            ],
             'order.placed.vendor' => [
                 'subject' => 'New order: ' . ($payload['order_number'] ?? ''),
                 'title' => 'You have a new order',
@@ -534,7 +614,7 @@ class ActivityMailer
      */
     protected function lineItemsForOrder(Order $order): array
     {
-        $order->loadMissing('items');
+        $order->loadMissing(['items', 'vendor']);
         $orderStatus = (string) $order->status;
         $out = [];
 
@@ -546,6 +626,7 @@ class ActivityMailer
             $out[] = [
                 'title' => $item->title,
                 'image' => $this->absoluteUrl($meta['deal_image'] ?? null),
+                'vendor_name' => $order->vendor?->business_name,
                 'offer_type' => $meta['offer_type'] ?? null,
                 'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
@@ -555,6 +636,23 @@ class ActivityMailer
         }
 
         return $out;
+    }
+
+    /**
+     * @param EloquentCollection<int, Order> $orders
+     * @return array<int, array<string, mixed>>
+     */
+    protected function lineItemsForOrders(EloquentCollection $orders): array
+    {
+        $lineItems = [];
+
+        foreach ($orders as $order) {
+            foreach ($this->lineItemsForOrder($order) as $row) {
+                $lineItems[] = $row;
+            }
+        }
+
+        return $lineItems;
     }
 
     protected function formatStatus(string $status): string

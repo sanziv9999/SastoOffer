@@ -119,16 +119,14 @@ class CheckoutController extends Controller
                 ]);
             }
         }
-        if ($firstOrder) {
-            try {
-                // Send one customer confirmation for the shared checkout order number.
-                $activityMailer->sendOrderPlacedCustomer($firstOrder);
-            } catch (\Throwable $e) {
-                Log::warning('Customer order confirmation mail failed', [
-                    'order_id' => $firstOrder->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+        try {
+            // Send one combined customer confirmation containing all vendor items.
+            $activityMailer->sendOrderPlacedCustomerSummary($orders);
+        } catch (\Throwable $e) {
+            Log::warning('Customer order confirmation mail failed', [
+                'order_number' => $firstOrder?->order_number,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return redirect()
