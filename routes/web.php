@@ -58,8 +58,10 @@ Route::get('/deal/{id}', function ($id) {
     return redirect()->route('deals.show.by-deal', ['deal' => $id]);
 })->name('deal.show.redirect');
 
-// Vendor profile (public – canonical slug URL)
-Route::get('/vendor-profile/{vendorProfile}', [VendorProfileController::class, 'show'])->name('vendor-profile.show');
+// Vendor profile (public)
+Route::get('/vendor-profile/{category}/{location}/{businessType}/{vendorProfile}', [VendorProfileController::class, 'show'])
+    ->name('vendor-profile.show.canonical');
+Route::get('/vendor-profile/{vendorProfile}', [VendorProfileController::class, 'showLegacy'])->name('vendor-profile.show');
 
 // ——— Auth (guest) ———
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');

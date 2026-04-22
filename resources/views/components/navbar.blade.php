@@ -1,6 +1,6 @@
 @php
-    $hideCategoryNav = request()->routeIs('vendor-profile.show');
-    $hideGlobalSearch = request()->routeIs('vendor-profile.show');
+    $hideCategoryNav = request()->routeIs('vendor-profile.show*');
+    $hideGlobalSearch = request()->routeIs('vendor-profile.show*');
 @endphp
 
 <header

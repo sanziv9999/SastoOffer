@@ -194,7 +194,7 @@
 
         {{-- Fixed spacer for navbar height --}}
         @php
-            $isVendorProfilePage = request()->routeIs('vendor-profile.show');
+            $isVendorProfilePage = request()->routeIs('vendor-profile.show*');
         @endphp
         <div class="{{ $isVendorProfilePage ? 'h-20 md:h-20' : 'h-28 md:h-32' }}"></div>
 

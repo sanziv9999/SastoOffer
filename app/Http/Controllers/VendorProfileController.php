@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateVendorProfileRequest;
 use App\Services\ActivityMailer;
 use App\Support\DealUrl;
 use App\Support\GdImageConverter;
+use App\Support\VendorProfileUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -227,11 +228,24 @@ class VendorProfileController extends Controller
         return redirect()->route('vendor-profiles.index')->with('success', 'Vendor profile created successfully.');
     }
 
-    public function show(VendorProfile $vendorProfile)
+    public function showLegacy(VendorProfile $vendorProfile)
     {
-        $rawParam = request()->segment(2);
-        if ($vendorProfile->slug && $rawParam !== $vendorProfile->slug) {
-            return redirect()->route('vendor-profile.show', ['vendorProfile' => $vendorProfile->slug], 301);
+        return redirect()->to(VendorProfileUrl::canonical($vendorProfile), 301);
+    }
+
+    public function show(string $category, string $location, string $businessType, VendorProfile $vendorProfile)
+    {
+        [$expectedCategory, $expectedLocation, $expectedBusinessType] = VendorProfileUrl::segments($vendorProfile);
+        $expectedSlug = $vendorProfile->slug ?: (string) $vendorProfile->id;
+        $rawVendorParam = (string) request()->segment(5);
+
+        if (
+            $category !== $expectedCategory
+            || $location !== $expectedLocation
+            || $businessType !== $expectedBusinessType
+            || $rawVendorParam !== $expectedSlug
+        ) {
+            return redirect()->to(VendorProfileUrl::canonical($vendorProfile), 301);
         }
 
         $vendorProfile->load(['user', 'primaryCategory.parent', 'defaultAddress', 'images'])
