@@ -21,6 +21,16 @@
                 $hasCoords = $vendorLat !== null && $vendorLng !== null && $vendorLat !== '' && $vendorLng !== '';
             @endphp
 
+            <div class="mb-3">
+                <button
+                    type="button"
+                    onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ route('home') }}'; }"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                >
+                    Go Back
+                </button>
+            </div>
+
             {{-- Compact vendor header --}}
             <div class="mb-4">
                 <div class="bg-card rounded-xl shadow-sm border p-4 md:p-5">
@@ -52,14 +62,6 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="/search?vendorId={{ $vendor->id }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3">
-                                Browse All Offers
-                            </a>
-                            <button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3" data-tab-trigger="about">
-                                View Profile Details
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
