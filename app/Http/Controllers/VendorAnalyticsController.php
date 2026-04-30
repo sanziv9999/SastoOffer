@@ -114,10 +114,10 @@ class VendorAnalyticsController extends Controller
                 ],
                 'topDeals' => [],
                 'monthlySales' => [],
-                'dailySales' => [],
                 'topCustomers' => [],
                 'offerMix' => [],
                 'categorySales' => [],
+                'detailedSales' => [],
             ]);
         }
 
@@ -152,24 +152,6 @@ class VendorAnalyticsController extends Controller
 
         $topDeals = $deals
             ->sortByDesc('quantitySold')
-            ->values();
-
-        $dailySales = collect(range(6, 0))
-            ->map(function ($daysAgo) use ($salesOrders) {
-                $date = now()->subDays($daysAgo)->startOfDay();
-                $dayOrders = $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay($date));
-
-                return [
-                    'day' => $date->format('D'),
-                    'amount' => round((float) $dayOrders->sum('grand_total'), 2),
-                    'orders' => $dayOrders->count(),
-                ];
-            })
-            ->push([
-                'day' => now()->format('D'),
-                'amount' => round((float) $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay(now()))->sum('grand_total'), 2),
-                'orders' => $salesOrders->filter(fn (Order $order) => $order->created_at?->isSameDay(now()))->count(),
-            ])
             ->values();
 
         $topCustomers = $salesOrders
@@ -222,14 +204,38 @@ class VendorAnalyticsController extends Controller
             ->sortByDesc('itemsSold')
             ->values();
 
+        $detailedSales = $salesOrders
+            ->flatMap(function (Order $order) {
+                return $order->items->map(function (OrderItem $item) use ($order) {
+                    $meta = is_array($item->meta) ? $item->meta : [];
+                    return [
+                        'orderId' => $order->id,
+                        'orderNumber' => $order->order_number,
+                        'date' => $order->created_at?->toIso8601String(),
+                        'status' => $order->status,
+                        'customerName' => $order->user?->name ?? 'Customer',
+                        'customerEmail' => $order->user?->email ?? '',
+                        'dealTitle' => $item->title ?: ($item->deal?->title ?? 'Deal'),
+                        'offerType' => (string) ($meta['offer_type'] ?? 'Offer'),
+                        'quantity' => (int) $item->quantity,
+                        'unitPrice' => round((float) $item->unit_price, 2),
+                        'lineTotal' => round((float) $item->line_total, 2),
+                    ];
+                });
+            })
+            ->sortByDesc('date')
+            ->values()
+            ->take(120)
+            ->values();
+
         return \Inertia\Inertia::render('vendor/Reports', [
             'stats' => $stats,
             'topDeals' => $topDeals,
             'monthlySales' => $monthlySales,
-            'dailySales' => $dailySales,
             'topCustomers' => $topCustomers,
             'offerMix' => $offerMix,
             'categorySales' => $categorySales,
+            'detailedSales' => $detailedSales,
         ]);
     }
 
@@ -266,6 +272,22 @@ class VendorAnalyticsController extends Controller
         $order->load(['user', 'items.deal']);
 
         return \Inertia\Inertia::render('vendor/OrderShow', [
+            'order' => $this->mapOrderForVendor($order),
+        ]);
+    }
+
+    public function showReportOrder(Order $order)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendorProfile;
+
+        if (! $vendor || (int) $order->vendor_id !== (int) $vendor->id) {
+            abort(403);
+        }
+
+        $order->load(['user', 'items.deal']);
+
+        return \Inertia\Inertia::render('vendor/ReportOrderView', [
             'order' => $this->mapOrderForVendor($order),
         ]);
     }

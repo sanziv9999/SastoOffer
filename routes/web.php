@@ -129,6 +129,7 @@ Route::middleware(['auth', 'role:vendor'])->group(function () {
         Route::delete('/vendor/deals/{deal}/offers/{offerType}', [DealController::class, 'removeOffer'])->name('vendor.deals.offers.remove');
 
         Route::get('/vendor/reports', [VendorAnalyticsController::class, 'index'])->name('vendor.reports');
+        Route::get('/vendor/reports/orders/{order}', [VendorAnalyticsController::class, 'showReportOrder'])->name('vendor.reports.orders.show');
         Route::get('/vendor/analytics', fn () => redirect()->route('vendor.reports'));
         Route::get('/vendor/orders', [VendorAnalyticsController::class, 'orders'])->name('vendor.orders');
         Route::get('/vendor/orders/{order}', [VendorAnalyticsController::class, 'showOrder'])->name('vendor.orders.show');

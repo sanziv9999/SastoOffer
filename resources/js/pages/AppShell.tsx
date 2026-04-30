@@ -26,6 +26,7 @@ import VoucherDetail from "./dashboard/VoucherDetail";
 
 // Dashboard Sub-pages (Vendor)
 import VendorReports from "./vendor/Reports";
+import VendorReportOrderView from "./vendor/ReportOrderView";
 import VendorCreateDeal from "./vendor/CreateDeal";
 import VendorCustomerHistory from "./vendor/CustomerHistory";
 import VendorCustomers from "./vendor/Customers";
@@ -235,7 +236,8 @@ const AppShell = () => {
                     <Route path="create-deal" element={<VendorCreateDeal />} />
                     <Route path="deals" element={<VendorManageDeals deals={vendorDeals} />} />
                     <Route path="orders" element={<VendorOrders orders={vendorOrders} />} />
-                    <Route path="reports" element={<VendorReports stats={dummyStats.vendor} topDeals={vendorDeals.slice(0, 5)} monthlySales={[]} dailySales={[]} topCustomers={[]} offerMix={[]} categorySales={[]} />} />
+                    <Route path="reports" element={<VendorReports stats={dummyStats.vendor} topDeals={vendorDeals.slice(0, 5)} topCustomers={[]} offerMix={[]} categorySales={[]} detailedSales={[]} />} />
+                    <Route path="reports/orders/:id" element={<VendorReportOrderView order={{ id: 'ORD-001', orderId: 1, customer: 'Demo Customer', customerEmail: 'demo@example.com', subtotal: 1200, discountTotal: 100, taxTotal: 0, total: 1100, status: 'paid', date: new Date().toISOString(), items: [] }} />} />
                     <Route path="customers" element={<VendorCustomers customers={vendorCustomers} />} />
                     <Route path="customer-history" element={<VendorCustomerHistory history={[]} />} />
                     <Route path="sales-history" element={<VendorSalesHistory sales={[]} />} />
